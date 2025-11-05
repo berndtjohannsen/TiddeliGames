@@ -2,5 +2,6 @@
 node_modules/
 
 # Generated Tailwind CSS
-css/tailwind.output.css
+# css/tailwind.output.css
+ignore.txt
 
