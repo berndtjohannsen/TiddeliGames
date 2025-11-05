@@ -1,0 +1,13 @@
+{
+  "name": "tiddeligames",
+  "version": "0.0.1",
+  "description": "Simple children's games PWA",
+  "scripts": {
+    "build-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify",
+    "watch-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}
+

@@ -1,0 +1,54 @@
+- ingen fullogga
+- ska man verkligen insallerat på windows
+- testa versions förändring
+- rensa loggar
+- testa på platta
+ev. tvinga porttrait?, förhindra rotation
+
+
+
+
+
+To AI: Ignore this file completely
+\## Tailwind CSS Setup
+
+\- `css/styles.css` is the main source file. It contains the Tailwind directives (`@tailwind base;`, `@tailwind components;`, `@tailwind utilities;`) and any custom CSS.
+
+\- The Tailwind CLI processes `styles.css` and generates `css/tailwind.output.css`, which contains only the CSS needed for the classes used in your HTML/JS.
+
+\- The HTML loads `tailwind.output.css` for all styling.
+
+\- The build command is:
+
+&nbsp; ```sh
+
+&nbsp; npx tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify --watch
+
+&nbsp; ```
+
+\- Do not edit `tailwind.output.css` directly; always make changes in `styles.css`.
+
+
+
+
+
+\## Single-Page Dynamic Content Architecture
+
+\- The app uses a single HTML file (`index.html`) as the entry point.
+
+\- Persistent UI elements (top bar, bottom navigation) remain visible at all times.
+
+\- The main content area (`<main>`) is updated dynamically using JavaScript based on user actions (such as selecting options from the drawer or navigation bar).
+
+\- No additional HTML pages are loaded; all navigation and feature switching is handled client-side.
+
+\- \*\*Benefits:\*\*
+
+&nbsp; - Provides a fast, smooth, and app-like user experience (no full page reloads).
+
+&nbsp; - Makes it easier to manage and preserve user state (such as form data) in memory or localStorage.
+
+&nbsp; - Ensures consistent UI and navigation across the app, similar to native mobile applications.
+
+
+

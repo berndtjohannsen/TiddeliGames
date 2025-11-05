@@ -1,0 +1,63 @@
+<!-- Main game selection page -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TiddeliGames</title>
+    <!-- PWA manifest & theme color -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <!-- Favicon (uses existing PWA icon as fallback) -->
+    <link rel="icon" type="image/png" href="/assets/icons/icon-192.png">
+    <!-- Tailwind CSS (generated) -->
+    <link rel="stylesheet" href="css/tailwind.output.css">
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen">
+    <!-- Discrete Install App button (top-right, shown conditionally) -->
+    <button
+        id="install-btn"
+        class="hidden fixed top-3 right-3 text-xs text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur px-2.5 py-2 rounded-full shadow-sm transition flex items-center justify-center"
+        aria-label="Install App"
+        title="Install App">
+        <!-- Install/Download icon (inline SVG, MIT-friendly) -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path d="M12 3.75a.75.75 0 0 1 .75.75v7.19l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0l-3.75-3.75a.75.75 0 1 1 1.06-1.06l2.47 2.47V4.5a.75.75 0 0 1 .75-.75Z"/>
+            <path d="M3.75 15a3.75 3.75 0 0 1 3.75-3.75h.75a.75.75 0 0 1 0 1.5H7.5A2.25 2.25 0 0 0 5.25 15v1.5A2.25 2.25 0 0 0 7.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25V15a2.25 2.25 0 0 0-2.25-2.25h-.75a.75.75 0 0 1 0-1.5h.75A3.75 3.75 0 0 1 20.25 15v1.5A3.75 3.75 0 0 1 16.5 20.25h-9A3.75 3.75 0 0 1 3.75 16.5V15Z"/>
+        </svg>
+        <span class="sr-only">Install App</span>
+    </button>
+    <!-- Main container -->
+    <div class="container mx-auto px-4 py-8 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-5xl font-bold text-gray-800 mb-2">TiddeliGames</h1>
+            <p class="text-xl text-gray-600">Choose a game to play!</p>
+        </header>
+
+        <!-- Game selection grid -->
+        <main class="flex-grow flex items-center justify-center">
+            <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl">
+                <!-- Game cards will be inserted here by JavaScript -->
+            </div>
+        </main>
+
+        <!-- Footer with version -->
+        <footer class="mt-8 flex flex-col items-center gap-2">
+            <!-- Version number (discrete) -->
+            <div id="version-display" class="text-xs text-gray-400">
+                <!-- Version will be inserted here by JavaScript -->
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/config.js"></script>
+    <script src="js/pwa.js"></script>
+    <script src="js/game-selector.js"></script>
+</body>
+</html>
+
