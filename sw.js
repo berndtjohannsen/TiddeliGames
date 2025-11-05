@@ -4,15 +4,15 @@
 
 const CACHE_NAME = 'tiddeligames-shell-v1';
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/css/tailwind.output.css',
-  '/css/styles.css',
-  '/css/animations.css',
-  '/js/config.js',
-  '/js/app.js',
-  '/js/game-selector.js',
-  '/js/pwa.js',
+  './',
+  './index.html',
+  './css/tailwind.output.css',
+  './css/styles.css',
+  './css/animations.css',
+  './js/config.js',
+  './js/app.js',
+  './js/game-selector.js',
+  './js/pwa.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,10 +37,10 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return; // only cache GET
 
   // Map /favicon.ico to an existing PNG icon to avoid 404s during development
-  if (new URL(request.url).pathname === '/favicon.ico') {
+  if (new URL(request.url).pathname.endsWith('/favicon.ico')) {
     event.respondWith(
       (async () => {
-        const iconUrl = '/assets/icons/icon-192.png';
+        const iconUrl = './assets/icons/icon-192.png';
         const cachedIcon = await caches.match(iconUrl);
         if (cachedIcon) return cachedIcon;
         try {
