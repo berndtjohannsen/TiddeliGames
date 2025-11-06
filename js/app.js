@@ -46,6 +46,11 @@
 // Robust remote version check (no-cache) and auto-upgrade flow
 (function remoteVersionWatcher() {
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000; // 60s
+    const host = (location && location.hostname) || '';
+    // Disable remote upgrade watcher during local development to avoid false downgrades
+    if (host === 'localhost' || host === '127.0.0.1') {
+        return;
+    }
 
     function toParts(v) {
         const [maj, min, pat] = (v || '0.0.0').split('.').map(n => parseInt(n, 10) || 0);
