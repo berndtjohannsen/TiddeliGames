@@ -22,12 +22,13 @@ Games may have a preferred orientation (portrait or landscape), but all games mu
   - Installed via npm, built via CLI for optimized CSS
   - MIT license (commercial-safe)
 
-- **Tone.js (via CDN)**
+- **Tone.js (via CDN)** - *Planned for future implementation*
   - Audio library for background music, synthesized sounds, loops, and effects
   - CDN version: `https://cdn.jsdelivr.net/npm/tone@next/build/Tone.js`
   - MIT license (commercial-safe)
+  - Currently: `js/audio.js` is a placeholder file
 
-- **HTML5 Audio API**
+- **HTML5 Audio API** - *Planned for future implementation*
   - Simple sound effects (clicks, pops, short clips)
   - Hybrid approach: Tone.js for complex audio, HTML5 for simple playback
 
@@ -47,10 +48,10 @@ Games may have a preferred orientation (portrait or landscape), but all games mu
 ## Additional Web APIs:
 - **CSS Grid/Flexbox**: Responsive layouts
 - **LocalStorage**: Game state and settings persistence
-- **Intersection Observer API**: Performance optimization
+- **Intersection Observer API**: Performance optimization (for future use)
 - **Screen Orientation API**: Detect and handle device orientation changes
 - **CSS Media Queries**: Orientation-based responsive layouts (`@media (orientation: portrait/landscape)`)
-- **Before Install Prompt API**: Detect PWA installability and trigger custom install UI
+- **Before Install Prompt API**: Detect PWA installability and trigger custom install UI (handled in `pwa.js`)
 
 ## Backend:
 None - This is a client-side only PWA application.
@@ -96,26 +97,41 @@ TiddeliGames/
 
 ## Module Organization
 - Each game is self-contained in its own directory
-- Shared functionality (audio, PWA, navigation, orientation handling) in root `js/` directory
+- Shared functionality (PWA, navigation, version management, orientation handling) in root `js/` directory
 - Common styles in root `css/` directory
 - Games can override shared styles as needed
 - Each game can specify preferred orientation in its configuration, but must implement responsive layouts for both orientations
+
+## JavaScript Module Responsibilities
+- **config.js**: App configuration and version (single source of truth)
+- **app.js**: Main app logic, cache-busting, remote version checking, update banner management
+- **game-selector.js**: Game selection page logic, game grid rendering, version display
+- **pwa.js**: Service Worker registration, install prompt handling, PWA lifecycle management
+- **audio.js**: Placeholder for future Tone.js audio management
 
 # Version management and updates
 
 ## Versioning Strategy
 - Semantic versioning (MAJOR.MINOR.PATCH)
 - **Single source of truth**: Version stored in `js/config.js` only
-- `sw.js` (Service Worker) reads version from `js/config.js` at runtime
+- `sw.js` cache name includes version (e.g., `tiddeligames-shell-v1.0.0`) - must be manually updated when releasing
 - `manifest.json` does NOT need a version field (not part of PWA manifest spec)
-- Service Worker handles cache invalidation on version updates
-- When updating version: Change only `js/config.js`
+- When updating version: Change only `js/config.js`, then update `CACHE_NAME` in `sw.js` to match
 
 ## Update Mechanism
-- Service Worker checks for updates on app launch
-- New version detection triggers cache refresh
-- User is notified of available updates (optional)
-- Stale-while-revalidate strategy for smooth updates
+- **Automatic version detection**: App fetches `js/config.js` (bypassing all caches) to check for new versions
+- **Update triggers**: 
+  - On app load (1 second delay to ensure config is loaded)
+  - When app becomes visible (user returns to installed app)
+  - On first user interaction (tap/click/keypress)
+- **Update flow**:
+  1. Remote version is fetched and compared with local version
+  2. If remote version is greater, modal update banner appears at top of screen
+  3. User must click "Update now" to proceed (no automatic updates)
+  4. On confirmation: All service workers unregistered, all caches cleared, page reloads
+  5. Fresh version loads with clean state
+- **No downgrades**: System only updates to higher versions, never downgrades
+- **Localhost protection**: Update checks disabled on localhost/127.0.0.1 to avoid development issues
 
 # Development tools
 
@@ -160,12 +176,14 @@ TiddeliGames/
 - Audio functionality testing (user gesture requirement, playback)
 
 ## Test Areas
-- Game selection page functionality
-- Individual game mechanics
-- Audio playback (Tone.js and HTML5 audio)
+- Game selection page functionality (currently shows 6 dummy games)
+- Individual game mechanics (when games are implemented)
+- Audio playback (Tone.js and HTML5 audio - when implemented)
 - Responsive design across screen sizes
 - Service Worker caching and offline behavior
 - PWA installation and launch
+- Version update mechanism (remote version checking, modal banner, cache clearing)
+- Install button visibility and functionality
 
 # Security and Privacy
 
@@ -216,19 +234,24 @@ TiddeliGames/
 - Modern, clean interface using Tailwind CSS utilities
 - Consistent color scheme across games
 - Smooth CSS animations for interactions
-- Responsive grid layout for game selection
-- "Install App" button prominently displayed in the game selection menu (when installation is available)
+- Responsive grid layout for game selection (1 column mobile, 2 tablet, 3 desktop)
+- "Install App" button discretely placed in top-right corner (when installation is available)
+- Version number displayed discretely in footer
+- Modal update banner at top of screen (blocks interaction until user updates)
 
 ## User Flow
 1. App launches → Game selection page (works in browser or as installed app)
-2. User can optionally click "Install App" button to install as PWA (if not already installed)
-3. User selects game → Game loads
-4. Game starts after user interaction (unlocks audio)
-5. User plays game → Returns to selection page when done
+2. Version check runs automatically (on load, visibility change, or first interaction)
+3. If new version available → Modal update banner appears (user must update to continue)
+4. User can optionally click "Install App" button (top-right) to install as PWA (if not already installed)
+5. User selects game → Game loads
+6. Game starts after user interaction (unlocks audio - when implemented)
+7. User plays game → Returns to selection page when done
 
 ## Installation Flow
 - App runs in browser by default
-- "Install App" button appears in the initial menu when PWA installation is available
+- "Install App" button appears discretely in top-right corner when PWA installation is available
 - Button is hidden if app is already installed or installation is not supported
 - Installation is optional - user can continue using app in browser if preferred
+- Button uses standard download/install icon (SVG) for universal recognition
 
