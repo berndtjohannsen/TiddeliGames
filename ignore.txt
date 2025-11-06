@@ -23,7 +23,8 @@ To AI: Ignore this file completely
 
 &nbsp; ```sh
 
-&nbsp; npx tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify --watch
+&nbsp; 
+npx tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify --watch
 
 &nbsp; ```
 

@@ -47,9 +47,22 @@
 (function remoteVersionWatcher() {
     const VERSION_CHECK_INTERVAL_MS = 60 * 1000; // 60s
 
+    function toParts(v) {
+        const [maj, min, pat] = (v || '0.0.0').split('.').map(n => parseInt(n, 10) || 0);
+        return [maj, min, pat];
+    }
+    function isGreater(remote, local) {
+        const [rM, rm, rp] = toParts(remote);
+        const [lM, lm, lp] = toParts(local);
+        if (rM !== lM) return rM > lM;
+        if (rm !== lm) return rm > lm;
+        return rp > lp;
+    }
+
     async function fetchRemoteVersion() {
         try {
-            const resp = await fetch('js/config.js', { cache: 'no-store' });
+            const url = `js/config.js?v=${Date.now()}`; // hard bust any caches/CDN
+            const resp = await fetch(url, { cache: 'no-store' });
             if (!resp.ok) return null;
             const text = await resp.text();
             const match = text.match(/version\s*:\s*"([^"]+)"/);
@@ -100,8 +113,8 @@
         if (typeof APP_CONFIG === 'undefined' || !APP_CONFIG.version) return;
         const localVersion = APP_CONFIG.version;
         const remoteVersion = await fetchRemoteVersion();
-        if (!remoteVersion || remoteVersion === localVersion) return;
-        // Remote is different → prompt user and upgrade deterministically
+        if (!remoteVersion || !isGreater(remoteVersion, localVersion)) return; // never downgrade or equal
+        // Remote is greater → prompt user and upgrade deterministically
         showBanner(async () => {
             // Hide banner quickly to give feedback
             const banner = document.getElementById('update-banner');
