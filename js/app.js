@@ -45,12 +45,9 @@
 
 // Robust remote version check (no-cache) and auto-upgrade flow
 (function remoteVersionWatcher() {
-    const VERSION_CHECK_INTERVAL_MS = 60 * 1000; // 60s
     const host = (location && location.hostname) || '';
-    // Disable remote upgrade watcher during local development to avoid false downgrades
-    if (host === 'localhost' || host === '127.0.0.1') {
-        return;
-    }
+    // Disable in local development
+    if (host === 'localhost' || host === '127.0.0.1') return;
 
     function toParts(v) {
         const [maj, min, pat] = (v || '0.0.0').split('.').map(n => parseInt(n, 10) || 0);
@@ -81,16 +78,23 @@
         const banner = document.getElementById('update-banner');
         const textEl = document.getElementById('update-banner-text');
         const reloadBtn = document.getElementById('update-reload-btn');
+        const overlay = document.getElementById('update-overlay');
         if (!banner || !reloadBtn) return;
         if (!banner.classList.contains('hidden')) return; // already shown
-        if (textEl) textEl.textContent = `New version ${remoteVersion} available. Updating soon…`;
+        if (textEl) textEl.textContent = `New version ${remoteVersion} available`;
         banner.classList.remove('hidden');
         reloadBtn.textContent = 'Update now';
-        reloadBtn.onclick = onConfirm;
-        // Auto-update after 5 seconds if user does not click
-        setTimeout(() => {
-            try { onConfirm && onConfirm(); } catch (_) {}
-        }, 5000);
+        // Make modal: show overlay and prevent background scroll
+        if (overlay) overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        reloadBtn.setAttribute('autofocus', 'true');
+        try { reloadBtn.focus(); } catch(_) {}
+        // Only way forward is updating
+        reloadBtn.onclick = () => {
+            if (overlay) overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            onConfirm && onConfirm();
+        };
     }
 
     async function clearSWAndCaches() {
@@ -130,11 +134,19 @@
         }, remoteVersion);
     }
 
-    // Initial check shortly after load, then periodic checks
-    window.addEventListener('load', () => {
-        setTimeout(checkOnce, 500);
-        setInterval(checkOnce, VERSION_CHECK_INTERVAL_MS);
-    });
+    // Only check on first user interaction (no automatic polling)
+    function onFirstGesture() {
+        checkOnce();
+        window.removeEventListener('pointerdown', onFirstGesture, { capture: true });
+        window.removeEventListener('keydown', onFirstGesture, { capture: true });
+        window.removeEventListener('touchstart', onFirstGesture, { capture: true });
+    }
+    window.addEventListener('pointerdown', onFirstGesture, { capture: true, once: true });
+    window.addEventListener('keydown', onFirstGesture, { capture: true, once: true });
+    window.addEventListener('touchstart', onFirstGesture, { capture: true, once: true });
+
+    // Expose manual trigger if needed
+    window.checkForUpdate = checkOnce;
 })();
 
 // Clean up any lingering ?v=... query parameter from previous updates
