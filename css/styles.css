@@ -6,3 +6,21 @@
 
 /* Custom styles below */
 
+/* Prevent horizontal overflow and flash during pull-to-refresh */
+html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+}
+
+/* Prevent overscroll bounce on mobile */
+body {
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
+}
+
+/* Ensure fixed/absolute positioned elements respect viewport */
+[class*="fixed"], [class*="absolute"] {
+    max-width: 100vw;
+}
+
