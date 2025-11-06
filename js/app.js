@@ -108,9 +108,10 @@
         } catch (_) {}
     }
 
-    function reloadWithVersion(version) {
+    function reloadWithVersion() {
+        // Reload without leaving a version query parameter in the URL
         const url = new URL(window.location.href);
-        url.searchParams.set('v', version);
+        url.searchParams.delete('v');
         window.location.replace(url.toString());
     }
 
@@ -125,7 +126,7 @@
             const banner = document.getElementById('update-banner');
             if (banner) banner.classList.add('hidden');
             await clearSWAndCaches();
-            reloadWithVersion(remoteVersion);
+            reloadWithVersion();
         }, remoteVersion);
     }
 
@@ -134,5 +135,19 @@
         setTimeout(checkOnce, 500);
         setInterval(checkOnce, VERSION_CHECK_INTERVAL_MS);
     });
+})();
+
+// Clean up any lingering ?v=... query parameter from previous updates
+(function stripVersionQueryFromUrl() {
+    try {
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('v')) {
+            url.searchParams.delete('v');
+            // Use history API to avoid a second reload
+            window.history.replaceState({}, document.title, url.toString());
+        }
+    } catch (_) {
+        // no-op
+    }
 })();
 
