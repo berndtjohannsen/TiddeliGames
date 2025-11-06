@@ -18,7 +18,10 @@
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen">
     <!-- Update banner (hidden by default) -->
-    <div id="update-banner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur border border-gray-200 shadow-lg rounded-full px-4 py-2 text-sm text-gray-700 flex items-center gap-3 z-50">
+    <!-- Modal overlay for update (blocks interaction) -->
+    <div id="update-overlay" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"></div>
+
+    <div id="update-banner" class="hidden fixed top-3 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur border border-gray-200 shadow-lg rounded-full px-4 py-2 text-sm text-gray-700 flex items-center gap-3 z-50">
         <span id="update-banner-text">New version available</span>
         <button id="update-reload-btn" class="text-blue-600 hover:text-blue-800 font-medium">Update now</button>
     </div>

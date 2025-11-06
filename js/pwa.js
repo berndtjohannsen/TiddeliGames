@@ -94,9 +94,6 @@ async function registerServiceWorker() {
         const registration = await navigator.serviceWorker.register('sw.js');
         console.log('Service Worker registered successfully:', registration);
 
-        // Force an immediate update check on load
-        registration.update().catch(() => {});
-
         // If there's an updated SW waiting, request immediate activation
         if (registration.waiting) {
             registration.waiting.postMessage('SKIP_WAITING');
@@ -116,16 +113,13 @@ async function registerServiceWorker() {
             });
         });
 
-        // Reload once the new SW takes control
+        // Reload once the new SW takes control (only when user accepted in our flow)
         let didRefresh = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (didRefresh) return;
             didRefresh = true;
             window.location.reload();
         });
-
-        // Periodic update checks while app is open
-        setInterval(() => registration.update().catch(() => {}), 60 * 1000);
     } catch (error) {
         console.error('Service Worker registration failed:', error);
     }
@@ -135,18 +129,22 @@ function showUpdateBanner(onReloadRequested) {
     const banner = document.getElementById('update-banner');
     const textEl = document.getElementById('update-banner-text');
     const reloadBtn = document.getElementById('update-reload-btn');
+    const overlay = document.getElementById('update-overlay');
     if (!banner || !reloadBtn) return;
-    if (textEl) textEl.textContent = 'New version available. Updating soon…';
+    if (textEl) textEl.textContent = 'New version available';
     banner.classList.remove('hidden');
     reloadBtn.textContent = 'Update now';
+    // Modal behavior
+    if (overlay) overlay.classList.remove('hidden');
+    document.body.classList.add('overflow-hidden');
+    reloadBtn.setAttribute('autofocus', 'true');
+    try { reloadBtn.focus(); } catch(_) {}
     reloadBtn.onclick = () => {
         banner.classList.add('hidden');
+        if (overlay) overlay.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
         try { onReloadRequested && onReloadRequested(); } catch (_) {}
     };
-    // Auto-update after 5 seconds
-    setTimeout(() => {
-        try { onReloadRequested && onReloadRequested(); } catch (_) {}
-    }, 5000);
 }
 
 // Initialize when DOM is loaded
