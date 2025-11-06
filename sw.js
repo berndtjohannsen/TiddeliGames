@@ -6,7 +6,7 @@
 const CACHE_NAME = 'tiddeligames-shell-v0.0.2';
 const APP_SHELL = [
   './',
-  './index.html',
+  // NOTE: Do NOT pre-cache index.html to prevent stale app shell
   './css/tailwind.output.css',
   './css/styles.css',
   './css/animations.css',
@@ -40,8 +40,31 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return; // only cache GET
 
-  // Map /favicon.ico to an existing PNG icon to avoid 404s during development
-  if (new URL(request.url).pathname.endsWith('/favicon.ico')) {
+  const url = new URL(request.url);
+
+  // Network-first for navigation/HTML requests to always get latest app shell
+  const isNavigation = request.mode === 'navigate' ||
+    (request.destination === 'document') ||
+    (request.headers.get('accept') || '').includes('text/html');
+
+  if (isNavigation) {
+    event.respondWith(
+      (async () => {
+        try {
+          const response = await fetch(request, { cache: 'no-store' });
+          return response;
+        } catch (_) {
+          // Fallback to cache if offline and we previously cached index.html (optional)
+          const cached = await caches.match('./index.html');
+          return cached || new Response('Offline', { status: 503, statusText: 'Offline' });
+        }
+      })()
+    );
+    return;
+  }
+
+  // Map /favicon.ico to an existing PNG icon to avoid 404s
+  if (url.pathname.endsWith('/favicon.ico')) {
     event.respondWith(
       (async () => {
         const iconUrl = './assets/icons/icon-192.png';
@@ -60,7 +83,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
+  // Cache-first for other GET requests (CSS/JS/images), fallback to network
+  event.respondWith(
+    (async () => {
+      const cached = await caches.match(request);
+      if (cached) return cached;
+      try {
+        const resp = await fetch(request);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, resp.clone());
+        return resp;
+      } catch (_) {
+        return new Response('', { status: 504 });
+      }
+    })()
+  );
 });
 
 // Allow page to request immediate activation of the waiting SW
