@@ -28,6 +28,9 @@ self.addEventListener('activate', (event) => {
       const keys = await caches.keys();
       await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
       await self.clients.claim();
+      // Notify clients that a new SW is active
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clientList.forEach((client) => client.postMessage({ type: 'SW_ACTIVATED' }));
     })()
   );
 });
@@ -57,5 +60,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
+});
+
+// Allow page to request immediate activation of the waiting SW
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 

@@ -82,15 +82,55 @@ function handleInstallClick() {
  * Register Service Worker
  */
 async function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        try {
-            // Register relative to current origin to work with Live Server
-            const registration = await navigator.serviceWorker.register('sw.js');
-            console.log('Service Worker registered successfully:', registration);
-        } catch (error) {
-            console.error('Service Worker registration failed:', error);
+    if (!('serviceWorker' in navigator)) return;
+    try {
+        // Register relative to current origin to work with Live Server and GitHub Pages
+        const registration = await navigator.serviceWorker.register('sw.js');
+        console.log('Service Worker registered successfully:', registration);
+
+        // If there's an updated SW waiting, request immediate activation
+        if (registration.waiting) {
+            registration.waiting.postMessage('SKIP_WAITING');
         }
+
+        // Detect a new installing SW and request activation when installed
+        registration.addEventListener('updatefound', () => {
+            const newSW = registration.installing;
+            if (!newSW) return;
+            newSW.addEventListener('statechange', () => {
+                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                    // Show update banner and let user trigger reload
+                    showUpdateBanner(() => {
+                        newSW.postMessage('SKIP_WAITING');
+                    });
+                }
+            });
+        });
+
+        // Reload once the new SW takes control
+        let didRefresh = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (didRefresh) return;
+            didRefresh = true;
+            window.location.reload();
+        });
+
+        // Periodic update checks while app is open
+        setInterval(() => registration.update().catch(() => {}), 60 * 1000);
+    } catch (error) {
+        console.error('Service Worker registration failed:', error);
     }
+}
+
+function showUpdateBanner(onReloadRequested) {
+    const banner = document.getElementById('update-banner');
+    const reloadBtn = document.getElementById('update-reload-btn');
+    if (!banner || !reloadBtn) return;
+    banner.classList.remove('hidden');
+    reloadBtn.onclick = () => {
+        banner.classList.add('hidden');
+        try { onReloadRequested && onReloadRequested(); } catch (_) {}
+    };
 }
 
 // Initialize when DOM is loaded
