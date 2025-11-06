@@ -3,7 +3,7 @@
 // Note: Keep lightweight; extend later with real caching
 
 // Bump this when releasing a new version to ensure fresh cache
-const CACHE_NAME = 'tiddeligames-shell-v0.0.2';
+const CACHE_NAME = 'tiddeligames-shell-v1.0.0';
 const APP_SHELL = [
   './',
   // NOTE: Do NOT pre-cache index.html to prevent stale app shell
@@ -29,9 +29,6 @@ self.addEventListener('activate', (event) => {
       const keys = await caches.keys();
       await Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)));
       await self.clients.claim();
-      // Notify clients that a new SW is active
-      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-      clientList.forEach((client) => client.postMessage({ type: 'SW_ACTIVATED' }));
     })()
   );
 });

@@ -1,19 +1,14 @@
 // Service Worker registration and install prompt handling
 
 let deferredPrompt = null;
-let isInstalled = false;
 
 /**
  * Check if app is already installed
  */
 function checkIfInstalled() {
     // Check if running as standalone (installed PWA)
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.navigator.standalone === true) {
-        isInstalled = true;
-        return true;
-    }
-    return false;
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
 }
 
 /**
@@ -125,26 +120,31 @@ async function registerServiceWorker() {
     }
 }
 
+// Use the showBanner function from app.js instead of duplicating
+// This function is kept for service worker update notifications but delegates to app.js
 function showUpdateBanner(onReloadRequested) {
-    const banner = document.getElementById('update-banner');
-    const textEl = document.getElementById('update-banner-text');
-    const reloadBtn = document.getElementById('update-reload-btn');
-    const overlay = document.getElementById('update-overlay');
-    if (!banner || !reloadBtn) return;
-    if (textEl) textEl.textContent = 'New version available';
-    banner.classList.remove('hidden');
-    reloadBtn.textContent = 'Update now';
-    // Modal behavior
-    if (overlay) overlay.classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
-    reloadBtn.setAttribute('autofocus', 'true');
-    try { reloadBtn.focus(); } catch(_) {}
-    reloadBtn.onclick = () => {
-        banner.classList.add('hidden');
-        if (overlay) overlay.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-        try { onReloadRequested && onReloadRequested(); } catch (_) {}
-    };
+    // Delegate to the main showBanner function in app.js if available
+    if (window.showUpdateBannerFromPWA) {
+        window.showUpdateBannerFromPWA(onReloadRequested, 'New version available');
+    } else {
+        // Fallback if app.js hasn't loaded yet
+        const banner = document.getElementById('update-banner');
+        const textEl = document.getElementById('update-banner-text');
+        const reloadBtn = document.getElementById('update-reload-btn');
+        const overlay = document.getElementById('update-overlay');
+        if (!banner || !reloadBtn) return;
+        if (textEl) textEl.textContent = 'New version available';
+        banner.classList.remove('hidden');
+        reloadBtn.textContent = 'Update now';
+        if (overlay) overlay.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        reloadBtn.onclick = () => {
+            banner.classList.add('hidden');
+            if (overlay) overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            try { onReloadRequested && onReloadRequested(); } catch (_) {}
+        };
+    }
 }
 
 // Initialize when DOM is loaded
@@ -167,7 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Handle app installed event (user installed via browser UI)
 window.addEventListener('appinstalled', () => {
     console.log('PWA was installed');
-    isInstalled = true;
     deferredPrompt = null;
     hideInstallButton();
 });

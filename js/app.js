@@ -18,30 +18,7 @@
     }
 })();
 
-// Detect version change and prompt user to reload
-(function handleVersionChange() {
-    try {
-        if (typeof APP_CONFIG === 'undefined' || !APP_CONFIG.version) return;
-        const STORAGE_KEY = 'tiddeligames.version';
-        const current = APP_CONFIG.version;
-        const previous = localStorage.getItem(STORAGE_KEY);
-
-        if (previous && previous !== current) {
-            // Show banner and let user reload
-            const banner = document.getElementById('update-banner');
-            const reloadBtn = document.getElementById('update-reload-btn');
-            if (banner && reloadBtn) {
-                banner.classList.remove('hidden');
-                reloadBtn.onclick = () => window.location.reload();
-            }
-        }
-
-        // Store current version for next launch comparison
-        localStorage.setItem(STORAGE_KEY, current);
-    } catch (_) {
-        // no-op
-    }
-})();
+// Version change detection is handled by remoteVersionWatcher below
 
 // Robust remote version check (no-cache) and auto-upgrade flow
 (function remoteVersionWatcher() {
@@ -85,7 +62,7 @@
         const overlay = document.getElementById('update-overlay');
         if (!banner || !reloadBtn) return;
         if (!banner.classList.contains('hidden')) return; // already shown
-        if (textEl) textEl.textContent = `New version ${remoteVersion} available`;
+        if (textEl) textEl.textContent = `New version ${remoteVersion || ''} available`.trim();
         banner.classList.remove('hidden');
         reloadBtn.textContent = 'Update now';
         // Make modal: show overlay and prevent background scroll
@@ -100,6 +77,9 @@
             onConfirm && onConfirm();
         };
     }
+    
+    // Expose for use by pwa.js
+    window.showUpdateBannerFromPWA = showBanner;
 
     async function clearSWAndCaches() {
         try {
@@ -154,9 +134,6 @@
     // Also check on first user interaction
     function onFirstGesture() {
         checkOnce();
-        window.removeEventListener('pointerdown', onFirstGesture, { capture: true });
-        window.removeEventListener('keydown', onFirstGesture, { capture: true });
-        window.removeEventListener('touchstart', onFirstGesture, { capture: true });
     }
     window.addEventListener('pointerdown', onFirstGesture, { capture: true, once: true });
     window.addEventListener('keydown', onFirstGesture, { capture: true, once: true });
