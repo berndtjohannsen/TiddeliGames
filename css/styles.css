@@ -7,20 +7,49 @@
 /* Custom styles below */
 
 /* Prevent horizontal overflow and flash during pull-to-refresh */
-html, body {
+html {
     overflow-x: hidden;
     max-width: 100vw;
     position: relative;
+    width: 100%;
+}
+
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+    position: relative;
+    width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 /* Prevent overscroll bounce on mobile */
 body {
     overscroll-behavior-y: contain;
     overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Ensure fixed/absolute positioned elements respect viewport */
 [class*="fixed"], [class*="absolute"] {
     max-width: 100vw;
+}
+
+/* Specifically constrain top fixed elements to prevent horizontal flash */
+#update-banner {
+    max-width: calc(100vw - 1rem) !important;
+    box-sizing: border-box;
+    will-change: transform;
+}
+
+#install-btn {
+    max-width: calc(100vw - 1rem) !important;
+    box-sizing: border-box;
+}
+
+/* Prevent container from causing overflow */
+.container {
+    max-width: 100vw;
+    box-sizing: border-box;
 }
 
