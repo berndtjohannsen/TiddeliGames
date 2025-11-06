@@ -63,8 +63,12 @@
 
     async function fetchRemoteVersion() {
         try {
-            const url = `js/config.js?v=${Date.now()}`; // hard bust any caches/CDN
-            const resp = await fetch(url, { cache: 'no-store' });
+            // Bypass service worker and all caches to get fresh version
+            const url = `js/config.js?v=${Date.now()}`;
+            const resp = await fetch(url, { 
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            });
             if (!resp.ok) return null;
             const text = await resp.text();
             const match = text.match(/version\s*:\s*"([^"]+)"/);
@@ -134,7 +138,20 @@
         }, remoteVersion);
     }
 
-    // Only check on first user interaction (no automatic polling)
+    // Check on app load (covers installed PWAs that open directly)
+    function checkOnLoad() {
+        // Small delay to ensure APP_CONFIG is loaded
+        setTimeout(checkOnce, 1000);
+    }
+
+    // Check when app becomes visible (user returns to installed app)
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            setTimeout(checkOnce, 500);
+        }
+    });
+
+    // Also check on first user interaction
     function onFirstGesture() {
         checkOnce();
         window.removeEventListener('pointerdown', onFirstGesture, { capture: true });
@@ -144,6 +161,13 @@
     window.addEventListener('pointerdown', onFirstGesture, { capture: true, once: true });
     window.addEventListener('keydown', onFirstGesture, { capture: true, once: true });
     window.addEventListener('touchstart', onFirstGesture, { capture: true, once: true });
+
+    // Run check on load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkOnLoad);
+    } else {
+        checkOnLoad();
+    }
 
     // Expose manual trigger if needed
     window.checkForUpdate = checkOnce;

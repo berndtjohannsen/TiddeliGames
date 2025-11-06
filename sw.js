@@ -63,6 +63,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Never cache js/config.js - always fetch fresh for version checks
+  if (url.pathname.includes('/js/config.js')) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+    );
+    return;
+  }
+
   // Map /favicon.ico to an existing PNG icon to avoid 404s
   if (url.pathname.endsWith('/favicon.ico')) {
     event.respondWith(
