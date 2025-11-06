@@ -53,3 +53,45 @@ body {
     box-sizing: border-box;
 }
 
+/* PWA standalone mode specific fixes for pull-to-refresh flash */
+@media (display-mode: standalone) {
+    html {
+        /* Lock horizontal position */
+        position: relative;
+        width: 100%;
+        overflow-x: hidden;
+    }
+    
+    body {
+        /* Allow vertical scrolling but prevent horizontal */
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        position: relative;
+        /* Ensure safe area insets don't cause overflow */
+        padding-left: env(safe-area-inset-left, 0);
+        padding-right: env(safe-area-inset-right, 0);
+    }
+    
+    /* Prevent pull-to-refresh visual artifacts at top - match gradient start */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: env(safe-area-inset-top, 20px);
+        background: linear-gradient(to bottom right, #dbeafe, #e9d5ff);
+        z-index: 9999;
+        pointer-events: none;
+    }
+    
+    /* Ensure all content respects safe areas */
+    #update-banner,
+    #install-btn {
+        margin-left: env(safe-area-inset-left, 0);
+        margin-right: env(safe-area-inset-right, 0);
+    }
+}
+
