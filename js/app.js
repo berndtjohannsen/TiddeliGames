@@ -18,3 +18,28 @@
     }
 })();
 
+// Detect version change and prompt user to reload
+(function handleVersionChange() {
+    try {
+        if (typeof APP_CONFIG === 'undefined' || !APP_CONFIG.version) return;
+        const STORAGE_KEY = 'tiddeligames.version';
+        const current = APP_CONFIG.version;
+        const previous = localStorage.getItem(STORAGE_KEY);
+
+        if (previous && previous !== current) {
+            // Show banner and let user reload
+            const banner = document.getElementById('update-banner');
+            const reloadBtn = document.getElementById('update-reload-btn');
+            if (banner && reloadBtn) {
+                banner.classList.remove('hidden');
+                reloadBtn.onclick = () => window.location.reload();
+            }
+        }
+
+        // Store current version for next launch comparison
+        localStorage.setItem(STORAGE_KEY, current);
+    } catch (_) {
+        // no-op
+    }
+})();
+

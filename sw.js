@@ -2,7 +2,8 @@
 // Minimal implementation to satisfy PWA install criteria
 // Note: Keep lightweight; extend later with real caching
 
-const CACHE_NAME = 'tiddeligames-shell-v1';
+// Bump this when releasing a new version to ensure fresh cache
+const CACHE_NAME = 'tiddeligames-shell-v0.0.2';
 const APP_SHELL = [
   './',
   './index.html',
