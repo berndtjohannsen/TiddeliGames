@@ -88,6 +88,9 @@ async function registerServiceWorker() {
         const registration = await navigator.serviceWorker.register('sw.js');
         console.log('Service Worker registered successfully:', registration);
 
+        // Force an immediate update check on load
+        registration.update().catch(() => {});
+
         // If there's an updated SW waiting, request immediate activation
         if (registration.waiting) {
             registration.waiting.postMessage('SKIP_WAITING');
