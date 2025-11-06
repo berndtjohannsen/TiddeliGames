@@ -1,3 +1,4 @@
+- olika ikoner för desktop link and app install ?
 - ingen fullogga
 - ska man verkligen insallerat på windows
 - testa versions förändring
