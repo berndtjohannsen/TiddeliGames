@@ -3,7 +3,7 @@
 // When updating version: Change only here
 
 const APP_CONFIG = {
-    version: "1.0.76",
+    version: "1.0.77",
     // Add other app configuration here
 };
 
