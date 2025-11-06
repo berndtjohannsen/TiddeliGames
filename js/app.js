@@ -97,6 +97,8 @@
     }
 
     function reloadWithVersion() {
+        // Mark that we're updating to prevent immediate re-check after reload
+        sessionStorage.setItem('updating_version', Date.now().toString());
         // Reload without leaving a version query parameter in the URL
         const url = new URL(window.location.href);
         url.searchParams.delete('v');
@@ -104,6 +106,18 @@
     }
 
     async function checkOnce() {
+        // Skip check if we just updated (within last 3 seconds)
+        const updatingTimestamp = sessionStorage.getItem('updating_version');
+        if (updatingTimestamp) {
+            const timeSinceUpdate = Date.now() - parseInt(updatingTimestamp, 10);
+            if (timeSinceUpdate < 3000) {
+                // Clear the flag after 3 seconds
+                setTimeout(() => sessionStorage.removeItem('updating_version'), 3000 - timeSinceUpdate);
+                return;
+            }
+            sessionStorage.removeItem('updating_version');
+        }
+        
         if (typeof APP_CONFIG === 'undefined' || !APP_CONFIG.version) return;
         const localVersion = APP_CONFIG.version;
         const remoteVersion = await fetchRemoteVersion();
@@ -114,6 +128,8 @@
             const banner = document.getElementById('update-banner');
             if (banner) banner.classList.add('hidden');
             await clearSWAndCaches();
+            // Small delay to ensure caches are cleared
+            await new Promise(resolve => setTimeout(resolve, 100));
             reloadWithVersion();
         }, remoteVersion);
     }
