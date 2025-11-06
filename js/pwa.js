@@ -127,13 +127,20 @@ async function registerServiceWorker() {
 
 function showUpdateBanner(onReloadRequested) {
     const banner = document.getElementById('update-banner');
+    const textEl = document.getElementById('update-banner-text');
     const reloadBtn = document.getElementById('update-reload-btn');
     if (!banner || !reloadBtn) return;
+    if (textEl) textEl.textContent = 'New version available. Updating soon…';
     banner.classList.remove('hidden');
+    reloadBtn.textContent = 'Update now';
     reloadBtn.onclick = () => {
         banner.classList.add('hidden');
         try { onReloadRequested && onReloadRequested(); } catch (_) {}
     };
+    // Auto-update after 5 seconds
+    setTimeout(() => {
+        try { onReloadRequested && onReloadRequested(); } catch (_) {}
+    }, 5000);
 }
 
 // Initialize when DOM is loaded
