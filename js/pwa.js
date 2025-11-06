@@ -83,6 +83,12 @@ function handleInstallClick() {
  */
 async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
+    // Disable Service Worker in local development to avoid stale caches and confusing upgrades
+    const host = (location && location.hostname) || '';
+    if (host === 'localhost' || host === '127.0.0.1') {
+        console.log('[PWA] SW disabled on localhost');
+        return;
+    }
     try {
         // Register relative to current origin to work with Live Server and GitHub Pages
         const registration = await navigator.serviceWorker.register('sw.js');
