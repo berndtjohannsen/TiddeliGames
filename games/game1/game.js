@@ -13,7 +13,6 @@ let circleContainer = null;
 let startButton = null;
 let timerDisplay = null;
 let instructionsText = null;
-let controlPanel = null;
 
 /**
  * Cache DOM references once the document is ready.
@@ -23,7 +22,6 @@ function cacheDomElements() {
     startButton = document.getElementById('start-button');
     timerDisplay = document.getElementById('timer-display');
     instructionsText = document.getElementById('instructions-text');
-    controlPanel = document.getElementById('control-panel');
 }
 
 /**
@@ -41,9 +39,6 @@ function ensureDomReferences() {
     }
     if (!instructionsText) {
         instructionsText = document.getElementById('instructions-text');
-    }
-    if (!controlPanel) {
-        controlPanel = document.getElementById('control-panel');
     }
 }
 
