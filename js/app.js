@@ -62,9 +62,9 @@
         const overlay = document.getElementById('update-overlay');
         if (!banner || !reloadBtn) return;
         if (!banner.classList.contains('hidden')) return; // already shown
-        if (textEl) textEl.textContent = `New version ${remoteVersion || ''} available`.trim();
+        if (textEl) textEl.textContent = `${window.APP_STRINGS.update.banner}${remoteVersion ? ' ' + remoteVersion : ''}`.trim();
         banner.classList.remove('hidden');
-        reloadBtn.textContent = 'Update now';
+        reloadBtn.textContent = window.APP_STRINGS.update.action;
         // Make modal: show overlay and prevent background scroll
         if (overlay) overlay.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');

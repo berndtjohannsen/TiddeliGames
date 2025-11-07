@@ -60,7 +60,12 @@ function attachEventListeners() {
 }
 
 // Default instruction copy for easy reuse
-const DEFAULT_INSTRUCTIONS = 'Tap the circles in number order';
+const STRINGS = window.GAME_STRINGS;
+const DEFAULT_INSTRUCTIONS = STRINGS.instructions;
+const PAUSED_INSTRUCTIONS = STRINGS.pausedInstructions;
+const LABELS = STRINGS.labels;
+const MESSAGES = STRINGS.messages;
+const ARIA = STRINGS.aria;
 // Track if the player has already started at least one round
 let hasStartedAtLeastOnce = false;
 
@@ -69,6 +74,8 @@ let nextCircleNumber = 1;
 let timerIntervalId = null;
 let gameStartTimestamp = null;
 let gameRunning = false;
+let gamePaused = false;
+let pausedElapsedMs = 0;
 
 // Web Audio context and helpers for playful sound effects
 let audioContext = null;
@@ -295,6 +302,13 @@ function formatElapsedTime(elapsedMs) {
     return `${seconds.toString().padStart(2, '0')}.${tenths}`;
 }
 
+function getCurrentElapsedMs() {
+    if (gameStartTimestamp === null) {
+        return pausedElapsedMs;
+    }
+    return performance.now() - gameStartTimestamp;
+}
+
 /**
  * Update the timer display based on the current elapsed time.
  */
@@ -311,11 +325,11 @@ function updateTimerDisplay() {
 /**
  * Start the timer loop that refreshes the display roughly every 100 ms.
  */
-function startTimer() {
+function startTimer(offsetMs = 0) {
     stopTimer();
-    gameStartTimestamp = performance.now();
+    gameStartTimestamp = performance.now() - offsetMs;
     if (timerDisplay) {
-        timerDisplay.textContent = '00.0';
+        timerDisplay.textContent = formatElapsedTime(offsetMs);
     }
     timerIntervalId = window.setInterval(updateTimerDisplay, 100);
 }
@@ -405,7 +419,7 @@ function createCircles() {
         circle.style.height = `${circleSize}px`;
         circle.textContent = number.toString();
         circle.dataset.number = number.toString();
-        circle.setAttribute('aria-label', `Circle number ${number}`);
+        circle.setAttribute('aria-label', ARIA.circle(number));
 
         circle.addEventListener('click', handleCircleClick);
 
@@ -474,7 +488,7 @@ function resetGameUi() {
         instructionsText.textContent = DEFAULT_INSTRUCTIONS;
     }
     if (startButton) {
-        startButton.textContent = 'Start Game';
+        startButton.textContent = LABELS.start;
         startButton.disabled = false;
     }
 }
@@ -482,7 +496,7 @@ function resetGameUi() {
 /**
  * Prepare internal state and UI for a new game.
  */
-function startGame() {
+function startNewGame() {
     ensureDomReferences();
 
     if (!circleContainer || !timerDisplay) {
@@ -491,6 +505,8 @@ function startGame() {
     }
 
     gameRunning = true;
+    gamePaused = false;
+    pausedElapsedMs = 0;
     nextCircleNumber = 1;
     resetGameUi();
     timerDisplay.textContent = '00.0';
@@ -505,7 +521,56 @@ function startGame() {
     }
 
     if (startButton) {
-        startButton.textContent = 'Pause';
+        startButton.textContent = LABELS.pause;
+        startButton.disabled = false;
+    }
+
+    if (instructionsText) {
+        instructionsText.textContent = DEFAULT_INSTRUCTIONS;
+    }
+}
+
+function pauseGame() {
+    if (!gameRunning) {
+        return;
+    }
+
+    pausedElapsedMs = getCurrentElapsedMs();
+    gameRunning = false;
+    gamePaused = true;
+
+    stopTimer();
+    stopAmbience().catch(error => {
+        console.warn('Unable to stop ambience during pause:', error);
+    });
+
+    if (instructionsText) {
+        instructionsText.textContent = PAUSED_INSTRUCTIONS;
+    }
+    if (startButton) {
+        startButton.textContent = LABELS.resume;
+        startButton.disabled = false;
+    }
+}
+
+function resumeGame() {
+    if (!gamePaused) {
+        return;
+    }
+
+    gameRunning = true;
+    gamePaused = false;
+
+    startTimer(pausedElapsedMs);
+    startAmbience().catch(error => {
+        console.warn('Unable to start ambience on resume:', error);
+    });
+
+    if (instructionsText) {
+        instructionsText.textContent = DEFAULT_INSTRUCTIONS;
+    }
+    if (startButton) {
+        startButton.textContent = LABELS.pause;
         startButton.disabled = false;
     }
 }
@@ -515,11 +580,13 @@ function startGame() {
  */
 function finishGame() {
     gameRunning = false;
+    gamePaused = false;
+    pausedElapsedMs = 0;
     stopTimer();
 
     const finalTime = timerDisplay ? timerDisplay.textContent : '';
     if (instructionsText) {
-        instructionsText.textContent = `Amazing! You finished in ${finalTime} seconds!`;
+        instructionsText.textContent = MESSAGES.success(finalTime);
     }
 
     playCheerSound().catch(error => {
@@ -530,7 +597,7 @@ function finishGame() {
     });
 
     if (startButton) {
-        startButton.textContent = 'Start Game';
+        startButton.textContent = LABELS.start;
         startButton.disabled = false;
     }
 }
@@ -542,6 +609,8 @@ function resetGameState() {
     ensureDomReferences();
 
     gameRunning = false;
+    gamePaused = false;
+    pausedElapsedMs = 0;
     nextCircleNumber = 1;
     stopTimer();
     if (timerDisplay) {
@@ -553,7 +622,7 @@ function resetGameState() {
     }
     hasStartedAtLeastOnce = false;
     if (startButton) {
-        startButton.textContent = 'Start Game';
+        startButton.textContent = LABELS.start;
         startButton.disabled = false;
     }
     stopAmbience().catch(error => {
@@ -567,11 +636,16 @@ function handleStartButtonClick() {
     });
 
     if (gameRunning) {
-        resetGameState();
+        pauseGame();
         return;
     }
 
-    startGame();
+    if (gamePaused) {
+        resumeGame();
+        return;
+    }
+
+    startNewGame();
 }
 
 // Ensure game is ready for interaction on load.
