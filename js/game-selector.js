@@ -4,10 +4,10 @@
 const GAMES = [
     {
         id: 'game1',
-        name: 'Game 1',
-        description: 'First fun game',
+        name: 'Number Pop',
+        description: 'Tap the numbers 1 to 10 as fast as you can!',
         path: 'games/game1/index.html',
-        icon: '🎮'
+        icon: '🎈'
     },
     {
         id: 'game2',

@@ -1,19 +1,46 @@
-<!-- Game-specific HTML -->
+<!-- Number circle game HTML document -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game 1</title>
-    <!-- Tailwind CSS (generated) -->
+    <title>Number Pop</title>
+    <!-- Tailwind CSS build output for utility classes -->
     <link rel="stylesheet" href="../../css/tailwind.output.css">
-    <!-- Custom styles -->
+    <!-- Shared application styles for layout consistency -->
     <link rel="stylesheet" href="../../css/styles.css">
+    <!-- Shared animation helpers -->
     <link rel="stylesheet" href="../../css/animations.css">
+    <!-- Game specific styling rules -->
     <link rel="stylesheet" href="game.css">
 </head>
-<body>
-    <!-- Game content -->
+<body class="min-h-screen bg-gradient-to-br from-sky-200 via-white to-purple-200">
+    <!-- Safe area aware wrapper -->
+    <div class="game-wrapper">
+        <!-- Header with back navigation and version info placeholder -->
+        <header class="game-header">
+            <!-- Back to game list button -->
+            <a href="../../index.html" class="back-button" aria-label="Back to all games">⟵</a>
+            <!-- Friendly instructions shown inline -->
+            <p id="instructions-text" class="header-instructions">Tap the circles in number order.</p>
+            <!-- Timer display positioned in the header for visibility -->
+            <div class="timer" id="timer-display">00.0</div>
+        </header>
+
+        <!-- Instructions and start button panel -->
+        <section id="control-panel" class="control-panel">
+            <!-- Start button to begin or restart the game -->
+            <button id="start-button" class="start-button" type="button">Start Game</button>
+        </section>
+
+        <!-- Game play area container -->
+        <main class="game-area" id="circle-container" aria-live="polite">
+            <!-- Circles are injected here by game.js -->
+        </main>
+    </div>
+
+    <!-- Game logic script -->
+    <script src="game.js" defer></script>
 </body>
 </html>
 
