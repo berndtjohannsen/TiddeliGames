@@ -1,50 +1,8 @@
 // Game selection page logic
 
 // Dummy game data - replace with actual games later
-const GAMES = [
-    {
-        id: 'game1',
-        name: 'Number Pop',
-        description: 'Tap the numbers 1 to 10 as fast as you can!',
-        path: 'games/game1/index.html',
-        icon: '🎈'
-    },
-    {
-        id: 'game2',
-        name: 'Game 2',
-        description: 'Second exciting game',
-        path: 'games/game2/index.html',
-        icon: '🎯'
-    },
-    {
-        id: 'game3',
-        name: 'Game 3',
-        description: 'Third amazing game',
-        path: 'games/game3/index.html',
-        icon: '🎲'
-    },
-    {
-        id: 'game4',
-        name: 'Game 4',
-        description: 'Fourth wonderful game',
-        path: 'games/game4/index.html',
-        icon: '🎨'
-    },
-    {
-        id: 'game5',
-        name: 'Game 5',
-        description: 'Fifth fantastic game',
-        path: 'games/game5/index.html',
-        icon: '🎪'
-    },
-    {
-        id: 'game6',
-        name: 'Game 6',
-        description: 'Sixth great game',
-        path: 'games/game6/index.html',
-        icon: '🎭'
-    }
-];
+const STRINGS = window.APP_STRINGS;
+const GAMES = STRINGS.games.items;
 
 /**
  * Create and display game selection cards
@@ -61,7 +19,7 @@ function renderGameGrid() {
     gameGrid.innerHTML = '';
 
     // Create game cards
-    GAMES.forEach(game => {
+    GAMES.forEach((game, index) => {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer transform hover:scale-105 transition-transform';
         card.setAttribute('data-game-id', game.id);
@@ -88,7 +46,7 @@ function displayVersion() {
     const versionDisplay = document.getElementById('version-display');
     
     if (versionDisplay && typeof APP_CONFIG !== 'undefined' && APP_CONFIG.version) {
-        versionDisplay.textContent = `Version ${APP_CONFIG.version}`;
+        versionDisplay.textContent = window.APP_STRINGS.version(APP_CONFIG.version);
     }
 }
 
@@ -96,5 +54,28 @@ function displayVersion() {
 document.addEventListener('DOMContentLoaded', () => {
     renderGameGrid();
     displayVersion();
+
+    // Inject localized header & install button strings
+    const titleEl = document.getElementById('main-title');
+    const subtitleEl = document.getElementById('main-subtitle');
+    if (titleEl) titleEl.textContent = window.APP_STRINGS.header.title;
+    if (subtitleEl) subtitleEl.textContent = window.APP_STRINGS.header.subtitle;
+
+    const installBtn = document.getElementById('install-btn');
+    if (installBtn) {
+        installBtn.title = window.APP_STRINGS.install.buttonTitle;
+        installBtn.setAttribute('aria-label', window.APP_STRINGS.install.buttonTitle);
+        const srSpan = installBtn.querySelector('.sr-only');
+        if (srSpan) srSpan.textContent = window.APP_STRINGS.install.srLabel;
+    }
+
+    const bannerText = document.getElementById('update-banner-text');
+    const bannerBtn = document.getElementById('update-reload-btn');
+    if (bannerText && !bannerText.textContent) {
+        bannerText.textContent = window.APP_STRINGS.update.banner;
+    }
+    if (bannerBtn && !bannerBtn.textContent) {
+        bannerBtn.textContent = window.APP_STRINGS.update.action;
+    }
 });
 

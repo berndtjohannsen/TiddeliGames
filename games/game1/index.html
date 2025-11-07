@@ -1,6 +1,6 @@
 <!-- Number circle game HTML document -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,7 +22,7 @@
             <!-- Back to game list button -->
             <a href="../../index.html" class="back-button" aria-label="Back to all games">⟵</a>
             <!-- Friendly instructions shown inline -->
-            <p id="instructions-text" class="header-instructions">Tap the circles in number order.</p>
+            <p id="instructions-text" class="header-instructions"></p>
             <!-- Timer display positioned in the header for visibility -->
             <div class="timer" id="timer-display">00.0</div>
         </header>
@@ -30,7 +30,7 @@
         <!-- Instructions and start button panel -->
         <section id="control-panel" class="control-panel">
             <!-- Start button to begin or restart the game -->
-            <button id="start-button" class="start-button" type="button">Start Game</button>
+            <button id="start-button" class="start-button" type="button"></button>
         </section>
 
         <!-- Game play area container -->
@@ -40,6 +40,7 @@
     </div>
 
     <!-- Game logic script -->
+    <script src="strings.js" defer></script>
     <script src="game.js" defer></script>
 </body>
 </html>
