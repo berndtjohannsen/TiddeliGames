@@ -21,17 +21,26 @@
         <header class="game-header">
             <!-- Back to game list button -->
             <a href="../../index.html" class="back-button" aria-label="Back to all games">⟵</a>
-            <!-- Friendly instructions shown inline -->
-            <p id="instructions-text" class="header-instructions"></p>
+            <!-- Primary action button -->
+            <button id="start-button" class="start-button" type="button"></button>
             <!-- Timer display positioned in the header for visibility -->
             <div class="timer" id="timer-display">00.0</div>
         </header>
 
-        <!-- Instructions and start button panel -->
-        <section id="control-panel" class="control-panel">
-            <!-- Start button to begin or restart the game -->
-            <button id="start-button" class="start-button" type="button"></button>
-        </section>
+        <!-- Friendly instructions and feedback -->
+        <p id="instructions-text" class="status-message" aria-live="polite"></p>
+
+        <!-- Completion dialog that appears after winning -->
+        <div id="completion-dialog" class="completion-dialog" hidden>
+            <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-dialog-title">
+                <h2 id="completion-dialog-title" class="completion-dialog__title"></h2>
+                <p id="completion-dialog-message" class="completion-dialog__message"></p>
+                <div class="completion-dialog__actions">
+                    <button id="retry-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                    <button id="back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+                </div>
+            </div>
+        </div>
 
         <!-- Game play area container -->
         <main class="game-area" id="circle-container" aria-live="polite">
