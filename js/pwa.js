@@ -86,7 +86,9 @@ async function registerServiceWorker() {
     }
     try {
         // Register relative to current origin to work with Live Server and GitHub Pages
-        const registration = await navigator.serviceWorker.register('sw.js');
+        const swVersion = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG.version) ? encodeURIComponent(APP_CONFIG.version) : '0';
+        const swUrl = `sw.js?v=${swVersion}`;
+        const registration = await navigator.serviceWorker.register(swUrl);
         console.log('Service Worker registered successfully:', registration);
 
         // If there's an updated SW waiting, request immediate activation
