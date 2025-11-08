@@ -7,7 +7,7 @@ window.GAME_STRINGS = Object.freeze({
         resume: 'Fortsätt'
     },
     messages: {
-        success: finalTime => `Det tog ${finalTime} sekunder!`
+        success: finalTime => `Det tog ${finalTime} sekunder`
     },
     dialog: {
         title: 'HURRA!',
