@@ -13,6 +13,11 @@ let circleContainer = null;
 let startButton = null;
 let timerDisplay = null;
 let instructionsText = null;
+let completionDialog = null;
+let completionDialogTitle = null;
+let completionDialogMessage = null;
+let retryButton = null;
+let backButton = null;
 
 /**
  * Cache DOM references once the document is ready.
@@ -22,6 +27,11 @@ function cacheDomElements() {
     startButton = document.getElementById('start-button');
     timerDisplay = document.getElementById('timer-display');
     instructionsText = document.getElementById('instructions-text');
+    completionDialog = document.getElementById('completion-dialog');
+    completionDialogTitle = document.getElementById('completion-dialog-title');
+    completionDialogMessage = document.getElementById('completion-dialog-message');
+    retryButton = document.getElementById('retry-button');
+    backButton = document.getElementById('back-button');
 }
 
 /**
@@ -40,6 +50,21 @@ function ensureDomReferences() {
     if (!instructionsText) {
         instructionsText = document.getElementById('instructions-text');
     }
+    if (!completionDialog) {
+        completionDialog = document.getElementById('completion-dialog');
+    }
+    if (!completionDialogTitle) {
+        completionDialogTitle = document.getElementById('completion-dialog-title');
+    }
+    if (!completionDialogMessage) {
+        completionDialogMessage = document.getElementById('completion-dialog-message');
+    }
+    if (!retryButton) {
+        retryButton = document.getElementById('retry-button');
+    }
+    if (!backButton) {
+        backButton = document.getElementById('back-button');
+    }
 }
 
 /**
@@ -52,6 +77,14 @@ function attachEventListeners() {
         startButton.addEventListener('click', handleStartButtonClick);
     }
 
+    if (retryButton) {
+        retryButton.addEventListener('click', handleRetryClick);
+    }
+
+    if (backButton) {
+        backButton.addEventListener('click', handleBackClick);
+    }
+
 }
 
 // Default instruction copy for easy reuse
@@ -60,6 +93,7 @@ const DEFAULT_INSTRUCTIONS = STRINGS.instructions;
 const PAUSED_INSTRUCTIONS = STRINGS.pausedInstructions;
 const LABELS = STRINGS.labels;
 const MESSAGES = STRINGS.messages;
+const DIALOG = STRINGS.dialog;
 const ARIA = STRINGS.aria;
 // Track if the player has already started at least one round
 let hasStartedAtLeastOnce = false;
@@ -201,21 +235,41 @@ async function playErrorTone() {
  * Play a short cheering arpeggio when the round finishes.
  */
 async function playCheerSound() {
-    await ensureAudioContext();
+    if (!audioContext) {
+        await ensureAudioContext();
+    }
 
     if (!audioContext) {
         return;
     }
 
-    const start = audioContext.currentTime + 0.05;
-    const chordFrequencies = [523.25, 659.25, 783.99]; // C major chord (C5, E5, G5)
+    const completionUrl = 'sounds/complete.mp3';
 
-    await Promise.all(
-        chordFrequencies.map((frequency, index) => {
-            const offset = index * 0.1;
-            return playTone(frequency, 0.45, start + offset, 0.55);
-        })
-    );
+    try {
+        const response = await fetch(completionUrl, { cache: 'force-cache' });
+        if (!response.ok) {
+            throw new Error(`Completion audio failed to load: ${response.status}`);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+
+        const gainNode = audioContext.createGain();
+        gainNode.gain.setValueAtTime(0.65, audioContext.currentTime);
+
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        source.start();
+        source.addEventListener('ended', () => {
+            source.disconnect();
+            gainNode.disconnect();
+        });
+    } catch (error) {
+        console.error('Unable to play completion sound:', error);
+    }
 }
 
 async function loadAmbienceBuffer() {
@@ -486,6 +540,7 @@ function resetGameUi() {
         startButton.textContent = LABELS.start;
         startButton.disabled = false;
     }
+    hideCompletionDialog();
 }
 
 /**
@@ -498,6 +553,8 @@ function startNewGame() {
         console.error('Game elements missing.');
         return;
     }
+
+    hideCompletionDialog();
 
     gameRunning = true;
     gamePaused = false;
@@ -571,6 +628,35 @@ function resumeGame() {
 }
 
 /**
+ * Display the friendly completion dialog with next-step options.
+ * @param {string} finalTime Text representation of the clear time.
+ */
+function showCompletionDialog(finalTime) {
+    ensureDomReferences();
+
+    if (!completionDialog || !completionDialogTitle || !completionDialogMessage || !retryButton || !backButton) {
+        return;
+    }
+
+    completionDialogTitle.textContent = DIALOG.title;
+    completionDialogMessage.textContent = MESSAGES.success(finalTime);
+    retryButton.textContent = DIALOG.retry;
+    backButton.textContent = DIALOG.back;
+    completionDialog.hidden = false;
+}
+
+/**
+ * Hide the completion dialog if it is currently visible.
+ */
+function hideCompletionDialog() {
+    ensureDomReferences();
+
+    if (completionDialog) {
+        completionDialog.hidden = true;
+    }
+}
+
+/**
  * Clean up after the player finishes the round.
  */
 function finishGame() {
@@ -595,6 +681,8 @@ function finishGame() {
         startButton.textContent = LABELS.start;
         startButton.disabled = false;
     }
+
+    showCompletionDialog(finalTime);
 }
 
 /**
@@ -620,6 +708,7 @@ function resetGameState() {
         startButton.textContent = LABELS.start;
         startButton.disabled = false;
     }
+    hideCompletionDialog();
     stopAmbience().catch(error => {
         console.warn('Unable to stop ambience:', error);
     });
@@ -641,6 +730,22 @@ function handleStartButtonClick() {
     }
 
     startNewGame();
+}
+
+/**
+ * Restart the game when the player chooses "Försök igen".
+ */
+function handleRetryClick() {
+    hideCompletionDialog();
+    resetGameState();
+}
+
+/**
+ * Return to the game list when the player chooses "Tillbaka".
+ */
+function handleBackClick() {
+    hideCompletionDialog();
+    window.location.href = '../../index.html';
 }
 
 // Ensure game is ready for interaction on load.
