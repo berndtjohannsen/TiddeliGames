@@ -2,8 +2,10 @@
 // Minimal implementation to satisfy PWA install criteria
 // Note: Keep lightweight; extend later with real caching
 
-// Bump this when releasing a new version to ensure fresh cache
-const CACHE_NAME = 'tiddeligames-shell-v1.0.0';
+// Infer cache version from service worker URL (passed via registration query parameter)
+const SW_LOCATION = new URL(self.location.href);
+const CACHE_VERSION = SW_LOCATION.searchParams.get('v') || '0';
+const CACHE_NAME = `tiddeligames-shell-v${CACHE_VERSION}`;
 const APP_SHELL = [
   './',
   // NOTE: Do NOT pre-cache index.html to prevent stale app shell
@@ -12,6 +14,7 @@ const APP_SHELL = [
   './css/animations.css',
   './js/config.js',
   './js/app.js',
+  './js/strings.js',
   './js/game-selector.js',
   './js/pwa.js',
 ];
