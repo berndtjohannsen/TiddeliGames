@@ -258,7 +258,7 @@ async function playCheerSound() {
         source.buffer = buffer;
 
         const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(0.65, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
 
         source.connect(gainNode);
         gainNode.connect(audioContext.destination);
