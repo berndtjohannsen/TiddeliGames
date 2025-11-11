@@ -25,14 +25,14 @@
     border-radius: 9999px;
     text-decoration: none;
     font-size: 1.6rem;
-    box-shadow: 0 8px 0 rgba(24, 56, 135, 0.28), 0 20px 26px rgba(24, 56, 135, 0.18);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
     transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
 /* Button press effect */
 .back-button:active {
-    transform: translateY(3px);
-    box-shadow: 0 5px 0 rgba(24, 56, 135, 0.32), 0 12px 18px rgba(24, 56, 135, 0.2);
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 18px, rgba(0, 0, 0, 0.2) 0 6px 6px;
 }
 
 /* Timer styled like a digital badge */
@@ -45,7 +45,7 @@
     min-width: 5rem;
     text-align: center;
     font-size: 1.5rem;
-    box-shadow: 0 7px 0 rgba(202, 138, 4, 0.28), 0 22px 30px rgba(250, 204, 21, 0.28);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
 }
 
 /* Status message keeps players informed without a bubble */
@@ -72,15 +72,15 @@
     border: none;
     border-radius: 9999px;
     cursor: pointer;
-    box-shadow: 0 8px 0 rgba(15, 118, 110, 0.4), 0 24px 32px rgba(15, 118, 110, 0.32);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
     transition: transform 150ms ease, box-shadow 150ms ease;
     max-width: clamp(260px, 35vw, 420px);
 }
 
 /* Button press animation */
 .start-button:active {
-    transform: translateY(4px);
-    box-shadow: 0 5px 0 rgba(15, 118, 110, 0.38), 0 14px 18px rgba(15, 118, 110, 0.3);
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 20px, rgba(0, 0, 0, 0.22) 0 6px 6px;
 }
 
 /* Game area uses relative positioning for circle placement */
@@ -174,17 +174,18 @@
 .completion-dialog__btn--primary {
     background: linear-gradient(135deg, #34d399, #10b981);
     color: #0f172a;
-    box-shadow: 0 8px 0 rgba(16, 185, 129, 0.35);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.2) 0 10px 10px;
 }
 
 .completion-dialog__btn--secondary {
     background: linear-gradient(135deg, #bfdbfe, #93c5fd);
     color: #1e3a8a;
-    box-shadow: 0 8px 0 rgba(59, 130, 246, 0.25);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.2) 0 10px 10px;
 }
 
 .completion-dialog__btn:active {
-    transform: translateY(3px);
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 18px, rgba(0, 0, 0, 0.2) 0 6px 6px;
 }
 
 /* Each circle is absolutely positioned */

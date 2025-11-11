@@ -7,7 +7,8 @@
 ev. tvinga porttrait?, förhindra rotation
 - konfigurera startscreen
 game1:
-- favicon
+- fixa favicon för standalon
+- tag ev bort några varninga
 - landscape/porttrait
 - spara rekord (då behövs nog användar id)
 
