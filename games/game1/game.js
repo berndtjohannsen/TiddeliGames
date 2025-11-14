@@ -348,7 +348,7 @@ function formatElapsedTime(elapsedMs) {
     const totalSeconds = elapsedMs / 1000;
     const seconds = Math.floor(totalSeconds);
     const tenths = Math.floor((totalSeconds - seconds) * 10);
-    return `${seconds.toString().padStart(2, '0')}.${tenths}`;
+    return `${seconds.toString().padStart(1, '0')}.${tenths}`;
 }
 
 function getCurrentElapsedMs() {
@@ -561,7 +561,7 @@ function startNewGame() {
     pausedElapsedMs = 0;
     nextCircleNumber = 1;
     resetGameUi();
-    timerDisplay.textContent = '00.0';
+    timerDisplay.textContent = '0.0';
     createCircles();
     startTimer();
     startAmbience().catch(error => {
@@ -697,7 +697,7 @@ function resetGameState() {
     nextCircleNumber = 1;
     stopTimer();
     if (timerDisplay) {
-        timerDisplay.textContent = '00.0';
+        timerDisplay.textContent = '0.0';
     }
     clearCircles();
     if (instructionsText) {
