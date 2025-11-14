@@ -22,6 +22,7 @@
 - Do not create delete or create new files or directories without first confirming with me
 - If a file becomes too large, like 500 lines, suggest to me to split it
 - if you need me to run a command, put it in our chat window for me to accept and for us both to see the result
+- all comments in english
 
 
 

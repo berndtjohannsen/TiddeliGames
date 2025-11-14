@@ -89,7 +89,7 @@
     width: 100%;
     height: clamp(420px, 70vh, 620px);
     /* Layer a soft gradient over the image so circles stay readable */
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('images/background.jpg');
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('images/background.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

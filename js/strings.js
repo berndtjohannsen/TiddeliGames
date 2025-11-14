@@ -22,9 +22,9 @@ window.APP_STRINGS = Object.freeze({
             },
             {
                 id: 'game2',
-                name: 'Spel 2',
-                description: 'Andra roliga spelet',
-                icon: '🎯',
+            name: 'Djurljud',
+            description: 'Lyssna på djuren och hitta alla sex!',
+            icon: '🐾',
                 path: 'games/game2/index.html'
             },
             {
