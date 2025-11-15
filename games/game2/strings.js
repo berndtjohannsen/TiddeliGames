@@ -28,7 +28,7 @@ window.GAME2_STRINGS = Object.freeze({
             id: 'horse',
             name: 'Häst',
             image: 'images/hast.png',
-            sound: 'sounds/djur-hast.mp3'
+            sound: 'sounds/hast.mp3'
         },
         {
             id: 'cow',

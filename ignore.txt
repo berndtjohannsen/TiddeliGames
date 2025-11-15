@@ -6,6 +6,8 @@
 - testa på platta
 ev. tvinga porttrait?, förhindra rotation
 - konfigurera startscreen
+- instruktioner (ålder, pedagogik)
+- hjälp (startscreen)
 game1:
 - fixa favicon för standalon
 - tag ev bort några varninga
@@ -20,6 +22,9 @@ MOtivering
 
 
 npx tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify --watch
+
+ "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="$TEMP/chrome-debug-profile"
+
 
 spel 1
 
@@ -38,7 +43,7 @@ To AI: Ignore this file completely
 &nbsp; ```sh
 
 &nbsp; 
-npx tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify --watch
+
 
 &nbsp; ```
 
