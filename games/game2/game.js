@@ -22,6 +22,9 @@ let backgroundBuffer = null;
 let backgroundSource = null;
 let backgroundGain = null;
 const audioBufferCache = new Map();
+// Track currently playing animal sound and card
+let currentAnimalSource = null;
+let currentAnimalCard = null;
 
 // Game state variables
 const state = {
@@ -246,6 +249,10 @@ function resetGameUi() {
         startButton.disabled = false;
     }
 
+    // Stop any playing animal sound and clear references
+    stopCurrentAnimalSound();
+    currentAnimalCard = null;
+
     clearAnimalField();
     if (animalField) {
         animalField.classList.remove('animal-field--paused');
@@ -300,34 +307,119 @@ function handleAnimalCardInteraction(card, animal) {
         return;
     }
 
+    // If another sound is currently playing, stop it and remove that card immediately
+    if (currentAnimalSource && currentAnimalCard) {
+        stopCurrentAnimalSound();
+        removeCardImmediately(currentAnimalCard);
+    }
+
     // Disable card immediately to prevent multiple clicks
     card.disabled = true;
+    currentAnimalCard = card;
 
     // Play sound and wait for it to finish before starting removal animation
-    playAnimalSound(animal)
+    // Store card reference in closure to ensure we can remove it even if currentAnimalCard changes
+    const cardToRemove = card;
+    const soundPromise = playAnimalSound(animal)
         .then(() => {
             // Sound finished, now add the class to trigger removal animation
-            card.classList.add('animal-card--found');
-            card.addEventListener('animationend', () => {
-                card.remove();
-            }, { once: true });
+            // Remove the card if it still exists and hasn't been removed yet
+            // Only remove if this is still the current card (hasn't been interrupted by another click)
+            if (cardToRemove && 
+                cardToRemove.parentNode && 
+                !cardToRemove.classList.contains('animal-card--found') &&
+                currentAnimalCard === cardToRemove) {
+                removeCardAfterSound(cardToRemove);
+            }
         })
         .catch(error => {
             console.warn(`Could not play sound for ${animal.name}:`, error);
             // If sound fails, remove immediately
-            card.classList.add('animal-card--found');
-            card.addEventListener('animationend', () => {
-                card.remove();
-            }, { once: true });
+            if (cardToRemove && cardToRemove.parentNode && !cardToRemove.classList.contains('animal-card--found')) {
+                if (currentAnimalCard === cardToRemove) {
+                    removeCardAfterSound(cardToRemove);
+                }
+            }
         });
 
     state.foundCount += 1;
 
     if (state.foundCount >= ANIMALS.length) {
-        // Wait a bit before finishing to allow last sound to play
-        setTimeout(() => {
+        // Wait for the last sound to finish before showing the finish popup
+        soundPromise.then(() => {
             finishGame();
-        }, 500);
+        }).catch(() => {
+            // If sound fails, still finish the game
+            finishGame();
+        });
+    }
+}
+
+/**
+ * Stops the currently playing animal sound.
+ */
+function stopCurrentAnimalSound() {
+    if (currentAnimalSource) {
+        try {
+            currentAnimalSource.stop();
+        } catch (error) {
+            // Source may have already stopped
+        }
+        try {
+            currentAnimalSource.disconnect();
+        } catch (error) {
+            // Source may already be disconnected
+        }
+        currentAnimalSource = null;
+    }
+}
+
+/**
+ * Removes a card immediately without waiting for sound.
+ */
+function removeCardImmediately(card) {
+    if (card && !card.classList.contains('animal-card--found')) {
+        // Clear reference if this is the current card
+        if (currentAnimalCard === card) {
+            currentAnimalCard = null;
+        }
+        card.classList.add('animal-card--found');
+        card.addEventListener('animationend', () => {
+            if (card && card.parentNode) {
+                card.remove();
+            }
+        }, { once: true });
+    }
+}
+
+/**
+ * Removes a card after its sound has finished playing.
+ */
+function removeCardAfterSound(card) {
+    if (card && card.parentNode && !card.classList.contains('animal-card--found')) {
+        // Stop any existing animations first
+        card.style.animation = 'none';
+        // Force a reflow
+        void card.offsetHeight;
+        // Now add the class and set the animation
+        card.classList.add('animal-card--found');
+        // Explicitly set animation style to ensure it takes effect
+        card.style.animation = 'animal-pop-out 320ms ease forwards';
+        card.style.animationPlayState = 'running';
+        // Force multiple reflows to ensure animation starts
+        void card.offsetHeight;
+        void card.getBoundingClientRect();
+        requestAnimationFrame(() => {
+            void card.offsetHeight;
+        });
+        card.addEventListener('animationend', () => {
+            if (card && card.parentNode) {
+                card.remove();
+            }
+            if (currentAnimalCard === card) {
+                currentAnimalCard = null;
+            }
+        }, { once: true });
     }
 }
 
@@ -430,6 +522,15 @@ async function playAnimalSound(animal) {
         return Promise.resolve();
     }
 
+    // Ensure audio context is running (important when background sound is playing)
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.warn('Could not resume AudioContext for animal sound:', error);
+        }
+    }
+
     const buffer = await loadAudioBuffer(animal.sound);
     if (!buffer) {
         return Promise.resolve();
@@ -437,16 +538,54 @@ async function playAnimalSound(animal) {
 
     return new Promise((resolve, reject) => {
         try {
+            // Stop any previously playing animal sound
+            stopCurrentAnimalSound();
+            
             const source = audioContext.createBufferSource();
             source.buffer = buffer;
             source.connect(audioContext.destination);
             
-            // Resolve promise when sound finishes
-            source.onended = () => {
-                resolve();
+            // Store reference to current source
+            currentAnimalSource = source;
+            
+            let resolved = false;
+            let timeoutId = null;
+            
+            const doResolve = () => {
+                if (!resolved) {
+                    resolved = true;
+                    if (timeoutId) {
+                        clearTimeout(timeoutId);
+                        timeoutId = null;
+                    }
+                    // Only clear currentAnimalSource if this is still the current source
+                    if (currentAnimalSource === source) {
+                        currentAnimalSource = null;
+                    }
+                    resolve();
+                }
             };
             
-            source.start();
+            // Resolve promise when sound finishes
+            source.onended = () => {
+                doResolve();
+            };
+            
+            // Fallback: resolve after buffer duration + buffer in case onended doesn't fire
+            // This is important because onended might not fire reliably with background sounds
+            // Calculate duration in milliseconds, ensure minimum of 500ms
+            const durationMs = Math.max(500, (buffer.duration || 1) * 1000);
+            timeoutId = setTimeout(() => {
+                doResolve();
+            }, durationMs + 500); // 500ms buffer for reliability
+            
+            try {
+                source.start(0);
+            } catch (error) {
+                // If start fails, resolve immediately
+                doResolve();
+                reject(error);
+            }
         } catch (error) {
             reject(error);
         }
@@ -514,13 +653,25 @@ function stopBackgroundAmbience() {
 async function ensureAudioContext() {
     if (audioContext) {
         if (audioContext.state === 'suspended') {
-            await audioContext.resume();
+            try {
+                await audioContext.resume();
+            } catch (error) {
+                console.warn('Could not resume AudioContext:', error);
+            }
         }
         return;
     }
 
     try {
         audioContext = new AudioContext();
+        // If context starts suspended, try to resume it
+        if (audioContext.state === 'suspended') {
+            try {
+                await audioContext.resume();
+            } catch (error) {
+                console.warn('Could not resume newly created AudioContext:', error);
+            }
+        }
     } catch (error) {
         console.warn('AudioContext could not be initialized:', error);
         audioContext = null;

@@ -19,12 +19,14 @@
     <div class="game2-wrapper">
         <!-- Page header with back link, title, and start button -->
         <header class="game2-header">
-            <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            <div class="game2-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+                <button id="start-button" class="start-button" type="button"></button>
+            </div>
             <div class="game2-header__center">
                 <h1 class="game2-title" id="game2-title"></h1>
                 <p class="game2-instructions" id="instructions-text" aria-live="polite"></p>
             </div>
-            <button id="start-button" class="start-button" type="button"></button>
         </header>
 
         <!-- Game board where animal cards are placed -->
