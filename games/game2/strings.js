@@ -3,7 +3,7 @@ window.GAME2_STRINGS = Object.freeze({
     title: '',
     instructions: '',
     pausedInstructions: '',
-    completionMessage: 'Bra!',
+    completionMessage: '',
     labels: {
         start: 'Starta',
         pause: 'Pausa',

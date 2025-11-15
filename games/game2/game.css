@@ -217,7 +217,7 @@
     text-align: center;
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
     max-width: 90%;
-    width: min(460px, 100%);
+    width: min(560px, 100%);
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -228,6 +228,16 @@
     font-size: clamp(2rem, 4vw, 2.6rem);
     font-weight: 800;
     color: #1e1b4b;
+}
+
+/* Video in the completion dialog */
+.completion-dialog__video {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 1rem;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    background: #000000;
 }
 
 /* Message text in the dialog */

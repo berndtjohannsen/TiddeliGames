@@ -13,6 +13,7 @@ let animalField = null;
 let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
+let completionVideo = null;
 let retryButton = null;
 let quitButton = null;
 
@@ -54,6 +55,7 @@ function cacheDomElements() {
     completionDialog = document.getElementById('completion-dialog');
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
+    completionVideo = document.getElementById('completion-video');
     retryButton = document.getElementById('retry-button');
     quitButton = document.getElementById('quit-button');
 }
@@ -186,6 +188,22 @@ function startNewGame() {
 
     startBackgroundAmbience().catch(error => {
         console.warn('Could not start background audio:', error);
+    });
+
+    // Preload all animal sound buffers in parallel to eliminate delays on first click
+    // This ensures all sounds are ready immediately when clicked
+    ensureAudioContext().then(() => {
+        if (audioContext && audioContext.state === 'running') {
+            const preloadPromises = ANIMALS.map(animal => {
+                const result = loadAudioBuffer(animal.sound);
+                // If it's already cached (returns buffer directly), wrap in resolved promise
+                // Otherwise it's already a promise
+                return result instanceof Promise ? result : Promise.resolve(result);
+            });
+            Promise.all(preloadPromises).catch(() => {
+                // Ignore errors during preload - sounds will load on demand
+            });
+        }
     });
 }
 
@@ -443,7 +461,7 @@ function finishGame() {
 }
 
 /**
- * Shows the completion dialog with the appropriate message.
+ * Shows the completion dialog with the appropriate message and plays the video.
  */
 function showCompletionDialog() {
     if (!completionDialog) {
@@ -453,15 +471,37 @@ function showCompletionDialog() {
     if (completionMessage) {
         completionMessage.textContent = STRINGS.completionMessage;
     }
+    
+    // Play the completion video with sound
+    // Since this is triggered by user interaction (completing the game), autoplay with sound should work
+    if (completionVideo) {
+        completionVideo.currentTime = 0; // Reset to start
+        completionVideo.muted = false; // Ensure audio is enabled
+        completionVideo.play().catch(error => {
+            console.warn('Could not play completion video:', error);
+            // If play fails, try with muted as fallback
+            completionVideo.muted = true;
+            completionVideo.play().catch(() => {
+                console.warn('Could not play completion video even with muted fallback');
+            });
+        });
+    }
+    
     completionDialog.hidden = false;
 }
 
 /**
- * Hides the completion dialog.
+ * Hides the completion dialog and stops the video.
  */
 function hideCompletionDialog() {
     if (completionDialog) {
         completionDialog.hidden = true;
+    }
+    
+    // Stop and reset the video when dialog is hidden
+    if (completionVideo) {
+        completionVideo.pause();
+        completionVideo.currentTime = 0;
     }
 }
 
@@ -523,6 +563,7 @@ async function playAnimalSound(animal) {
     }
 
     // Ensure audio context is running (important when background sound is playing)
+    // Only resume if actually suspended to avoid unnecessary delays
     if (audioContext.state === 'suspended') {
         try {
             await audioContext.resume();
@@ -531,8 +572,15 @@ async function playAnimalSound(animal) {
         }
     }
 
-    const buffer = await loadAudioBuffer(animal.sound);
+    // Load buffer - if cached, this returns immediately
+    const buffer = loadAudioBuffer(animal.sound);
     if (!buffer) {
+        return Promise.resolve();
+    }
+    
+    // If buffer is a promise (not cached), wait for it
+    const audioBuffer = buffer instanceof Promise ? await buffer : buffer;
+    if (!audioBuffer) {
         return Promise.resolve();
     }
 
@@ -542,7 +590,7 @@ async function playAnimalSound(animal) {
             stopCurrentAnimalSound();
             
             const source = audioContext.createBufferSource();
-            source.buffer = buffer;
+            source.buffer = audioBuffer;
             source.connect(audioContext.destination);
             
             // Store reference to current source
@@ -574,7 +622,7 @@ async function playAnimalSound(animal) {
             // Fallback: resolve after buffer duration + buffer in case onended doesn't fire
             // This is important because onended might not fire reliably with background sounds
             // Calculate duration in milliseconds, ensure minimum of 500ms
-            const durationMs = Math.max(500, (buffer.duration || 1) * 1000);
+            const durationMs = Math.max(500, (audioBuffer.duration || 1) * 1000);
             timeoutId = setTimeout(() => {
                 doResolve();
             }, durationMs + 500); // 500ms buffer for reliability
@@ -680,32 +728,37 @@ async function ensureAudioContext() {
 
 /**
  * Loads and caches an audio file as an AudioBuffer.
+ * Returns the buffer synchronously if cached, or a Promise if it needs to be loaded.
  */
-async function loadAudioBuffer(url) {
+function loadAudioBuffer(url) {
+    // Return cached buffer immediately (synchronously) if available
     if (audioBufferCache.has(url)) {
         return audioBufferCache.get(url);
     }
 
-    if (!audioContext) {
-        return null;
-    }
+    // If not cached, return a promise that loads and caches it
+    return (async () => {
+        if (!audioContext) {
+            return null;
+        }
 
-    const response = await fetch(url);
+        const response = await fetch(url);
 
-    if (!response.ok) {
-        console.warn(`Could not load audio file: ${url}`);
-        return null;
-    }
+        if (!response.ok) {
+            console.warn(`Could not load audio file: ${url}`);
+            return null;
+        }
 
-    const arrayBuffer = await response.arrayBuffer();
-    try {
-        const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        audioBufferCache.set(url, decodedBuffer);
-        return decodedBuffer;
-    } catch (error) {
-        console.warn('Could not decode audio file:', error);
-        return null;
-    }
+        const arrayBuffer = await response.arrayBuffer();
+        try {
+            const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            audioBufferCache.set(url, decodedBuffer);
+            return decodedBuffer;
+        } catch (error) {
+            console.warn('Could not decode audio file:', error);
+            return null;
+        }
+    })();
 }
 
 /**

@@ -1,19 +1,15 @@
-- olika ikoner för desktop link and app install ?
-- ingen fullogga
 - ska man verkligen insallerat på windows
 - testa versions förändring
-- rensa loggar
 - testa på platta
 ev. tvinga porttrait?, förhindra rotation
 - konfigurera startscreen
 - instruktioner (ålder, pedagogik)
 - hjälp (startscreen)
-game1:
-- fixa favicon för standalon
+- refactoring
 - tag ev bort några varninga
-- landscape/porttrait
 - spara rekord (då behövs nog användar id)
-game2
+
+
 MOtivering
 - alla games har en pedagogiskt elements
 - ingen på trängande reklam
