@@ -1,10 +1,10 @@
-<!-- Animal Sounds (Game 2) -->
+<!-- Counting Game (Game 3) -->
 <!DOCTYPE html>
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Djurljud</title>
+    <title>Räkna frukter</title>
     <!-- Shared Tailwind styles for consistent layout -->
     <link rel="stylesheet" href="../../css/tailwind.output.css">
     <!-- Shared app styles -->
@@ -16,36 +16,36 @@
 </head>
 <body class="min-h-screen bg-gradient-to-br from-violet-200 via-white to-rose-200">
     <!-- Wrapper that centers the entire game experience -->
-    <div class="game2-wrapper">
-        <!-- Page header with back link, title, and start button -->
-        <header class="game2-header">
-            <div class="game2-header__buttons">
+    <div class="game3-wrapper">
+        <!-- Page header with back link and title -->
+        <header class="game3-header">
+            <div class="game3-header__buttons">
                 <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
-                <button id="start-button" class="start-button" type="button"></button>
             </div>
-            <div class="game2-header__center">
-                <h1 class="game2-title" id="game2-title"></h1>
-                <p class="game2-instructions" id="instructions-text" aria-live="polite"></p>
+            <div class="game3-header__center">
+                <h1 class="game3-title" id="game3-title"></h1>
+                <p class="game3-instructions" id="instructions-text" aria-live="polite"></p>
             </div>
         </header>
 
-        <!-- Game board where animal cards are placed -->
-        <main id="animal-field" class="animal-field" aria-live="polite">
-            <!-- Animals are placed dynamically by game.js -->
+        <!-- Game board where fruit objects are placed -->
+        <main id="fruit-field" class="fruit-field" aria-live="polite">
+            <!-- Fruits are placed dynamically by game.js -->
         </main>
+
+        <!-- Number buttons at the bottom -->
+        <div id="number-buttons" class="number-buttons" role="group" aria-label="Välj antal frukter">
+            <!-- Number buttons 1-20 are created dynamically by game.js -->
+        </div>
     </div>
 
-    <!-- Completion dialog shown when all animals are found -->
+    <!-- Completion dialog shown when correct number is clicked -->
     <div id="completion-dialog" class="completion-dialog" hidden>
         <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
             <h2 id="completion-title" class="completion-dialog__title"></h2>
-            <video id="completion-video" class="completion-dialog__video" autoplay playsinline>
-                <source src="video/katt.mp4" type="video/mp4">
-            </video>
             <p id="completion-message" class="completion-dialog__message"></p>
             <div class="completion-dialog__actions">
-                <button id="retry-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
-                <button id="quit-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
             </div>
         </div>
     </div>

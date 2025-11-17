@@ -41,7 +41,32 @@
     <!-- Main container -->
     <div class="container mx-auto px-4 py-8 min-h-screen flex flex-col">
         <!-- Header -->
-        <header class="text-center mb-8">
+        <header class="text-center mb-8 pt-12 sm:pt-14">
+            <!-- Volume control in top left, aligned with download button -->
+            <div class="fixed top-3 left-3 flex items-center gap-2 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full shadow-sm z-10">
+                <button id="mute-button" type="button" class="p-0 border-0 bg-transparent cursor-pointer outline-none focus:outline-none" aria-label="Mute/Unmute">
+                    <!-- Unmuted icon (shown when not muted) -->
+                    <svg id="volume-icon-unmuted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-gray-600">
+                        <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 1 1-1.06-1.06 8.25 8.25 0 0 0 0-11.668.75.75 0 0 1 0-1.06Z"/>
+                        <path d="M15.932 7.757a.75.75 0 0 1 1.061 0 6 6 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.5 4.5 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z"/>
+                    </svg>
+                    <!-- Muted icon (hidden when not muted) -->
+                    <svg id="volume-icon-muted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-gray-600 hidden">
+                        <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06Z"/>
+                        <path d="M1.22 1.22a.75.75 0 0 1 1.06 0L22.78 22.78a.75.75 0 1 1-1.06 1.06L2.28 2.28a.75.75 0 0 1 0-1.06Z"/>
+                    </svg>
+                </button>
+                <input 
+                    type="range" 
+                    id="volume-slider" 
+                    min="0" 
+                    max="100" 
+                    value="35" 
+                    class="w-24 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                    aria-label="Volym"
+                />
+                <span id="volume-display" class="text-xs text-gray-600 w-6 text-right">35%</span>
+            </div>
             <h1 id="main-title" class="text-5xl font-bold text-gray-800 mb-2"></h1>
             <p id="main-subtitle" class="text-xl text-gray-600"></p>
         </header>
@@ -65,6 +90,7 @@
     <!-- Scripts -->
     <script src="js/config.js"></script>
     <script src="js/strings.js"></script>
+    <script src="js/volume-control.js"></script>
     <script src="js/app.js"></script>
     <script src="js/pwa.js"></script>
     <script src="js/game-selector.js"></script>

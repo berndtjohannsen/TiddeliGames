@@ -5,6 +5,20 @@
 const STRINGS = window.GAME2_STRINGS;
 const ANIMALS = Array.isArray(STRINGS.animals) ? STRINGS.animals.slice() : [];
 
+// Constants for animations and timing
+const ANIMATION_DURATION_MS = 320; // Duration of card removal animation
+const AUDIO_TIMEOUT_BUFFER_MS = 500; // Buffer time for audio timeout fallback
+const MIN_AUDIO_DURATION_MS = 500; // Minimum audio duration for timeout calculation
+// Background volume is now controlled from main page volume control
+const FLOAT_PHASE_MULTIPLIER = 0.4; // Multiplier for spreading float animation phases
+const FLOAT_PHASE_MAX = 3; // Maximum float phase in seconds
+const POSITIONING_PADDING_MIN = 40; // Minimum padding for card positioning (px)
+const POSITIONING_PADDING_RATIO = 0.2; // Padding as ratio of card width
+const POSITIONING_MAX_ATTEMPTS = 500; // Maximum attempts to find non-overlapping position
+const SMALL_SCREEN_BREAKPOINT = 600; // Screen width threshold for small screen layout (px)
+const GRID_OFFSET_MAX = 25; // Maximum random offset for grid-based positioning (px)
+const GRID_OFFSET_RATIO = 0.3; // Grid offset as ratio of cell size
+
 // DOM references shared between functions
 let titleEl = null;
 let instructionsEl = null;
@@ -31,7 +45,9 @@ let currentAnimalCard = null;
 const state = {
     gameRunning: false,
     gamePaused: false,
-    foundCount: 0
+    foundCount: 0,
+    audioStarted: false,
+    audioStarting: false
 };
 
 /**
@@ -42,6 +58,7 @@ window.addEventListener('DOMContentLoaded', () => {
     populateStaticTexts();
     attachEventListeners();
     resetGameUi();
+    requestBackgroundAudioStart();
 });
 
 /**
@@ -98,6 +115,36 @@ function attachEventListeners() {
         quitButton.addEventListener('click', handleQuitClick);
     }
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Listen for volume changes from main page
+    window.addEventListener('volumechange', handleVolumeChange);
+    ['pointerdown', 'touchstart', 'keydown'].forEach(eventName => {
+        document.addEventListener(eventName, handleFirstAudioInteraction, { once: true });
+    });
+}
+
+/**
+ * Handles the first user interaction to kick off background ambience.
+ */
+function handleFirstAudioInteraction() {
+    requestBackgroundAudioStart();
+}
+
+/**
+ * Handles volume changes from the main page control.
+ * @param {CustomEvent} event - Volume change event
+ */
+function handleVolumeChange(event) {
+    const newVolume = event.detail.volume;
+    
+    // Update background ambience volume
+    if (backgroundGain && audioContext && audioContext.state === 'running') {
+        backgroundGain.gain.setValueAtTime(newVolume, audioContext.currentTime);
+    }
+    
+    // Update completion video volume if it's playing
+    if (completionVideo && !completionVideo.paused) {
+        completionVideo.volume = newVolume;
+    }
 }
 
 /**
@@ -177,7 +224,7 @@ function startNewGame() {
         card.style.left = `${pos.x}px`;
         card.style.top = `${pos.y}px`;
         // Set unique animation delay for independent floating motion
-        const floatPhase = (index * 0.4) % 3; // Spread delays across 0-3 seconds
+        const floatPhase = (index * FLOAT_PHASE_MULTIPLIER) % FLOAT_PHASE_MAX;
         card.style.setProperty('--float-phase', floatPhase);
         animalField.appendChild(card);
     });
@@ -186,9 +233,7 @@ function startNewGame() {
         animalField.classList.remove('animal-field--paused');
     }
 
-    startBackgroundAmbience().catch(error => {
-        console.warn('Could not start background audio:', error);
-    });
+    requestBackgroundAudioStart();
 
     // Preload all animal sound buffers in parallel to eliminate delays on first click
     // This ensures all sounds are ready immediately when clicked
@@ -246,9 +291,7 @@ function resumeGame() {
         });
     } else if (!backgroundSource) {
         // If the source was stopped completely, we need to restart it
-        startBackgroundAmbience().catch(error => {
-            console.warn('Could not restart background audio:', error);
-        });
+        requestBackgroundAudioStart();
     }
 }
 
@@ -422,7 +465,7 @@ function removeCardAfterSound(card) {
         // Now add the class and set the animation
         card.classList.add('animal-card--found');
         // Explicitly set animation style to ensure it takes effect
-        card.style.animation = 'animal-pop-out 320ms ease forwards';
+        card.style.animation = `animal-pop-out ${ANIMATION_DURATION_MS}ms ease forwards`;
         card.style.animationPlayState = 'running';
         // Force multiple reflows to ensure animation starts
         void card.offsetHeight;
@@ -477,6 +520,9 @@ function showCompletionDialog() {
     if (completionVideo) {
         completionVideo.currentTime = 0; // Reset to start
         completionVideo.muted = false; // Ensure audio is enabled
+        // Set video volume based on global volume control
+        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
+        completionVideo.volume = globalVolume;
         completionVideo.play().catch(error => {
             console.warn('Could not play completion video:', error);
             // If play fails, try with muted as fallback
@@ -539,6 +585,29 @@ function handleVisibilityChange() {
 }
 
 /**
+ * Attempts to start the looping ambience, respecting autoplay restrictions.
+ */
+function requestBackgroundAudioStart() {
+    if (state.audioStarted || state.audioStarting) {
+        return;
+    }
+
+    state.audioStarting = true;
+    startBackgroundAmbience()
+        .then(() => {
+            if (audioContext && audioContext.state === 'running') {
+                state.audioStarted = true;
+            }
+        })
+        .catch(error => {
+            console.warn('Could not start background audio yet:', error);
+        })
+        .finally(() => {
+            state.audioStarting = false;
+        });
+}
+
+/**
  * Updates the instruction text on the page.
  */
 function setInstructionsText(text) {
@@ -591,7 +660,15 @@ async function playAnimalSound(animal) {
             
             const source = audioContext.createBufferSource();
             source.buffer = audioBuffer;
-            source.connect(audioContext.destination);
+            
+            // Create gain node and apply global volume control
+            const gainNode = audioContext.createGain();
+            // Get global volume and use it for animal sounds (same as background)
+            const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
+            gainNode.gain.setValueAtTime(globalVolume, audioContext.currentTime);
+            
+            source.connect(gainNode);
+            gainNode.connect(audioContext.destination);
             
             // Store reference to current source
             currentAnimalSource = source;
@@ -621,11 +698,11 @@ async function playAnimalSound(animal) {
             
             // Fallback: resolve after buffer duration + buffer in case onended doesn't fire
             // This is important because onended might not fire reliably with background sounds
-            // Calculate duration in milliseconds, ensure minimum of 500ms
-            const durationMs = Math.max(500, (audioBuffer.duration || 1) * 1000);
+            // Calculate duration in milliseconds, ensure minimum duration
+            const durationMs = Math.max(MIN_AUDIO_DURATION_MS, (audioBuffer.duration || 1) * 1000);
             timeoutId = setTimeout(() => {
                 doResolve();
-            }, durationMs + 500); // 500ms buffer for reliability
+            }, durationMs + AUDIO_TIMEOUT_BUFFER_MS);
             
             try {
                 source.start(0);
@@ -669,7 +746,9 @@ async function startBackgroundAmbience() {
     backgroundSource.loop = true;
 
     backgroundGain = audioContext.createGain();
-    backgroundGain.gain.setValueAtTime(0.35, audioContext.currentTime);
+    // Get volume from shared volume control (defaults to 0.35 if not available)
+    const volume = window.TiddeliGamesVolume?.get() ?? 0.35;
+    backgroundGain.gain.setValueAtTime(volume, audioContext.currentTime);
 
     backgroundSource.connect(backgroundGain);
     backgroundGain.connect(audioContext.destination);
@@ -693,6 +772,8 @@ function stopBackgroundAmbience() {
         backgroundGain.disconnect();
         backgroundGain = null;
     }
+    state.audioStarted = false;
+    state.audioStarting = false;
 }
 
 /**
@@ -784,12 +865,12 @@ function shuffleArray(array) {
 function calculateNonOverlappingPositions(count, containerWidth, containerHeight, cardWidth, cardHeight) {
     const positions = [];
     // Increase padding significantly on smaller screens to prevent overlapping
-    // Use at least 40px or 20% of card width, whichever is larger
-    const padding = Math.max(40, cardWidth * 0.2);
-    const maxAttempts = 500; // Increased attempts for better placement
+    // Use at least minimum padding or ratio of card width, whichever is larger
+    const padding = Math.max(POSITIONING_PADDING_MIN, cardWidth * POSITIONING_PADDING_RATIO);
+    const maxAttempts = POSITIONING_MAX_ATTEMPTS;
     
     // On small screens, prefer grid layout for better spacing
-    const isSmallScreen = containerWidth < 600;
+    const isSmallScreen = containerWidth < SMALL_SCREEN_BREAKPOINT;
     const useGrid = isSmallScreen || count > 5;
     
     if (useGrid) {
@@ -800,8 +881,8 @@ function calculateNonOverlappingPositions(count, containerWidth, containerHeight
         const cellHeight = (containerHeight - padding * 2) / rows;
         
         // Calculate maximum safe offset (ensure cards stay within bounds and don't overlap)
-        const maxOffsetX = Math.min(25, (cellWidth - cardWidth) * 0.3);
-        const maxOffsetY = Math.min(25, (cellHeight - cardHeight) * 0.3);
+        const maxOffsetX = Math.min(GRID_OFFSET_MAX, (cellWidth - cardWidth) * GRID_OFFSET_RATIO);
+        const maxOffsetY = Math.min(GRID_OFFSET_MAX, (cellHeight - cardHeight) * GRID_OFFSET_RATIO);
         
         for (let i = 0; i < count; i++) {
             const col = i % cols;

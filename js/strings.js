@@ -29,9 +29,9 @@ window.APP_STRINGS = Object.freeze({
             },
             {
                 id: 'game3',
-                name: 'Spel 3',
-                description: 'Tredje fantastiska spelet',
-                icon: '🎲',
+                name: 'Räkna frukter',
+                description: 'Räkna frukterna och välj rätt nummer!',
+                icon: '🍎',
                 path: 'games/game3/index.html'
             },
             {

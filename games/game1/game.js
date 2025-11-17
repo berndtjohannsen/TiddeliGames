@@ -85,6 +85,22 @@ function attachEventListeners() {
         backButton.addEventListener('click', handleBackClick);
     }
 
+    // Listen for volume changes from main page
+    window.addEventListener('volumechange', handleVolumeChange);
+}
+
+/**
+ * Handles volume changes from the main page control.
+ * @param {CustomEvent} event - Volume change event
+ */
+function handleVolumeChange(event) {
+    if (ambienceGain && audioContext && audioContext.state === 'running') {
+        const newVolume = event.detail.volume;
+        const now = audioContext.currentTime;
+        ambienceGain.gain.cancelScheduledValues(now);
+        ambienceGain.gain.setValueAtTime(ambienceGain.gain.value, now);
+        ambienceGain.gain.linearRampToValueAtTime(newVolume, now + 0.1);
+    }
 }
 
 // Default instruction copy for easy reuse
@@ -111,6 +127,8 @@ let audioContext = null;
 let ambienceSource = null;
 let ambienceGain = null;
 let ambienceBuffer = null;
+let ambienceStarted = false;
+let ambienceStarting = false;
 
 // Relative path to the gentle kids ambience track (place file under assets/audio)
 const AMBIENCE_AUDIO_PATH = 'sounds/background.mp3';
@@ -137,14 +155,18 @@ async function ensureAudioContext() {
  * @param {number} frequency Frequency of the tone in hertz.
  * @param {number} duration Tone duration in seconds.
  * @param {number} startTime Optional Web Audio start time.
- * @param {number} volume Gain level between 0 and 1.
+ * @param {number} relativeVolume Relative volume level between 0 and 1 (will be scaled by global volume).
  */
-async function playTone(frequency, duration = 0.35, startTime = null, volume = 0.6) {
+async function playTone(frequency, duration = 0.35, startTime = null, relativeVolume = 0.6) {
     await ensureAudioContext();
 
     if (!audioContext) {
         return;
     }
+
+    // Get global volume and scale the relative volume by it
+    const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
+    const actualVolume = globalVolume * relativeVolume;
 
     const playAt = startTime ?? audioContext.currentTime;
 
@@ -174,7 +196,7 @@ async function playTone(frequency, duration = 0.35, startTime = null, volume = 0
     source.buffer = buffer;
     const gainNode = audioContext.createGain();
 
-    gainNode.gain.setValueAtTime(volume, playAt);
+    gainNode.gain.setValueAtTime(actualVolume, playAt);
     gainNode.gain.linearRampToValueAtTime(0.0001, playAt + duration);
 
     source.connect(gainNode);
@@ -258,7 +280,10 @@ async function playCheerSound() {
         source.buffer = buffer;
 
         const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        // Get global volume and scale the relative volume (0.3) by it
+        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
+        const actualVolume = globalVolume * 0.3;
+        gainNode.gain.setValueAtTime(actualVolume, audioContext.currentTime);
 
         source.connect(gainNode);
         gainNode.connect(audioContext.destination);
@@ -307,8 +332,10 @@ async function startAmbience() {
     ambienceSource.loop = true;
 
     ambienceGain = audioContext.createGain();
+    // Get volume from shared volume control (defaults to 0.25 if not available)
+    const targetVolume = window.TiddeliGamesVolume?.get() ?? 0.25;
     ambienceGain.gain.setValueAtTime(0, audioContext.currentTime);
-    ambienceGain.gain.linearRampToValueAtTime(0.25, audioContext.currentTime + 0.8);
+    ambienceGain.gain.linearRampToValueAtTime(targetVolume, audioContext.currentTime + 0.8);
 
     ambienceSource.connect(ambienceGain);
     ambienceGain.connect(audioContext.destination);
@@ -336,7 +363,27 @@ async function stopAmbience() {
             ambienceGain.disconnect();
             ambienceGain = null;
         }
+        ambienceStarted = false;
+        ambienceStarting = false;
     }, release * 1000);
+}
+
+async function requestAmbienceStart() {
+    if (ambienceStarted || ambienceStarting) {
+        return;
+    }
+
+    ambienceStarting = true;
+    try {
+        await startAmbience();
+        if (audioContext && audioContext.state === 'running' && ambienceSource) {
+            ambienceStarted = true;
+        }
+    } catch (error) {
+        console.warn('Unable to start ambience yet:', error);
+    } finally {
+        ambienceStarting = false;
+    }
 }
 
 /**
@@ -564,9 +611,7 @@ function startNewGame() {
     timerDisplay.textContent = '0.0';
     createCircles();
     startTimer();
-    startAmbience().catch(error => {
-        console.warn('Unable to start ambience:', error);
-    });
+    requestAmbienceStart();
 
     if (!hasStartedAtLeastOnce) {
         hasStartedAtLeastOnce = true;
@@ -614,9 +659,7 @@ function resumeGame() {
     gamePaused = false;
 
     startTimer(pausedElapsedMs);
-    startAmbience().catch(error => {
-        console.warn('Unable to start ambience on resume:', error);
-    });
+    requestAmbienceStart();
 
     if (instructionsText) {
         instructionsText.textContent = DEFAULT_INSTRUCTIONS;
@@ -753,13 +796,18 @@ window.addEventListener('DOMContentLoaded', () => {
     cacheDomElements();
     attachEventListeners();
     resetGameState();
+    requestAmbienceStart();
 });
 
 // Resume audio context on first user interaction to satisfy autoplay policies
 function handleFirstInteraction() {
-    ensureAudioContext().catch(error => {
-        console.warn('Unable to resume audio context on interaction:', error);
-    });
+    ensureAudioContext()
+        .catch(error => {
+            console.warn('Unable to resume audio context on interaction:', error);
+        })
+        .finally(() => {
+            requestAmbienceStart();
+        });
 }
 
 document.addEventListener('pointerdown', handleFirstInteraction, { once: true });
