@@ -16,29 +16,29 @@ window.APP_STRINGS = Object.freeze({
             {
                 id: 'game1',
                 name: 'Sifferpop',
-                description: 'Tryck på siffrorna 1 till 10 så snabbt du kan!',
+                description: 'Tryck på siffrorna 1 till 10. (3+ år)',            
                 icon: '🎈',
                 path: 'games/game1/index.html'
             },
             {
                 id: 'game2',
             name: 'Djurljud',
-            description: 'Lyssna på djuren och hitta alla sex!',
+            description: 'Lyssna på djuren. (1+ år)',
             icon: '🐾',
                 path: 'games/game2/index.html'
             },
             {
                 id: 'game3',
                 name: 'Räkna frukter',
-                description: 'Räkna frukterna och välj rätt nummer!',
+                description: 'Räkna frukterna. (3+ år)',
                 icon: '🍎',
                 path: 'games/game3/index.html'
             },
             {
                 id: 'game4',
-                name: 'Spel 4',
-                description: 'Fjärde kreativa spelet',
-                icon: '🎨',
+                name: 'Stava ord',
+                description: 'Matcha bilden med ord. (4+ år)',
+                icon: '📝',
                 path: 'games/game4/index.html'
             },
             {

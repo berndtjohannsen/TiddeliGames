@@ -124,6 +124,10 @@
         if (!remoteVersion || !isGreater(remoteVersion, localVersion)) return; // never downgrade or equal
         // Remote is greater → prompt user and upgrade deterministically
         showBanner(async () => {
+            // Mark that user confirmed the update (for service worker flow)
+            if (window.setUserConfirmedUpdate) {
+                window.setUserConfirmedUpdate();
+            }
             // Hide banner quickly to give feedback
             const banner = document.getElementById('update-banner');
             if (banner) banner.classList.add('hidden');

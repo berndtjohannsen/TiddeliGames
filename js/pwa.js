@@ -104,6 +104,10 @@ async function registerServiceWorker() {
                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
                     // Show update banner and let user trigger reload
                     showUpdateBanner(() => {
+                        // Mark that user confirmed the update
+                        if (window.setUserConfirmedUpdate) {
+                            window.setUserConfirmedUpdate();
+                        }
                         newSW.postMessage('SKIP_WAITING');
                     });
                 }
@@ -112,11 +116,25 @@ async function registerServiceWorker() {
 
         // Reload once the new SW takes control (only when user accepted in our flow)
         let didRefresh = false;
+        let userConfirmedUpdate = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (didRefresh) return;
-            didRefresh = true;
-            window.location.reload();
+            // Only reload if user has confirmed the update
+            if (userConfirmedUpdate) {
+                didRefresh = true;
+                window.location.reload();
+            }
         });
+        
+        // Store the flag setter for use by showUpdateBanner
+        window.setUserConfirmedUpdate = () => {
+            userConfirmedUpdate = true;
+            // If service worker already changed, reload now
+            if (navigator.serviceWorker.controller && !didRefresh) {
+                didRefresh = true;
+                window.location.reload();
+            }
+        };
     } catch (error) {
         console.error('Service Worker registration failed:', error);
     }

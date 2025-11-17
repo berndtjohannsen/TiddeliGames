@@ -1,0 +1,292 @@
+/* Wrapper that centers the layout and provides spacing around the game */
+.game4-wrapper {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.75rem, 2vw, 2.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header container with back button and title */
+.game4-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+    margin-bottom: clamp(0.25rem, 1vw, 1rem);
+}
+
+/* Top row with back button */
+.game4-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+/* Central block for title and instructions */
+.game4-header__center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+/* Back button with round design and clear shadow */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 1.8rem;
+    text-decoration: none;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+/* Press effect for the back button */
+.back-button:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 20px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+/* Game title */
+.game4-title {
+    font-size: clamp(1.8rem, 4vw, 3.4rem);
+    font-weight: 800;
+    color: #1e1b4b;
+}
+
+/* Instruction text below the title */
+.game4-instructions {
+    font-size: clamp(1rem, 2vw, 1.6rem);
+    font-weight: 600;
+    color: #312e81;
+}
+
+/* Game board with background image */
+.game4-field {
+    position: relative;
+    width: 100%;
+    min-height: clamp(280px, 50vh, 620px);
+    padding: clamp(1rem, 3vw, 3rem);
+    border-radius: 2rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
+        url('images/background.png');
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    margin-bottom: clamp(0.75rem, 2vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 3vw, 3rem);
+}
+
+/* Images container */
+.game4-images {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+}
+
+/* Word container */
+.game4-words {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: clamp(1rem, 2.5vw, 2rem);
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+}
+
+/* Image button */
+.game4-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1;
+    font-size: clamp(4rem, 8vw, 6rem);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #f59e0b;
+    border-radius: 1.5rem;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    user-select: none;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+}
+
+.game4-image:hover:not(.game4-image--matched) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-color: #d97706;
+}
+
+.game4-image:active:not(.game4-image--matched) {
+    transform: translateY(-2px);
+}
+
+.game4-image--selected {
+    background: rgba(254, 243, 199, 0.95);
+    border-color: #d97706;
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: rgba(245, 158, 11, 0.4) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
+}
+
+.game4-image--matched {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0);
+    transition: all 400ms ease;
+}
+
+/* Word button */
+.game4-word {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(60px, 8vw, 100px);
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #8b5cf6;
+    border-radius: 1.5rem;
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 700;
+    color: #4c1d95;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    user-select: none;
+}
+
+.game4-word:hover:not(.game4-word--matched) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-color: #7c3aed;
+}
+
+.game4-word:active:not(.game4-word--matched) {
+    transform: translateY(-2px);
+}
+
+.game4-word--selected {
+    background: rgba(221, 214, 254, 0.95);
+    border-color: #7c3aed;
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: rgba(139, 92, 246, 0.4) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
+}
+
+.game4-word--matched {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0);
+    transition: all 400ms ease;
+}
+
+/* Completion dialog overlay */
+.completion-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+/* Keep dialog hidden via hidden attribute */
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+/* The dialog content itself */
+.completion-dialog__content {
+    background: #ffffff;
+    border-radius: 1.75rem;
+    padding: clamp(2rem, 5vw, 2.5rem);
+    text-align: center;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Title in the dialog */
+.completion-dialog__title {
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #1e1b4b;
+}
+
+/* Message text in the dialog */
+.completion-dialog__message {
+    font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+    color: #312e81;
+}
+
+/* Button row in the dialog */
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Base style for dialog buttons */
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+/* Primary button (continue) */
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+/* Press effect on dialog buttons */
+.completion-dialog__btn:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 20px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .game4-images,
+    .game4-words {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1rem;
+    }
+}
+
