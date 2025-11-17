@@ -22,14 +22,12 @@ const GRID_OFFSET_RATIO = 0.3; // Grid offset as ratio of cell size
 // DOM references shared between functions
 let titleEl = null;
 let instructionsEl = null;
-let startButton = null;
 let animalField = null;
 let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let completionVideo = null;
-let retryButton = null;
-let quitButton = null;
+let continueButton = null;
 
 // Audio-related resources
 let audioContext = null;
@@ -59,6 +57,7 @@ window.addEventListener('DOMContentLoaded', () => {
     attachEventListeners();
     resetGameUi();
     requestBackgroundAudioStart();
+    startNewGame(); // Start game automatically, similar to game 3
 });
 
 /**
@@ -67,14 +66,12 @@ window.addEventListener('DOMContentLoaded', () => {
 function cacheDomElements() {
     titleEl = document.getElementById('game2-title');
     instructionsEl = document.getElementById('instructions-text');
-    startButton = document.getElementById('start-button');
     animalField = document.getElementById('animal-field');
     completionDialog = document.getElementById('completion-dialog');
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     completionVideo = document.getElementById('completion-video');
-    retryButton = document.getElementById('retry-button');
-    quitButton = document.getElementById('quit-button');
+    continueButton = document.getElementById('continue-button');
 }
 
 /**
@@ -84,14 +81,8 @@ function populateStaticTexts() {
     if (titleEl) {
         titleEl.textContent = STRINGS.title;
     }
-    if (startButton) {
-        startButton.textContent = STRINGS.labels.start;
-    }
-    if (retryButton) {
-        retryButton.textContent = STRINGS.labels.retry;
-    }
-    if (quitButton) {
-        quitButton.textContent = STRINGS.labels.quit;
+    if (continueButton) {
+        continueButton.textContent = STRINGS.labels.continue;
     }
     if (completionTitle) {
         completionTitle.textContent = STRINGS.dialog.title;
@@ -105,14 +96,8 @@ function populateStaticTexts() {
  * Attaches all event listeners for buttons and window events.
  */
 function attachEventListeners() {
-    if (startButton) {
-        startButton.addEventListener('click', handleStartButtonClick);
-    }
-    if (retryButton) {
-        retryButton.addEventListener('click', handleRetryClick);
-    }
-    if (quitButton) {
-        quitButton.addEventListener('click', handleQuitClick);
+    if (continueButton) {
+        continueButton.addEventListener('click', handleContinueClick);
     }
     document.addEventListener('visibilitychange', handleVisibilityChange);
     // Listen for volume changes from main page
@@ -148,23 +133,6 @@ function handleVolumeChange(event) {
 }
 
 /**
- * Handles clicks on the start button and toggles between start, pause, and resume.
- */
-function handleStartButtonClick() {
-    if (!state.gameRunning) {
-        startNewGame();
-        return;
-    }
-
-    if (state.gamePaused) {
-        resumeGame();
-        return;
-    }
-
-    pauseGame();
-}
-
-/**
  * Starts a new game by resetting state, creating animal cards, and starting audio.
  */
 function startNewGame() {
@@ -186,9 +154,6 @@ function startNewGame() {
     clearAnimalField();
     hideCompletionDialog();
     setInstructionsText(STRINGS.instructions);
-    if (startButton) {
-        startButton.textContent = STRINGS.labels.pause;
-    }
 
     const shuffledAnimals = shuffleArray(ANIMALS.slice());
     
@@ -253,14 +218,11 @@ function startNewGame() {
 }
 
 /**
- * Pauses the game, updates UI, and temporarily stops audio streams.
+ * Pauses the game when window loses focus (e.g., tab switch).
+ * Note: Resume is automatic when window regains focus.
  */
 function pauseGame() {
     state.gamePaused = true;
-    setInstructionsText(STRINGS.pausedInstructions);
-    if (startButton) {
-        startButton.textContent = STRINGS.labels.resume;
-    }
     if (animalField) {
         animalField.classList.add('animal-field--paused');
     }
@@ -273,14 +235,10 @@ function pauseGame() {
 }
 
 /**
- * Resumes the game after a pause and continues background audio.
+ * Resumes the game when window regains focus.
  */
 function resumeGame() {
     state.gamePaused = false;
-    setInstructionsText(STRINGS.instructions);
-    if (startButton) {
-        startButton.textContent = STRINGS.labels.pause;
-    }
     if (animalField) {
         animalField.classList.remove('animal-field--paused');
     }
@@ -304,11 +262,6 @@ function resetGameUi() {
     state.foundCount = 0;
 
     setInstructionsText(STRINGS.instructions);
-
-    if (startButton) {
-        startButton.textContent = STRINGS.labels.start;
-        startButton.disabled = false;
-    }
 
     // Stop any playing animal sound and clear references
     stopCurrentAnimalSound();
@@ -492,9 +445,6 @@ function finishGame() {
     state.gamePaused = false;
 
     setInstructionsText(STRINGS.completionMessage);
-    if (startButton) {
-        startButton.textContent = STRINGS.labels.start;
-    }
     if (animalField) {
         animalField.classList.remove('animal-field--paused');
     }
@@ -562,25 +512,21 @@ function clearAnimalField() {
 }
 
 /**
- * Resets the game to initial state without starting play immediately.
+ * Handles the continue button click - restarts the game.
  */
-function handleRetryClick() {
-    resetGameUi();
+function handleContinueClick() {
+    hideCompletionDialog();
+    startNewGame();
 }
 
 /**
- * Takes the player back to the main menu.
- */
-function handleQuitClick() {
-    window.location.href = '../../index.html';
-}
-
-/**
- * Automatically pauses the game when the window loses focus (mobile/tabs).
+ * Automatically pauses/resumes the game when the window loses/regains focus (mobile/tabs).
  */
 function handleVisibilityChange() {
     if (document.hidden && state.gameRunning && !state.gamePaused) {
         pauseGame();
+    } else if (!document.hidden && state.gameRunning && state.gamePaused) {
+        resumeGame();
     }
 }
 

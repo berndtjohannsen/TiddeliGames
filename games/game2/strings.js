@@ -2,22 +2,16 @@
 window.GAME2_STRINGS = Object.freeze({
     title: '',
     instructions: '',
-    pausedInstructions: '',
     completionMessage: '',
     labels: {
-        start: 'Starta',
-        pause: 'Pausa',
-        resume: 'Fortsätt',
-        retry: 'Spela igen',
-        quit: 'Tillbaka'
+        continue: 'Fortsätt'
     },
     dialog: {
         title: '',
         subtitle: ''
     },
     aria: {
-        animal: name => `Djur: ${name}`,
-        backgroundAudioToggle: 'Starta eller stoppa bakgrundsljudet'
+        animal: name => `Djur: ${name}`
     },
     ambience: {
         track: 'sounds/background.mp3'
