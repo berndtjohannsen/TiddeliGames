@@ -1,6 +1,6 @@
 window.APP_STRINGS = Object.freeze({
     update: {
-        banner: 'Ny version finns tillgänglig',
+        banner: 'Ny version!',
         action: 'Uppdatera nu'
     },
     install: {
@@ -43,9 +43,9 @@ window.APP_STRINGS = Object.freeze({
             },
             {
                 id: 'game5',
-                name: 'Spel 5',
-                description: 'Femte cirkusspelet',
-                icon: '🎪',
+                name: 'Räkna ihop',
+                description: 'Addera emojis. (4+ år)',
+                icon: '➕',
                 path: 'games/game5/index.html'
             },
             {

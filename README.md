@@ -1,15 +1,13 @@
 # TiddeliGames
 
-This is an app including several simple childrens games. They are web (PWA) apps and can run on any supported platform. Primarily tested on Chrome browser on android.
+This is an app that includes several small simple childrens games. They are web (PWA) apps and can run on any supported platform including phones and tablets. Primarily tested on Chrome browsers on Windows and Android. Games are in swedish but are pretty easy to localize. The games require no backend, copy and install on any web server to run.
 
+You can test directly from here: https://berndtjohannsen.github.io.com/TiddeliGames
+
+The game optionally (user selection) be installed as an app or just run in the browser.
 
 ## Features
-- Main selection menu for the different games
-- Can optionally (user selection) be installed as an app
-- A number of games (TBD)
-- Each games has its separate configuration
-- Version handling
-
+Several games each with an element of learning. Letters, words, numbers and simple arithmetics. Best played sitting in the knee of your parents or grand-parents.
 
 Technical details in `design.md`.
 
@@ -33,7 +31,7 @@ This project uses the following third-party libraries:
 - **Tailwind CSS** - MIT License (commercial-safe)
 - **Tone.js** - MIT License (commercial-safe)
 
-These third-party components have their own licenses which allow commercial use. However, the overall project license restricts commercial use of the complete application.
+These third-party components have their own licenses which allow commercial use. 
 
 ### Rights
 All rights reserved. For commercial licensing inquiries, please contact the repository owner.
