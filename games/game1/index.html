@@ -17,18 +17,16 @@
 <body class="min-h-screen bg-gradient-to-br from-sky-200 via-white to-purple-200">
     <!-- Safe area aware wrapper -->
     <div class="game-wrapper">
-        <!-- Header with back navigation and version info placeholder -->
+        <!-- Header with back navigation and title -->
         <header class="game-header">
-            <!-- Back to game list button -->
-            <a href="../../index.html" class="back-button" aria-label="Back to all games">⟵</a>
-            <!-- Primary action button -->
-            <button id="start-button" class="start-button" type="button"></button>
-            <!-- Timer display positioned in the header for visibility -->
-            <div class="timer" id="timer-display">0.0</div>
+            <div class="game-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game-header__center">
+                <h1 id="game-title" class="game-title"></h1>
+                <p id="instructions-text" class="game-instructions" aria-live="polite"></p>
+            </div>
         </header>
-
-        <!-- Friendly instructions and feedback -->
-        <p id="instructions-text" class="status-message" aria-live="polite"></p>
 
         <!-- Completion dialog that appears after winning -->
         <div id="completion-dialog" class="completion-dialog" hidden>
@@ -39,8 +37,7 @@
                     <img src="images/dog.png" alt="Glad hund firar vinsten">
                 </div>
                 <div class="completion-dialog__actions">
-                    <button id="retry-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
-                    <button id="back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+                    <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
                 </div>
             </div>
         </div>

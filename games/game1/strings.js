@@ -1,23 +1,15 @@
 window.GAME_STRINGS = Object.freeze({
-    /** can be used for on-screen instructions for example
-    instructions: 'Tryck på cirklarna i nummerordning.',
-    pausedInstructions: 'Pausat! Tryck på Fortsätt för att spela vidare.',
-    **/
-   
-    instructions: '',     
-    pausedInstructions: '',
+    title: 'Sifferpop',
+    instructions: 'Tryck på siffrorna 1 till 10 i ordning.',
     labels: {
-        start: 'Starta',
-        pause: 'Pausa',
-        resume: 'Fortsätt'
+        continue: 'Fortsätt'
     },
     messages: {
-        success: finalTime => `Det tog ${finalTime} sekunder`
+        success: 'Hurra! Alla siffror är klara.'
     },
     dialog: {
-        title: 'HURRA!',
-        retry: 'Försök igen',
-        back: 'Tillbaka'
+        title: 'Bra jobbat!',
+        message: 'Vill du spela igen?'
     },
     aria: {
         circle: number => `Cirkel nummer ${number}`

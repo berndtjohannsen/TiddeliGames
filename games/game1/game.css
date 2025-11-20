@@ -6,14 +6,25 @@
     width: 100%;
 }
 
-/* Header arranges back button, title, and timer neatly */
+/* Header arranges back button, title, and instructions */
 .game-header {
     display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1.5vw, 1rem);
+    margin-bottom: clamp(0.5rem, 1.5vw, 1.25rem);
+}
+
+.game-header__buttons {
+    display: flex;
+    justify-content: flex-start;
     align-items: center;
-    justify-content: space-between;
-    gap: clamp(0.4rem, 1.5vw, 0.75rem);
-    flex-wrap: nowrap;
-    margin-bottom: clamp(0.25rem, 1vw, 0.5rem);
+}
+
+.game-header__center {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.3rem, 1vw, 0.6rem);
 }
 
 /* Back button uses soft colors and large touch target */
@@ -29,58 +40,22 @@
     transition: transform 150ms ease, box-shadow 150ms ease;
 }
 
-/* Button press effect */
 .back-button:active {
     transform: translateY(2px);
     box-shadow: rgba(0, 0, 0, 0.25) 0 10px 18px, rgba(0, 0, 0, 0.2) 0 6px 6px;
 }
 
-/* Timer styled like a digital badge */
-.timer {
-    background: #facc15;
-    color: #0f172a;
-    font-weight: 700;
-    padding: 0.75rem 1.5rem;
-    border-radius: 1.5rem;
-    min-width: 5rem;
-    text-align: center;
-    font-size: 1.5rem;
-    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+.game-title {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #1e1b4b;
 }
 
-/* Status message keeps players informed without a bubble */
-.status-message {
-    font-size: clamp(1rem, 3vw, 1.25rem);
+.game-instructions {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
     font-weight: 600;
     color: #312e81;
-    text-align: center;
-    margin-bottom: 1rem;
     min-height: 1.5em;
-}
-
-/* Start button uses bright friendly colors */
-.start-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 1 1 auto;
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: #ffffff;
-    font-size: 1.25rem;
-    font-weight: 700;
-    padding: 0.6rem 1.65rem;
-    border: none;
-    border-radius: 9999px;
-    cursor: pointer;
-    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
-    transition: transform 150ms ease, box-shadow 150ms ease;
-    max-width: clamp(260px, 35vw, 420px);
-}
-
-/* Button press animation */
-.start-button:active {
-    transform: translateY(2px);
-    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 20px, rgba(0, 0, 0, 0.22) 0 6px 6px;
 }
 
 /* Game area uses relative positioning for circle placement */

@@ -270,6 +270,7 @@ function resetGameUi() {
     clearAnimalField();
     if (animalField) {
         animalField.classList.remove('animal-field--paused');
+        animalField.classList.remove('animal-field--has-selected');
     }
     hideCompletionDialog();
     stopBackgroundAmbience();
@@ -324,12 +325,36 @@ function handleAnimalCardInteraction(card, animal) {
     // If another sound is currently playing, stop it and remove that card immediately
     if (currentAnimalSource && currentAnimalCard) {
         stopCurrentAnimalSound();
+        // Remove selected class from previous card
+        currentAnimalCard.classList.remove('animal-card--selected');
         removeCardImmediately(currentAnimalCard);
     }
 
-    // Disable card immediately to prevent multiple clicks
-    card.disabled = true;
+    // Prevent multiple clicks using pointer-events instead of disabled
+    // (disabled buttons sometimes have rendering issues)
+    card.style.pointerEvents = 'none';
     currentAnimalCard = card;
+    // Remove transition to prevent interference with animation
+    card.style.transition = 'none';
+    // Force hardware acceleration (but don't set transform here - let animation handle it)
+    card.style.willChange = 'transform';
+    // Blur the card to remove any focus state that might interfere
+    card.blur();
+    // Add selected class FIRST so its animation rule is in place
+    card.classList.add('animal-card--selected');
+    
+    // Explicitly set animation to ensure it starts
+    card.style.animation = 'selected-move 1.5s ease-in-out infinite, selected-pulse 1.2s ease-in-out infinite';
+    card.style.animationPlayState = 'running';
+    
+    // THEN add class to parent to pause other cards
+    if (animalField) {
+        animalField.classList.add('animal-field--has-selected');
+    }
+    
+    // Force immediate repaint by accessing layout properties
+    void card.offsetHeight;
+    void card.getBoundingClientRect();
 
     // Play sound and wait for it to finish before starting removal animation
     // Store card reference in closure to ensure we can remove it even if currentAnimalCard changes
@@ -397,6 +422,15 @@ function removeCardImmediately(card) {
         if (currentAnimalCard === card) {
             currentAnimalCard = null;
         }
+        // Remove selected class before adding found class
+        card.classList.remove('animal-card--selected');
+        // Remove class from parent if no other selected cards exist
+        if (animalField) {
+            const hasSelected = animalField.querySelector('.animal-card--selected');
+            if (!hasSelected) {
+                animalField.classList.remove('animal-field--has-selected');
+            }
+        }
         card.classList.add('animal-card--found');
         card.addEventListener('animationend', () => {
             if (card && card.parentNode) {
@@ -411,6 +445,19 @@ function removeCardImmediately(card) {
  */
 function removeCardAfterSound(card) {
     if (card && card.parentNode && !card.classList.contains('animal-card--found')) {
+        // Remove selected class before starting removal animation
+        card.classList.remove('animal-card--selected');
+        // Clear currentAnimalCard reference if this was the selected card
+        if (currentAnimalCard === card) {
+            currentAnimalCard = null;
+        }
+        // Remove class from parent if no other selected cards exist
+        if (animalField) {
+            const hasSelected = animalField.querySelector('.animal-card--selected');
+            if (!hasSelected) {
+                animalField.classList.remove('animal-field--has-selected');
+            }
+        }
         // Stop any existing animations first
         card.style.animation = 'none';
         // Force a reflow

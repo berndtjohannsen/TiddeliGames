@@ -122,6 +122,13 @@
     animation-play-state: paused;
 }
 
+/* Selected state must override hover/focus */
+.animal-card--selected:hover,
+.animal-card--selected:focus-visible {
+    transform: none !important;
+    animation-play-state: running !important;
+}
+
 /* The animal image itself */
 .animal-card__image {
     width: 100%;
@@ -132,6 +139,71 @@
     pointer-events: none;
     display: block;
     border-radius: 1.5rem;
+}
+
+/* When a card is selected, pause all other cards' animations */
+.animal-field:has(.animal-card--selected) .animal-card:not(.animal-card--selected):not(.animal-card--found),
+.animal-field--has-selected .animal-card:not(.animal-card--selected):not(.animal-card--found) {
+    animation-play-state: paused !important;
+}
+
+/* Selected state - when an animal card is currently playing its sound */
+/* Must come after the pause rule to ensure it overrides */
+.animal-card--selected,
+.animal-field:has(.animal-card--selected) .animal-card--selected,
+.animal-field--has-selected .animal-card--selected {
+    border: 4px solid #fbbf24;
+    box-shadow: 
+        rgba(251, 191, 36, 0.5) 0 0 24px,
+        rgba(251, 191, 36, 0.35) 0 10px 26px,
+        rgba(0, 0, 0, 0.25) 0 4px 8px;
+    /* Disable transition so animation can work properly */
+    transition: none !important;
+    /* Force hardware acceleration and composite layer for smooth animation */
+    will-change: transform;
+    backface-visibility: hidden;
+    /* Ensure hover/focus states don't interfere */
+    pointer-events: auto;
+    /* Override the base floaty animation completely with the selected-move animation */
+    animation: selected-move 1.5s ease-in-out infinite, selected-pulse 1.2s ease-in-out infinite !important;
+    animation-play-state: running !important;
+    animation-delay: 0s !important;
+    z-index: 10;
+}
+
+/* Enhanced movement animation for selected card - more pronounced movement */
+@keyframes selected-move {
+    0%, 100% {
+        transform: scale(1.18) translate(0, -10px) rotate(0deg);
+    }
+    20% {
+        transform: scale(1.18) translate(18px, -22px) rotate(5deg);
+    }
+    40% {
+        transform: scale(1.18) translate(-15px, -12px) rotate(-5deg);
+    }
+    60% {
+        transform: scale(1.18) translate(12px, -26px) rotate(4deg);
+    }
+    80% {
+        transform: scale(1.18) translate(-10px, -16px) rotate(-4deg);
+    }
+}
+
+/* Pulsing animation for selected card */
+@keyframes selected-pulse {
+    0%, 100% {
+        box-shadow: 
+            rgba(251, 191, 36, 0.5) 0 0 24px,
+            rgba(251, 191, 36, 0.35) 0 10px 26px,
+            rgba(0, 0, 0, 0.25) 0 4px 8px;
+    }
+    50% {
+        box-shadow: 
+            rgba(251, 191, 36, 0.7) 0 0 28px,
+            rgba(251, 191, 36, 0.5) 0 10px 30px,
+            rgba(0, 0, 0, 0.25) 0 4px 8px;
+    }
 }
 
 /* Animation when the animal has been clicked */
