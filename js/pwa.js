@@ -145,7 +145,8 @@ async function registerServiceWorker() {
 function showUpdateBanner(onReloadRequested) {
     // Delegate to the main showBanner function in app.js if available
     if (window.showUpdateBannerFromPWA) {
-        window.showUpdateBannerFromPWA(onReloadRequested, 'New version available');
+        // Pass null for remoteVersion since we don't have a specific version number from SW update
+        window.showUpdateBannerFromPWA(onReloadRequested, null);
     } else {
         // Fallback if app.js hasn't loaded yet
         const banner = document.getElementById('update-banner');
@@ -153,9 +154,16 @@ function showUpdateBanner(onReloadRequested) {
         const reloadBtn = document.getElementById('update-reload-btn');
         const overlay = document.getElementById('update-overlay');
         if (!banner || !reloadBtn) return;
-        if (textEl) textEl.textContent = 'New version available';
+        // Use Swedish string if available, otherwise fallback
+        const bannerText = (window.APP_STRINGS && window.APP_STRINGS.update && window.APP_STRINGS.update.banner) 
+            ? window.APP_STRINGS.update.banner 
+            : 'Ny version!';
+        const actionText = (window.APP_STRINGS && window.APP_STRINGS.update && window.APP_STRINGS.update.action) 
+            ? window.APP_STRINGS.update.action 
+            : 'Uppdatera';
+        if (textEl) textEl.textContent = bannerText;
         banner.classList.remove('hidden');
-        reloadBtn.textContent = 'Update now';
+        reloadBtn.textContent = actionText;
         if (overlay) overlay.classList.remove('hidden');
         document.body.classList.add('overflow-hidden');
         reloadBtn.onclick = () => {
