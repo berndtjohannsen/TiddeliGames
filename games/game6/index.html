@@ -1,0 +1,67 @@
+<!-- Spelling Game (Game 6) - Click characters in order -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stava ord</title>
+    <!-- Shared Tailwind styles for consistent layout -->
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <!-- Shared app styles -->
+    <link rel="stylesheet" href="../../css/styles.css">
+    <!-- Animation helpers -->
+    <link rel="stylesheet" href="../../css/animations.css">
+    <!-- Game-specific styles -->
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-violet-200 via-white to-rose-200">
+    <!-- Wrapper that centers the entire game experience -->
+    <div class="game6-wrapper">
+        <!-- Page header with back link and title -->
+        <header class="game6-header">
+            <div class="game6-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game6-header__center">
+                <h1 class="game6-title" id="game6-title"></h1>
+                <p class="game6-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <!-- Game board with background image -->
+        <main id="game6-field" class="game6-field" aria-live="polite">
+            <!-- Emoji display -->
+            <div id="emoji-container" class="game6-emoji-container" role="img" aria-label="Bild">
+                <!-- Emoji is placed dynamically by game.js -->
+            </div>
+
+            <!-- Answer area showing selected characters -->
+            <div id="answer-container" class="game6-answer" role="textbox" aria-label="Svar">
+                <!-- Selected characters are placed dynamically by game.js -->
+            </div>
+
+            <!-- Character buttons (scrambled) -->
+            <div id="characters-container" class="game6-characters" role="group" aria-label="Bokstäver">
+                <!-- Character buttons are placed dynamically by game.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Completion dialog shown when word is spelled correctly -->
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Localization and logic -->
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>
+

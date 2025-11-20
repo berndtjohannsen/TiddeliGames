@@ -1,0 +1,297 @@
+/* Wrapper that centers the layout and provides spacing around the game */
+.game6-wrapper {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.75rem, 2vw, 2.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header container with back button and title */
+.game6-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+    margin-bottom: clamp(0.25rem, 1vw, 1rem);
+}
+
+/* Top row with back button */
+.game6-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+/* Central block for title and instructions */
+.game6-header__center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+/* Back button with round design and clear shadow */
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 62px;
+    height: 62px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+    color: #0f172a;
+    font-weight: 700;
+    font-size: 1.8rem;
+    text-decoration: none;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+/* Press effect for the back button */
+.back-button:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 20px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+/* Game title */
+.game6-title {
+    font-size: clamp(1.8rem, 4vw, 3.4rem);
+    font-weight: 800;
+    color: #1e1b4b;
+}
+
+/* Instruction text below the title */
+.game6-instructions {
+    font-size: clamp(1rem, 2vw, 1.6rem);
+    font-weight: 600;
+    color: #312e81;
+}
+
+/* Game board with background image */
+.game6-field {
+    position: relative;
+    width: 100%;
+    min-height: clamp(280px, 50vh, 620px);
+    padding: clamp(1rem, 3vw, 3rem);
+    border-radius: 2rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
+        url('images/background.png');
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
+    position: relative;
+    overflow: hidden;
+    flex: 1;
+    margin-bottom: clamp(0.75rem, 2vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: center;
+}
+
+/* Emoji container - large display at top */
+.game6-emoji-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(200px, 30vw, 300px);
+    height: clamp(200px, 30vw, 300px);
+    font-size: clamp(8rem, 15vw, 12rem);
+    background: rgba(255, 255, 255, 0.95);
+    border: 4px solid #f59e0b;
+    border-radius: 2rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+    user-select: none;
+}
+
+/* Answer area showing selected characters in order */
+.game6-answer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+    min-height: clamp(80px, 12vw, 120px);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #8b5cf6;
+    border-radius: 1.5rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    backdrop-filter: blur(4px);
+    width: 100%;
+    max-width: 600px;
+    flex-wrap: wrap;
+}
+
+/* Answer character slot (empty or filled) */
+.game6-answer-char {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(50px, 8vw, 70px);
+    height: clamp(50px, 8vw, 70px);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    color: #4c1d95;
+    background: rgba(221, 214, 254, 0.5);
+    border: 2px dashed #8b5cf6;
+    border-radius: 0.75rem;
+    transition: all 200ms ease;
+}
+
+/* Answer character slot with content */
+.game6-answer-char--filled {
+    background: rgba(221, 214, 254, 0.95);
+    border: 3px solid #7c3aed;
+    border-style: solid;
+    box-shadow: rgba(139, 92, 246, 0.3) 0 4px 8px;
+}
+
+/* Character buttons container */
+.game6-characters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.75rem, 2vw, 1.25rem);
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    width: 100%;
+    max-width: 600px;
+    justify-content: center;
+}
+
+/* Individual character button */
+.game6-char {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(60px, 10vw, 80px);
+    height: clamp(60px, 10vw, 80px);
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    color: #4c1d95;
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #8b5cf6;
+    border-radius: 1.5rem;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    user-select: none;
+}
+
+.game6-char:hover:not(.game6-char--used) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-color: #7c3aed;
+}
+
+.game6-char:active:not(.game6-char--used) {
+    transform: translateY(-2px);
+}
+
+.game6-char--used {
+    opacity: 0.3;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* Completion dialog overlay */
+.completion-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+/* Keep dialog hidden via hidden attribute */
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+/* The dialog content itself */
+.completion-dialog__content {
+    background: #ffffff;
+    border-radius: 1.75rem;
+    padding: clamp(2rem, 5vw, 2.5rem);
+    text-align: center;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Title in the dialog */
+.completion-dialog__title {
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #1e1b4b;
+}
+
+/* Message text in the dialog */
+.completion-dialog__message {
+    font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+    color: #312e81;
+}
+
+/* Button row in the dialog */
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Base style for dialog buttons */
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+/* Primary button (continue) */
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+/* Press effect on dialog buttons */
+.completion-dialog__btn:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 20px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .game6-characters {
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .game6-char {
+        width: clamp(50px, 12vw, 70px);
+        height: clamp(50px, 12vw, 70px);
+        font-size: clamp(1.6rem, 5vw, 2.5rem);
+    }
+}
+

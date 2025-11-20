@@ -1,5 +1,5 @@
-// Local strings and game-specific resources for Spelling Game (Game 4)
-window.GAME4_STRINGS = Object.freeze({
+// Local strings and game-specific resources for Spelling Game (Game 6)
+window.GAME6_STRINGS = Object.freeze({
     title: '',
     instructions: '',
     labels: {
@@ -11,7 +11,7 @@ window.GAME4_STRINGS = Object.freeze({
     },
     aria: {
         image: word => `Bild: ${word}`,
-        word: word => `Ord: ${word}`
+        character: char => `Bokstav: ${char}`
     },
     ambience: {
         track: 'sounds/background.mp3'
@@ -21,9 +21,10 @@ window.GAME4_STRINGS = Object.freeze({
     },
     // Word-image pairs (emoji and Swedish word)
     // Each pair has an emoji and the corresponding Swedish word
-    // Easy to recognize and spell for kids
+    // Easy to recognize and spell for kids (5+ years)
+    // All words are 6 characters or less
     wordPairs: [
-        // Animals
+        // Animals (2-6 characters)
         { emoji: '🐱', word: 'KATT' },
         { emoji: '🐶', word: 'HUND' },
         { emoji: '🐷', word: 'GRIS' },
@@ -48,22 +49,16 @@ window.GAME4_STRINGS = Object.freeze({
         { emoji: '🐬', word: 'DELFIN' },
         { emoji: '🦈', word: 'HAJ' },
         { emoji: '🦀', word: 'KRABBA' },
-        { emoji: '🐧', word: 'PINGVIN' },
         { emoji: '🦉', word: 'UGGLA' },
-        { emoji: '🐘', word: 'ELEFANT' },
-        { emoji: '🦒', word: 'GIRAFF' },
         { emoji: '🐪', word: 'KAMEL' },
-        { emoji: '🦘', word: 'KÄNGURU' },
-        // Vehicles
+        { emoji: '🐿️', word: 'EKORRE' },
+        // Vehicles (2-6 characters)
         { emoji: '🚗', word: 'BIL' },
         { emoji: '🚌', word: 'BUSS' },
         { emoji: '🚂', word: 'TÅG' },
-        { emoji: '✈️', word: 'FLYGPLAN' },
         { emoji: '🚢', word: 'BÅT' },
-        { emoji: '🚑', word: 'AMBULANS' },
-        { emoji: '🚒', word: 'BRANDBIL' },
-        { emoji: '🚓', word: 'POLISBIL' },
-        // Food
+        { emoji: '🚤', word: 'BÅT' },
+        // Food (2-6 characters)
         { emoji: '🍎', word: 'ÄPPLE' },
         { emoji: '🍌', word: 'BANAN' },
         { emoji: '🍞', word: 'BRÖD' },
@@ -71,48 +66,51 @@ window.GAME4_STRINGS = Object.freeze({
         { emoji: '🍪', word: 'KAKA' },
         { emoji: '🥛', word: 'MJÖLK' },
         { emoji: '🧀', word: 'OST' },
-        { emoji: '🍊', word: 'APELSIN' },
-        { emoji: '🍓', word: 'JORDGUBBE' },
-        { emoji: '🍉', word: 'MELON' },
         { emoji: '🥕', word: 'MOROT' },
-        { emoji: '🥔', word: 'POTATIS' },
         { emoji: '🍅', word: 'TOMAT' },
         { emoji: '🥒', word: 'GURKA' },
-    
         { emoji: '🍝', word: 'PASTA' },
-        { emoji: '🍔', word: 'HAMBURGARE' },
         { emoji: '🌭', word: 'KORV' },
         { emoji: '🍦', word: 'GLASS' },
         { emoji: '🍭', word: 'GODIS' },
         { emoji: '☕', word: 'KAFFE' },
-        // Body parts
+        { emoji: '🥚', word: 'ÄGG' },
+        { emoji: '🥗', word: 'SALLAD' },
+        { emoji: '🎂', word: 'TÅRTA' },
+        { emoji: '🍼', word: 'FLASKA' },
+        { emoji: '🧊', word: 'IS' },
+        { emoji: '🥄', word: 'SKED' },
+        { emoji: '🔪', word: 'KNIV' },
+        // Body parts (2-6 characters)
         { emoji: '👋', word: 'HAND' },
         { emoji: '🦶', word: 'FOT' },
         { emoji: '👂', word: 'ÖRA' },
         { emoji: '👃', word: 'NÄSA' },
         { emoji: '👁️', word: 'ÖGA' },
         { emoji: '👄', word: 'MUN' },
-        { emoji: '👅', word: 'TUNGA' },
-        { emoji: '🦷', word: 'TAND' },
         { emoji: '💪', word: 'ARM' },
         { emoji: '🦵', word: 'BEN' },
-        // Nature
+        { emoji: '🦴', word: 'BEN' },
+                // Nature (2-6 characters)
         { emoji: '🌳', word: 'TRÄD' },
         { emoji: '🌸', word: 'BLOMMA' },
         { emoji: '☀️', word: 'SOL' },
         { emoji: '🌙', word: 'MÅNE' },
         { emoji: '🌲', word: 'GRAN' },
-       
         { emoji: '🍄', word: 'SVAMP' },
         { emoji: '🌻', word: 'SOLROS' },
-        
-
-        // Weather
-        { emoji: '☁️', word: 'MOLN' },
-        { emoji: '🌧️', word: 'REGN' },
-        { emoji: '🌈', word: 'REGNBÅGE' },
-        { emoji: '☃️', word: 'SNÖGUBBE' },
-        // Objects
+        { emoji: '🌷', word: 'TULPAN' },
+        { emoji: '🌹', word: 'ROS' },
+        { emoji: '🌾', word: 'RIS' },
+        { emoji: '🍂', word: 'LÖV' },
+        { emoji: '🍃', word: 'LÖV' },
+        { emoji: '🍇', word: 'DRUVOR' },
+        { emoji: '🌽', word: 'MAJS' },
+        { emoji: '🌶️', word: 'PEPPAR' },
+        { emoji: '🧅', word: 'LÖK' },
+        // Weather (2-6 characters)
+        { emoji: '💧', word: 'DROPPE' },
+        // Objects (2-6 characters)
         { emoji: '🏠', word: 'HUS' },
         { emoji: '📚', word: 'BOK' },
         { emoji: '⚽', word: 'BOLL' },
@@ -121,28 +119,33 @@ window.GAME4_STRINGS = Object.freeze({
         { emoji: '💡', word: 'LAMPA' },
         { emoji: '🪑', word: 'STOL' },
         { emoji: '🛏️', word: 'SÄNG' },
-        { emoji: '🪟', word: 'FÖNSTER' },
         { emoji: '🪣', word: 'HINK' },
-       
-                // Clothing
+        { emoji: '🧩', word: 'PUSSEL' },
+        { emoji: '🥁', word: 'TRUMMA' },
+        { emoji: '🪜', word: 'STEGE' },
+        { emoji: '🪓', word: 'YXA' },
+        { emoji: '🪝', word: 'KROK' },
+        { emoji: '💉', word: 'SPRUTA' },
+        { emoji: '🚪', word: 'DÖRR' },
+        { emoji: '🛁', word: 'BADKAR' },
+        { emoji: '🧺', word: 'KORG' },
+                // Clothing (2-6 characters)
         { emoji: '👕', word: 'TRÖJA' },
         { emoji: '👖', word: 'BYXOR' },
-        { emoji: '👗', word: 'KLÄNNING' },
         { emoji: '👟', word: 'SKO' },
         { emoji: '🧢', word: 'MÖSSA' },
-        { emoji: '🧦', word: 'STRUMPA' },
-        // Toys and games
-        { emoji: '🧩', word: 'PUSSEL' },
-        // Musical instruments
-        { emoji: '🥁', word: 'TRUMMA' },
-        { emoji: '🎺', word: 'TRUMPET' },
-                // Sports
-        // School/learning
+        { emoji: '👜', word: 'VÄSKA' },
+        { emoji: '👞', word: 'SKO' },
+        { emoji: '🥿', word: 'SKO' },
+        { emoji: '👢', word: 'STÖVEL' },
+        { emoji: '👑', word: 'KRONA' },
+        { emoji: '👒', word: 'HATT' },
+        { emoji: '🎩', word: 'HATT' },
+        { emoji: '🎓', word: 'MÖSSA' },
+        { emoji: '💍', word: 'RING' },
+        // School/learning (2-6 characters)
         { emoji: '✏️', word: 'PENNA' },
-        { emoji: '✂️', word: 'SAX' }
-        
-
-        // Buildings
-
+        { emoji: '📑', word: 'BLAD' },
+        { emoji: '📖', word: 'BOK' }
     ]
 });

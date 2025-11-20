@@ -9,14 +9,14 @@ window.APP_STRINGS = Object.freeze({
     },
     header: {
         title: 'TiddeliGames',
-        subtitle: 'Välj ett spel att spela!'
+        subtitle: 'Välj ett spel!'
     },
     games: {
         items: [
             {
                 id: 'game1',
                 name: 'Sifferpop',
-                description: 'Tryck på siffrorna 1 till 10. (3+ år)',            
+                description: 'Siffrorna 1 till 10. (3+ år)',            
                 icon: '🎈',
                 path: 'games/game1/index.html'
             },
@@ -50,9 +50,9 @@ window.APP_STRINGS = Object.freeze({
             },
             {
                 id: 'game6',
-                name: 'Spel 6',
-                description: 'Sjätte stora spelet',
-                icon: '🎭',
+                name: 'Stava ord',
+                description: 'Bokstavera. (5+ år)',
+                icon: '🔤',
                 path: 'games/game6/index.html'
             }
         ]
