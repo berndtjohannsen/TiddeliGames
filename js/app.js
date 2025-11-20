@@ -18,6 +18,47 @@
     }
 })();
 
+// Prevent accidental pull-to-refresh (especially on iOS Safari and Android Chrome)
+(function preventPullToRefresh() {
+    let maybePrevent = false;
+    let lastTouchY = 0;
+    const THRESHOLD = 12;
+
+    function shouldPrevent() {
+        const scrollElement = document.scrollingElement || document.documentElement;
+        return (window.scrollY || (scrollElement && scrollElement.scrollTop) || 0) <= 0;
+    }
+
+    window.addEventListener('touchstart', (event) => {
+        if (event.touches.length !== 1) {
+            maybePrevent = false;
+            return;
+        }
+        lastTouchY = event.touches[0].clientY;
+        maybePrevent = shouldPrevent();
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (event) => {
+        if (!maybePrevent) {
+            return;
+        }
+        if (event.touches.length !== 1) {
+            maybePrevent = false;
+            return;
+        }
+
+        const currentY = event.touches[0].clientY;
+        const isPullingDown = currentY - lastTouchY > THRESHOLD;
+
+        if (isPullingDown) {
+            event.preventDefault();
+        } else if (currentY < lastTouchY) {
+            // User scrolled up, allow future pull-to-refresh when reaching top again
+            maybePrevent = false;
+        }
+    }, { passive: false });
+})();
+
 // Version change detection is handled by remoteVersionWatcher below
 
 // Robust remote version check (no-cache) and auto-upgrade flow
@@ -25,6 +66,23 @@
     const host = (location && location.hostname) || '';
     // Disable in local development
     if (host === 'localhost' || host === '127.0.0.1') return;
+
+    // Only check automatically on the landing page or once per session (start)
+    const path = ((location && location.pathname) || '').toLowerCase();
+    const isStartPage = !path.includes('/games/') && (path === '/' || path.endsWith('/index.html') || path === '');
+    const versionCheckedKey = 'version_checked_once';
+    const alreadyChecked = sessionStorage.getItem(versionCheckedKey) === 'true';
+
+    if (!isStartPage && alreadyChecked) {
+        return;
+    }
+    if (!alreadyChecked) {
+        try {
+            sessionStorage.setItem(versionCheckedKey, 'true');
+        } catch (_) {
+            // ignore quota errors
+        }
+    }
 
     function toParts(v) {
         const [maj, min, pat] = (v || '0.0.0').split('.').map(n => parseInt(n, 10) || 0);

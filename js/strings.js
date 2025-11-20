@@ -1,7 +1,7 @@
 window.APP_STRINGS = Object.freeze({
     update: {
         banner: 'Ny version!',
-        action: 'Uppdatera nu'
+        action: 'Uppdatera'
     },
     install: {
         buttonTitle: 'Installera app',
