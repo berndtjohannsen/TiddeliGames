@@ -38,6 +38,8 @@ const audioBufferCache = new Map();
 // Track currently playing animal sound and card
 let currentAnimalSource = null;
 let currentAnimalCard = null;
+// Track animation frame for selected card
+let selectedCardAnimationFrame = null;
 
 // Game state variables
 const state = {
@@ -45,7 +47,8 @@ const state = {
     gamePaused: false,
     foundCount: 0,
     audioStarted: false,
-    audioStarting: false
+    audioStarting: false,
+    currentGameAnimalCount: 0 // Number of animals in the current game
 };
 
 /**
@@ -155,7 +158,15 @@ function startNewGame() {
     hideCompletionDialog();
     setInstructionsText(STRINGS.instructions);
 
-    const shuffledAnimals = shuffleArray(ANIMALS.slice());
+    // Randomly select 6 animals from the available pool
+    const animalsToUse = ANIMALS.length > 6 
+        ? shuffleArray(ANIMALS.slice()).slice(0, 6)
+        : ANIMALS.slice();
+    
+    // Store the count for completion check
+    state.currentGameAnimalCount = animalsToUse.length;
+    
+    const shuffledAnimals = shuffleArray(animalsToUse);
     
     // Create a temporary card to get actual rendered size
     const tempCard = createAnimalCard(shuffledAnimals[0]);
@@ -200,11 +211,11 @@ function startNewGame() {
 
     requestBackgroundAudioStart();
 
-    // Preload all animal sound buffers in parallel to eliminate delays on first click
+    // Preload sound buffers for the selected animals only
     // This ensures all sounds are ready immediately when clicked
     ensureAudioContext().then(() => {
         if (audioContext && audioContext.state === 'running') {
-            const preloadPromises = ANIMALS.map(animal => {
+            const preloadPromises = animalsToUse.map(animal => {
                 const result = loadAudioBuffer(animal.sound);
                 // If it's already cached (returns buffer directly), wrap in resolved promise
                 // Otherwise it's already a promise
@@ -336,25 +347,130 @@ function handleAnimalCardInteraction(card, animal) {
     currentAnimalCard = card;
     // Remove transition to prevent interference with animation
     card.style.transition = 'none';
-    // Force hardware acceleration (but don't set transform here - let animation handle it)
+    // Force hardware acceleration
     card.style.willChange = 'transform';
     // Blur the card to remove any focus state that might interfere
     card.blur();
     // Add selected class FIRST so its animation rule is in place
     card.classList.add('animal-card--selected');
     
-    // Explicitly set animation to ensure it starts
-    card.style.animation = 'selected-move 1.5s ease-in-out infinite, selected-pulse 1.2s ease-in-out infinite';
-    card.style.animationPlayState = 'running';
-    
     // THEN add class to parent to pause other cards
     if (animalField) {
         animalField.classList.add('animal-field--has-selected');
     }
     
-    // Force immediate repaint by accessing layout properties
-    void card.offsetHeight;
-    void card.getBoundingClientRect();
+    // Manually animate using requestAnimationFrame for guaranteed mobile support
+    // This directly manipulates transform, bypassing CSS animation issues
+    let startTime = performance.now();
+    const moveDuration = 1500; // 1.5 seconds
+    const pulseDuration = 1200; // 1.2 seconds
+    
+    // Cancel any existing animation
+    if (selectedCardAnimationFrame) {
+        cancelAnimationFrame(selectedCardAnimationFrame);
+    }
+    
+    // Force initial paint by ensuring card is visible and triggering multiple repaints
+    // Mobile browsers need aggressive repaint forcing
+    const forceInitialPaint = () => {
+        // Scroll to ensure card is in viewport (triggers repaint)
+        const rect = card.getBoundingClientRect();
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+            card.scrollIntoView({ behavior: 'instant', block: 'nearest' });
+        }
+        
+        // Force multiple layout recalculations
+        void card.offsetWidth;
+        void card.offsetHeight;
+        void card.getBoundingClientRect();
+        void window.getComputedStyle(card).transform;
+        
+        // Trigger scroll event to force repaint (like clicking background does)
+        window.scrollBy(0, 0.1);
+        window.scrollBy(0, -0.1);
+        
+        // Trigger resize event
+        window.dispatchEvent(new Event('resize'));
+    };
+    
+    // Force initial paint multiple times
+    forceInitialPaint();
+    requestAnimationFrame(() => {
+        forceInitialPaint();
+        requestAnimationFrame(() => {
+            forceInitialPaint();
+        });
+    });
+    
+    const animate = (currentTime) => {
+        if (!card.parentNode || !card.classList.contains('animal-card--selected')) {
+            // Card was removed or deselected, stop animation
+            selectedCardAnimationFrame = null;
+            return;
+        }
+        
+        // Calculate animation progress
+        const moveProgress = ((currentTime - startTime) % moveDuration) / moveDuration;
+        const pulseProgress = ((currentTime - startTime) % pulseDuration) / pulseDuration;
+        
+        // Ease-in-out function
+        const easeInOut = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        
+        // Calculate move transform
+        let moveX = 0, moveY = -10, rotate = 0;
+        if (moveProgress < 0.2) {
+            const t = easeInOut(moveProgress / 0.2);
+            moveX = 18 * t;
+            moveY = -10 + (-12) * t;
+            rotate = 5 * t;
+        } else if (moveProgress < 0.4) {
+            const t = easeInOut((moveProgress - 0.2) / 0.2);
+            moveX = 18 + (-33) * t;
+            moveY = -22 + (10) * t;
+            rotate = 5 + (-10) * t;
+        } else if (moveProgress < 0.6) {
+            const t = easeInOut((moveProgress - 0.4) / 0.2);
+            moveX = -15 + (27) * t;
+            moveY = -12 + (-14) * t;
+            rotate = -5 + (9) * t;
+        } else if (moveProgress < 0.8) {
+            const t = easeInOut((moveProgress - 0.6) / 0.2);
+            moveX = 12 + (-22) * t;
+            moveY = -26 + (10) * t;
+            rotate = 4 + (-8) * t;
+        } else {
+            const t = easeInOut((moveProgress - 0.8) / 0.2);
+            moveX = -10 + (10) * t;
+            moveY = -16 + (6) * t;
+            rotate = -4 + (4) * t;
+        }
+        
+        // Calculate pulse shadow
+        const pulseIntensity = 0.5 + 0.2 * Math.sin(pulseProgress * Math.PI * 2);
+        const shadowBlur = 24 + 4 * Math.sin(pulseProgress * Math.PI * 2);
+        const shadowY = 10 + 2 * Math.sin(pulseProgress * Math.PI * 2);
+        
+        // Apply transform directly - use !important via setProperty to override any CSS
+        card.style.setProperty('transform', `scale(1.18) translate3d(${moveX}px, ${moveY}px, 0) rotate(${rotate}deg)`, 'important');
+        
+        // Apply pulse shadow
+        card.style.setProperty('box-shadow', `
+            rgba(251, 191, 36, ${pulseIntensity}) 0 0 ${shadowBlur}px,
+            rgba(251, 191, 36, ${pulseIntensity * 0.7}) 0 ${shadowY}px ${shadowBlur + 2}px,
+            rgba(0, 0, 0, 0.25) 0 4px 8px
+        `, 'important');
+        
+        // Force repaint every frame by reading computed style
+        if (Math.floor(currentTime) % 100 < 16) { // Every ~100ms
+            void card.getBoundingClientRect();
+        }
+        
+        // Continue animation
+        selectedCardAnimationFrame = requestAnimationFrame(animate);
+    };
+    
+    // Start animation immediately
+    selectedCardAnimationFrame = requestAnimationFrame(animate);
 
     // Play sound and wait for it to finish before starting removal animation
     // Store card reference in closure to ensure we can remove it even if currentAnimalCard changes
@@ -383,7 +499,8 @@ function handleAnimalCardInteraction(card, animal) {
 
     state.foundCount += 1;
 
-    if (state.foundCount >= ANIMALS.length) {
+    // Check if all animals in the current game have been found
+    if (state.foundCount >= state.currentGameAnimalCount) {
         // Wait for the last sound to finish before showing the finish popup
         soundPromise.then(() => {
             finishGame();
@@ -422,6 +539,15 @@ function removeCardImmediately(card) {
         if (currentAnimalCard === card) {
             currentAnimalCard = null;
         }
+        // Cancel manual animation
+        if (selectedCardAnimationFrame) {
+            cancelAnimationFrame(selectedCardAnimationFrame);
+            selectedCardAnimationFrame = null;
+        }
+        // Cancel any Web Animations API animations
+        if (card.animate && card.getAnimations) {
+            card.getAnimations().forEach(anim => anim.cancel());
+        }
         // Remove selected class before adding found class
         card.classList.remove('animal-card--selected');
         // Remove class from parent if no other selected cards exist
@@ -445,6 +571,15 @@ function removeCardImmediately(card) {
  */
 function removeCardAfterSound(card) {
     if (card && card.parentNode && !card.classList.contains('animal-card--found')) {
+        // Cancel manual animation
+        if (selectedCardAnimationFrame) {
+            cancelAnimationFrame(selectedCardAnimationFrame);
+            selectedCardAnimationFrame = null;
+        }
+        // Cancel any Web Animations API animations
+        if (card.animate && card.getAnimations) {
+            card.getAnimations().forEach(anim => anim.cancel());
+        }
         // Remove selected class before starting removal animation
         card.classList.remove('animal-card--selected');
         // Clear currentAnimalCard reference if this was the selected card

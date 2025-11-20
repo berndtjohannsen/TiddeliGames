@@ -187,11 +187,6 @@ function createCharButton(char, index) {
  * @param {string} char - The character value
  */
 function handleCharClick(charButton, char) {
-    // Ignore if already used
-    if (charButton.classList.contains('game6-char--used')) {
-        return;
-    }
-
     // Check if this is the correct next character
     const expectedChar = state.wordChars[state.selectedIndex];
     
@@ -201,8 +196,16 @@ function handleCharClick(charButton, char) {
         slot.textContent = char;
         slot.classList.add('game6-answer-char--filled');
         
-        // Mark button as used
-        charButton.classList.add('game6-char--used');
+        // Remove button from DOM instead of just marking as used
+        // This prevents confusion - the character is gone, not just grayed out
+        if (charButton.parentNode) {
+            charButton.parentNode.removeChild(charButton);
+        }
+        // Remove from charButtons array
+        const buttonIndex = state.charButtons.indexOf(charButton);
+        if (buttonIndex > -1) {
+            state.charButtons.splice(buttonIndex, 1);
+        }
         
         // Move to next position
         state.selectedIndex++;

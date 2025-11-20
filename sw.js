@@ -98,8 +98,16 @@ self.addEventListener('fetch', (event) => {
       if (cached) return cached;
       try {
         const resp = await fetch(request);
+        // Skip caching for partial responses (206) - Cache API doesn't support them
+        // Also skip caching for non-OK responses
+        if (resp.status === 206 || !resp.ok) {
+          return resp;
+        }
         const cache = await caches.open(CACHE_NAME);
-        cache.put(request, resp.clone());
+        // Only cache if response is OK and not a partial response
+        cache.put(request, resp.clone()).catch(() => {
+          // Silently fail if caching fails (e.g., quota exceeded)
+        });
         return resp;
       } catch (_) {
         return new Response('', { status: 504 });

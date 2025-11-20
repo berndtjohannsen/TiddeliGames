@@ -15,16 +15,16 @@ window.APP_STRINGS = Object.freeze({
         items: [
             {
                 id: 'game1',
-                name: 'Sifferpop',
+                name: 'Siffror',
                 description: 'Siffrorna 1 till 10. (3+ år)',            
                 icon: '🎈',
                 path: 'games/game1/index.html'
             },
             {
                 id: 'game2',
-            name: 'Djurljud',
-            description: 'Lyssna på djuren. (1+ år)',
-            icon: '🐾',
+            name: 'Ljud',
+            description: 'Klicka och lyssna. (1+ år)',
+            icon: '🔊',
                 path: 'games/game2/index.html'
             },
             {
@@ -36,15 +36,15 @@ window.APP_STRINGS = Object.freeze({
             },
             {
                 id: 'game4',
-                name: 'Stava ord',
-                description: 'Matcha bilden med ord. (4+ år)',
+                name: 'Ord',
+                description: 'Känn igen ordet. (4+ år)',
                 icon: '📝',
                 path: 'games/game4/index.html'
             },
             {
                 id: 'game5',
-                name: 'Räkna ihop',
-                description: 'Addera emojis. (4+ år)',
+                name: 'Addera',
+                description: '"Plussa" emojis. (4+ år)',
                 icon: '➕',
                 path: 'games/game5/index.html'
             },

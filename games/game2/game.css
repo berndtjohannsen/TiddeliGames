@@ -162,8 +162,12 @@
     /* Force hardware acceleration and composite layer for smooth animation */
     will-change: transform;
     backface-visibility: hidden;
+    -webkit-backface-visibility: hidden; /* Safari support */
     /* Ensure hover/focus states don't interfere */
     pointer-events: auto;
+    /* Force GPU layer on mobile - use perspective to trigger composite layer */
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
     /* Override the base floaty animation completely with the selected-move animation */
     animation: selected-move 1.5s ease-in-out infinite, selected-pulse 1.2s ease-in-out infinite !important;
     animation-play-state: running !important;
@@ -172,21 +176,22 @@
 }
 
 /* Enhanced movement animation for selected card - more pronounced movement */
+/* Using translate3d to force GPU acceleration on mobile */
 @keyframes selected-move {
     0%, 100% {
-        transform: scale(1.18) translate(0, -10px) rotate(0deg);
+        transform: scale(1.18) translate3d(0, -10px, 0) rotate(0deg);
     }
     20% {
-        transform: scale(1.18) translate(18px, -22px) rotate(5deg);
+        transform: scale(1.18) translate3d(18px, -22px, 0) rotate(5deg);
     }
     40% {
-        transform: scale(1.18) translate(-15px, -12px) rotate(-5deg);
+        transform: scale(1.18) translate3d(-15px, -12px, 0) rotate(-5deg);
     }
     60% {
-        transform: scale(1.18) translate(12px, -26px) rotate(4deg);
+        transform: scale(1.18) translate3d(12px, -26px, 0) rotate(4deg);
     }
     80% {
-        transform: scale(1.18) translate(-10px, -16px) rotate(-4deg);
+        transform: scale(1.18) translate3d(-10px, -16px, 0) rotate(-4deg);
     }
 }
 

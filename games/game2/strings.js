@@ -16,7 +16,8 @@ window.GAME2_STRINGS = Object.freeze({
     ambience: {
         track: 'sounds/background.mp3'
     },
-    // List of animals to be placed on the game board.
+    // List of animals/items to be placed on the game board.
+    // Game will randomly select 6 from this list each round
     animals: [
         {
             id: 'horse',
@@ -53,6 +54,48 @@ window.GAME2_STRINGS = Object.freeze({
             name: 'Hund',
             image: 'images/hund.png',
             sound: 'sounds/hund.mp3'
+        },
+        {
+            id: 'cat',
+            name: 'Katt',
+            image: 'images/katt.png',
+            sound: 'sounds/katt.mp3'
+        },
+        {
+            id: 'duck',
+            name: 'Anka',
+            image: 'images/anka.png',
+            sound: 'sounds/anka.mp3'
+        },
+        {
+            id: 'bird',
+            name: 'Fågel',
+            image: 'images/fagel.png',
+            sound: 'sounds/fagel.mp3'
+        },
+        {
+            id: 'car',
+            name: 'Bil',
+            image: 'images/bil.png',
+            sound: 'sounds/bil.mp3'
+        },
+        {
+            id: 'bike',
+            name: 'Cykel',
+            image: 'images/cykel.png',
+            sound: 'sounds/cykel.mp3'
+        },
+        {
+            id: 'baby',
+            name: 'Baby',
+            image: 'images/baby.png',
+            sound: 'sounds/baby.mp3'
+        },
+        {
+            id: 'santa',
+            name: 'Jultomte',
+            image: 'images/jultomte.png',
+            sound: 'sounds/jultomte.mp3'
         }
     ]
 });
