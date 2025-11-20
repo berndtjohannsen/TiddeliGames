@@ -5,7 +5,7 @@
     padding: clamp(0.75rem, 2vw, 2.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 3.5rem);
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    min-height: 100%;
 }
 
 /* Header container with back button and title */
