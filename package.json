@@ -4,9 +4,15 @@
   "description": "Simple children's games PWA",
   "scripts": {
     "build-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify",
-    "watch-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --watch"
+    "watch-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --watch",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "tailwindcss": "^3.4.0"
   }
 }

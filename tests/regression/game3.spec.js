@@ -9,22 +9,25 @@ test.describe('Game 3 - Count Fruits', () => {
   test('game page loads', async ({ page }) => {
     await page.waitForTimeout(500);
     
-    const gameArea = page.locator('#game-area, .game3-field');
+    // Actual element is #fruit-field
+    const gameArea = page.locator('#fruit-field, .fruit-field');
     await expect(gameArea).toBeVisible();
   });
 
   test('fruit display is visible', async ({ page }) => {
-    await page.waitForTimeout(500);
+    // Wait for fruits to be created
+    await page.waitForSelector('#fruit-field [class*="fruit"]', { timeout: 3000 });
     
-    const fruits = page.locator('.game3-fruit, [class*="fruit"]');
+    const fruits = page.locator('#fruit-field [class*="fruit"]');
     const count = await fruits.count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('number buttons are visible', async ({ page }) => {
-    await page.waitForTimeout(500);
+    // Wait for number buttons to be created
+    await page.waitForSelector('#number-buttons button', { timeout: 3000 });
     
-    const numberButtons = page.locator('.game3-number, [class*="number"], button');
+    const numberButtons = page.locator('#number-buttons button');
     const count = await numberButtons.count();
     expect(count).toBeGreaterThan(0);
   });

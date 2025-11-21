@@ -24,15 +24,15 @@ test.describe('Game 2 - Animal Sounds', () => {
   });
 
   test('can click on animal card', async ({ page }) => {
-    await page.waitForTimeout(1000);
+    // Wait for animal cards to be created
+    await page.waitForSelector('#animal-field .animal-card', { timeout: 3000 });
     
-    const animalCard = page.locator('.animal-card, [data-animal-id]').first();
-    const isVisible = await animalCard.isVisible().catch(() => false);
+    const animalCard = page.locator('#animal-field .animal-card').first();
+    await expect(animalCard).toBeVisible();
     
-    if (isVisible) {
-      await animalCard.click();
-      await page.waitForTimeout(500); // Wait for sound/animation
-    }
+    // Cards are constantly animating, so use force click to bypass stability check
+    await animalCard.click({ force: true });
+    await page.waitForTimeout(500); // Wait for sound/animation
   });
 });
 

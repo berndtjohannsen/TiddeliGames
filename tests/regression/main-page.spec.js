@@ -29,35 +29,50 @@ test.describe('Main Page', () => {
   });
 
   test('game cards display game numbers', async ({ page }) => {
+    // Wait for game cards to be rendered
+    await page.waitForSelector('[data-game-id="game1"]', { timeout: 3000 });
+    
     const game1 = page.locator('[data-game-id="game1"]');
-    await expect(game1.locator('text=1')).toBeVisible();
+    // Game number is in a div with absolute positioning
+    await expect(game1.locator('text=/^1$/')).toBeVisible();
     
     const game6 = page.locator('[data-game-id="game6"]');
-    await expect(game6.locator('text=6')).toBeVisible();
+    await expect(game6.locator('text=/^6$/')).toBeVisible();
   });
 
   test('help button is visible and clickable', async ({ page }) => {
+    // Wait for help button to be rendered
     const helpBtn = page.locator('#help-btn');
-    await expect(helpBtn).toBeVisible();
+    await expect(helpBtn).toBeVisible({ timeout: 3000 });
     await expect(helpBtn).toContainText('?');
     
     // Click help button
-    await helpBtn.click();
+    await helpBtn.click({ timeout: 5000 });
     
-    // Verify help dialog appears
+    // Wait for dialog to appear (it might have animation)
     const helpDialog = page.locator('#help-dialog');
-    await expect(helpDialog).toBeVisible();
-    await expect(helpDialog.locator('h2')).toContainText('Hjälp');
+    await expect(helpDialog).toBeVisible({ timeout: 2000 });
+    
+    // Wait a bit for content to render and animation to complete
+    await page.waitForTimeout(200);
+    
+    // Verify dialog content - heading is "Lite Info" (see index.html)
+    const heading = helpDialog.locator('h2');
+    await expect(heading).toBeVisible({ timeout: 2000 });
+    await expect(heading).toContainText('Lite Info', { timeout: 2000 });
   });
 
   test('help dialog can be closed', async ({ page }) => {
     // Open help dialog
     await page.locator('#help-btn').click();
-    await expect(page.locator('#help-dialog')).toBeVisible();
+    await expect(page.locator('#help-dialog')).toBeVisible({ timeout: 2000 });
+    
+    // Wait a bit for dialog animation
+    await page.waitForTimeout(100);
     
     // Close via close button
     await page.locator('#help-close-btn').click();
-    await expect(page.locator('#help-dialog')).toBeHidden();
+    await expect(page.locator('#help-dialog')).toBeHidden({ timeout: 2000 });
   });
 
   test('version number is displayed', async ({ page }) => {

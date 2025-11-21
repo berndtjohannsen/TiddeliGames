@@ -10,9 +10,9 @@ test.describe('Game 1 - Numbers', () => {
     // Wait for game to initialize
     await page.waitForTimeout(500);
     
-    // Check that game elements are present
-    const gameField = page.locator('#game-field');
-    await expect(gameField).toBeVisible();
+    // Check that game elements are present - actual element is #circle-container
+    const gameArea = page.locator('#circle-container, .game-area');
+    await expect(gameArea).toBeVisible();
   });
 
   test('back button is visible', async ({ page }) => {
@@ -25,18 +25,20 @@ test.describe('Game 1 - Numbers', () => {
   });
 
   test('game can be interacted with', async ({ page }) => {
-    // Wait for game to initialize
-    await page.waitForTimeout(500);
+    // Wait for game to initialize and circles to be created
+    await page.waitForSelector('#circle-container button', { timeout: 3000 });
     
-    // Try to find clickable game elements
-    const clickableElements = page.locator('button, [role="button"], .game-circle, [onclick]');
-    const count = await clickableElements.count();
+    // Find clickable circle buttons
+    const circles = page.locator('#circle-container button');
+    const count = await circles.count();
+    
+    expect(count).toBeGreaterThan(0);
     
     if (count > 0) {
-      // Click first clickable element
-      await clickableElements.first().click();
-      // Just verify no errors occurred
-      await page.waitForTimeout(100);
+      // Click first circle
+      await circles.first().click();
+      // Wait a bit for any animations/sounds
+      await page.waitForTimeout(200);
     }
   });
 });
