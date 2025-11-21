@@ -3,6 +3,19 @@ node_modules/
 
 # Generated Tailwind CSS
 # css/tailwind.output.css
+
+# Personal notes (should not be in repository)
 ignore.txt
-test*
+
+# Test files (but keep tests/ directory for Playwright tests)
+testindex.html
+test*.html
+
+# Netlify functions (may contain sensitive data)
 netlify/
+
+# Playwright test results and cache
+test-results/
+playwright-report/
+playwright/.cache/
+playwright/.auth/

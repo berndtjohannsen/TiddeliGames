@@ -1,0 +1,4 @@
+# Ensure test files are treated as text
+tests/**/*.js text eol=lf
+tests/**/*.md text eol=lf
+
