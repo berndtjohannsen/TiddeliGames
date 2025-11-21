@@ -80,7 +80,7 @@ window.GAME4_STRINGS = Object.freeze({
         { emoji: '🥒', word: 'GURKA' },
     
         { emoji: '🍝', word: 'PASTA' },
-        { emoji: '🍔', word: 'HAMBURGARE' },
+
         { emoji: '🌭', word: 'KORV' },
         { emoji: '🍦', word: 'GLASS' },
         { emoji: '🍭', word: 'GODIS' },
@@ -114,7 +114,7 @@ window.GAME4_STRINGS = Object.freeze({
         { emoji: '☃️', word: 'SNÖGUBBE' },
         // Objects
         { emoji: '🏠', word: 'HUS' },
-        { emoji: '📚', word: 'BOK' },
+        
         { emoji: '⚽', word: 'BOLL' },
         { emoji: '🧸', word: 'NALLE' },
         { emoji: '🎁', word: 'PAKET' },

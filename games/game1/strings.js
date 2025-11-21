@@ -1,6 +1,6 @@
 window.GAME_STRINGS = Object.freeze({
-    title: 'Sifferpop',
-    instructions: 'Tryck på siffrorna 1 till 10 i ordning.',
+    title: '',
+    instructions: '',
     labels: {
         continue: 'Fortsätt'
     },

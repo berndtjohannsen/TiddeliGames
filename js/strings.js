@@ -57,6 +57,23 @@ window.APP_STRINGS = Object.freeze({
             }
         ]
     },
-    version: version => `Version ${version}`
+    version: version => `Version ${version}`,
+    help: {
+        text: `Dessa spel är till för små barn (+1 år). Spelen är tänkta att lära ut något (och ha kul samtidigt). Fokus på bokstäver, ord och siffror. Det finns ingen reklam. 
+
+Programkoden (och mer teknisk info) ligger här: https://github.com/berndtjohannsen/TiddeliGames  
+
+Så länge det inte blir för mycket trafik, kommer man att kunna spela gratis här: 
+https://tiddelipom.com
+
+
+Barn ska inte ha för mycket skärmtid!
+Men:
+- Det är bättre med skärmtid framför ett lärorikt spel än att sitta passivt själv framför en TV.
+- Spelen spelas bäst/helst tillsammans med en förälder (eller motsvarande)
+
+Kontakt: info@tiddelipom.com`,
+        image: 'help.png'
+    }
 });
 
