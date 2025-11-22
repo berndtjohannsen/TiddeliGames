@@ -249,12 +249,7 @@ function displayGame() {
     
     state.answerButtons = [];
     
-    // Display first group of emojis with count
-    const firstCount = document.createElement('span');
-    firstCount.className = 'game5-count';
-    firstCount.textContent = state.firstNumber;
-    if (firstGroup) firstGroup.appendChild(firstCount);
-    
+    // Display first group of emojis (count badge removed to prevent wrapping beyond 2 rows)
     for (let i = 0; i < state.firstNumber; i++) {
         const emoji = document.createElement('span');
         emoji.className = 'game5-emoji';
@@ -263,12 +258,7 @@ function displayGame() {
         if (firstGroup) firstGroup.appendChild(emoji);
     }
     
-    // Display second group of emojis with count
-    const secondCount = document.createElement('span');
-    secondCount.className = 'game5-count';
-    secondCount.textContent = state.secondNumber;
-    if (secondGroup) secondGroup.appendChild(secondCount);
-    
+    // Display second group of emojis (count badge removed to prevent wrapping beyond 2 rows)
     for (let i = 0; i < state.secondNumber; i++) {
         const emoji = document.createElement('span');
         emoji.className = 'game5-emoji';

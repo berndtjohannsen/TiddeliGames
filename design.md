@@ -22,15 +22,19 @@ Games may have a preferred orientation (portrait or landscape), but all games mu
   - Installed via npm, built via CLI for optimized CSS
   - MIT license (commercial-safe)
 
+- **HTML5 Audio API** - *Implemented*
+  - Sound effects for game interactions (clicks, pops, success/error sounds)
+  - Background ambient sounds for games (Game 2: animal sounds, Game 6: background ambience)
+  - Global volume control accessible from main page (slider and mute button)
+  - Volume persistence via localStorage across sessions
+  - Volume events broadcast to all games via custom `volumechange` event
+
 - **Tone.js (via CDN)** - *Planned for future implementation*
   - Audio library for background music, synthesized sounds, loops, and effects
   - CDN version: `https://cdn.jsdelivr.net/npm/tone@next/build/Tone.js`
   - MIT license (commercial-safe)
   - Currently: `js/audio.js` is a placeholder file
-
-- **HTML5 Audio API** - *Planned for future implementation*
-  - Simple sound effects (clicks, pops, short clips)
-  - Hybrid approach: Tone.js for complex audio, HTML5 for simple playback
+  - Future: Hybrid approach with HTML5 Audio for simple sounds, Tone.js for complex audio
 
 ## Media & Assets:
 - **Images**: WebP format (with PNG/JPG fallbacks for compatibility)
@@ -80,16 +84,27 @@ TiddeliGames/
 │   ├── app.js              # Main app logic
 │   ├── game-selector.js    # Game selection page logic
 │   ├── pwa.js              # Service Worker registration and install prompt handling
-│   └── audio.js            # Audio management (Tone.js setup)
+│   ├── volume-control.js   # Global volume control for all games (slider, mute, localStorage)
+│   ├── strings.js          # Localization strings for main page
+│   └── audio.js            # Audio management (Tone.js setup) - placeholder
 ├── games/
-│   ├── game1/
+│   ├── game1/              # Numbers (Siffror) - Click numbered circles
 │   │   ├── index.html      # Game-specific HTML
 │   │   ├── game.js         # Game logic
 │   │   ├── game.css        # Game-specific styles
+│   │   ├── strings.js      # Game localization strings
 │   │   ├── images/         # Game images
 │   │   └── sounds/         # Game sounds
-│   └── game2/
-│       └── ... (similar structure)
+│   ├── game2/              # Animal Sounds (Ljud) - Click animal cards to hear sounds
+│   │   ├── index.html
+│   │   ├── game.js
+│   │   ├── game.css
+│   │   ├── strings.js
+│   │   └── ... (similar structure)
+│   ├── game3/              # Count Fruits (Räkna frukter) - Count emoji fruits and select number
+│   ├── game4/              # Match Words (Ord) - Match images to words
+│   ├── game5/              # Addition (Addera) - Count two groups of emojis and add them
+│   └── game6/              # Spell Words (Stava ord) - Spell words by clicking letters in order
 └── assets/
     ├── icons/              # PWA icons (various sizes)
     └── shared/             # Shared assets across games
@@ -105,8 +120,10 @@ TiddeliGames/
 ## JavaScript Module Responsibilities
 - **config.js**: App configuration and version (single source of truth)
 - **app.js**: Main app logic, cache-busting, remote version checking, update banner management
-- **game-selector.js**: Game selection page logic, game grid rendering, version display
+- **game-selector.js**: Game selection page logic, game grid rendering, version display, help dialog
 - **pwa.js**: Service Worker registration, install prompt handling, PWA lifecycle management
+- **volume-control.js**: Global volume control system for all games (slider, mute button, localStorage persistence)
+- **strings.js**: Localization strings for main page (games, help text, update messages, etc.)
 - **audio.js**: Placeholder for future Tone.js audio management
 
 # Version management and updates
@@ -139,12 +156,15 @@ TiddeliGames/
 - **Live Server**: For local development and hot-reload
 - **Git**: Version control (managed by user)
 - **Modern Browser DevTools**: Chrome/Firefox for debugging
+- **Playwright**: Automated end-to-end testing framework
+- **http-server**: Static file server for Playwright tests (automatically started)
 
 ## Build Process
 - **Tailwind CSS**: Requires build step via CLI (`npm run watch-css` or `npm run build-css`)
 - Generated CSS file: `css/tailwind.output.css`
 - Other assets: Direct file references (no build needed)
 - Live Server: Run Tailwind watch command in separate terminal while developing
+- **Testing**: Playwright tests automatically start `http-server` - no manual server needed
 
 ## Testing Environment
 - Chrome DevTools for mobile device emulation
@@ -170,20 +190,38 @@ TiddeliGames/
 # Testing
 
 ## Testing Strategy
-- Manual testing on target devices (Android phones/tablets)
-- Cross-browser testing (Chrome, Firefox, Safari)
-- PWA functionality testing (installability, offline mode)
-- Audio functionality testing (user gesture requirement, playback)
+- **Automated Testing**: Playwright end-to-end tests for regression testing
+- **Manual testing**: On target devices (Android phones/tablets, especially Pixel 7 and Motorola)
+- **Cross-browser testing**: Chrome, Firefox, Safari
+- **PWA functionality testing**: Installability, offline mode
+- **Audio functionality testing**: User gesture requirement, playback
+- **Mobile responsive testing**: Verify all games fit within viewport, no unwanted scrolling
+
+## Automated Testing (Playwright)
+- **Test framework**: Playwright for end-to-end browser testing
+- **Test structure**: 
+  - `tests/regression/` - Game functionality and navigation tests
+  - `tests/pwa/` - PWA feature tests (service worker, manifest, offline)
+- **Test server**: Automatically starts `http-server` on port 5500 for test execution
+- **Test commands**: 
+  - `npm test` - Run all tests
+  - `npm run test:ui` - Run with Playwright UI
+  - `npm run test:headed` - Run with visible browser
+  - `npm run test:debug` - Debug mode
+  - `npm run test:report` - Show test report
+- **Test coverage**: All 6 games, navigation, PWA features, volume control, help dialog
 
 ## Test Areas
-- Game selection page functionality (currently shows 6 dummy games)
-- Individual game mechanics (when games are implemented)
-- Audio playback (Tone.js and HTML5 audio - when implemented)
-- Responsive design across screen sizes
+- Game selection page functionality (all 6 games implemented)
+- Individual game mechanics (all games fully functional)
+- Audio playback (HTML5 Audio API - implemented)
+- Responsive design across screen sizes (mobile-first, prevents unwanted scrolling)
 - Service Worker caching and offline behavior
 - PWA installation and launch
 - Version update mechanism (remote version checking, modal banner, cache clearing)
 - Install button visibility and functionality
+- Volume control functionality (slider, mute, persistence)
+- Help dialog display and interaction
 
 # Security and Privacy
 
@@ -206,11 +244,13 @@ TiddeliGames/
 ## Design Principles
 
 ### Mobile-First
-- Primary target: Android mobile devices
+- Primary target: Android mobile devices (tested on Pixel 7, Motorola)
 - Touch-friendly interface with adequate tap targets (minimum 44x44px)
 - Responsive design for tablets and desktop
 - **Orientation Support**: Games can have a preferred orientation (portrait or landscape), but all games must be fully functional and responsive in both orientations
 - Layouts adapt dynamically using CSS media queries and JavaScript orientation detection
+- **Overflow Prevention**: Games prevent unwanted vertical scrolling/bouncing on mobile devices using CSS `overflow-y: hidden` and `overscroll-behavior-y: none`
+- **Content Fit**: All game content fits within viewport without scrolling (background images sized appropriately)
 
 ### Child-Friendly
 - Large, colorful buttons
@@ -238,15 +278,22 @@ TiddeliGames/
 - "Install App" button discretely placed in top-right corner (when installation is available)
 - Version number displayed discretely in footer
 - Modal update banner at top of screen (blocks interaction until user updates)
+- Volume control (slider and mute button) in top-left corner (main page only, no percentage display)
+- Help dialog accessible via "?" button in top-right corner
+- Mobile-first responsive design with overflow prevention (prevents unwanted scrolling on game pages)
+- Background images with proper sizing to prevent stretching beyond viewport (games 4, 5, 6)
+- Consistent back button styling across all games
 
 ## User Flow
 1. App launches → Game selection page (works in browser or as installed app)
 2. Version check runs automatically (on load, visibility change, or first interaction)
 3. If new version available → Modal update banner appears (user must update to continue)
 4. User can optionally click "Install App" button (top-right) to install as PWA (if not already installed)
-5. User selects game → Game loads
-6. Game starts after user interaction (unlocks audio - when implemented)
-7. User plays game → Returns to selection page when done
+5. User can adjust volume using slider and mute button (top-left corner)
+6. User can view help information via "?" button (top-right corner)
+7. User selects game → Game loads
+8. Game starts after user interaction (unlocks audio)
+9. User plays game → Returns to selection page when done
 
 ## Installation Flow
 - App runs in browser by default

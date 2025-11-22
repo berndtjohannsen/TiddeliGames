@@ -104,8 +104,7 @@
     align-items: center;
     justify-content: center;
     gap: clamp(0.4rem, 1.2vw, 0.85rem); /* Reduced gap */
-    padding: clamp(0.6rem, 1.5vw, 1.2rem); /* Reduced padding */
-    padding-left: clamp(4rem, 8vw, 5.5rem); /* Extra left padding for count badge - reduced */
+    padding: clamp(0.6rem, 1.5vw, 1.2rem); /* Reduced padding - count badge removed */
     background: rgba(255, 255, 255, 0.85);
     border-radius: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
