@@ -69,9 +69,9 @@
 .fruit-field {
     position: relative;
     width: 100%;
-    min-height: clamp(220px, 38vh, 520px); /* Further reduced to ensure number buttons are visible */
-    max-height: clamp(220px, 38vh, 520px); /* Add max-height to prevent expansion */
-    padding: clamp(0.75rem, 2.5vw, 2.5rem);
+    min-height: clamp(280px, 45vh, 580px); /* Increased height to give fruits more breathing room */
+    max-height: clamp(280px, 45vh, 580px); /* Add max-height to prevent expansion */
+    padding: clamp(1.25rem, 3vw, 3rem); /* Increased padding for more spacing around fruits */
     border-radius: 2rem;
     background:
         linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
@@ -87,7 +87,7 @@
 /* Fruit object displayed on the game board */
 .fruit-object {
     position: absolute;
-    font-size: clamp(3rem, 6vw, 5rem);
+    font-size: clamp(3.25rem, 6.5vw, 5.5rem); /* Slightly larger fruits for better visibility */
     user-select: none;
     pointer-events: none;
     animation: floaty 7s ease-in-out infinite;
