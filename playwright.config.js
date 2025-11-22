@@ -47,10 +47,12 @@ module.exports = defineConfig({
   ],
 
   // Run local dev server before starting tests
+  // Use npx http-server if available, otherwise user must start Live Server manually on port 5500
   webServer: {
-    command: 'echo "Please start Live Server on port 5500 before running tests"',
+    command: 'npx http-server . -p 5500 --cors',
     port: 5500,
     reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000, // Give server time to start
   },
 });
 
