@@ -2,8 +2,6 @@
 
 This is an app that includes several simple small childrens games. It is a web (PWA) apps and can run on any supported platform including phones and tablets. Primarily tested on Chrome browsers on Windows and Android. Games are in swedish but are pretty easy to localize. No backend is required. Copy and install on any web server to run.
 
-You can test directly from here: https://berndtjohannsen.github.io/TiddeliGames
-
 The game can optionally (user selection) be installed as an app or just run in the browser.
 
 ## Features
