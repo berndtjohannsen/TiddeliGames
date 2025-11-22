@@ -32,10 +32,10 @@
     background: #38bdf8;
     color: #0f172a;
     font-weight: 700;
-    padding: 0.75rem 1.25rem;
+    padding: 0.6rem 1rem; /* Slightly smaller */
     border-radius: 9999px;
     text-decoration: none;
-    font-size: 2rem; /* Larger arrow */
+    font-size: 1.75rem; /* Slightly smaller arrow */
     box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
     transition: transform 150ms ease, box-shadow 150ms ease;
 }
@@ -244,8 +244,8 @@
 /* Responsive adjustments for very small screens */
 @media (max-width: 480px) {
     .back-button {
-        font-size: 1.3rem; /* Larger arrow on small screens */
-        padding: 0.6rem 1rem;
+        font-size: 1.2rem; /* Slightly smaller arrow on small screens */
+        padding: 0.5rem 0.85rem; /* Slightly smaller padding */
     }
 
     .timer {
@@ -260,8 +260,8 @@
     }
 
     .back-button {
-        padding: 0.55rem 0.9rem;
-        font-size: 1.6rem; /* Larger arrow on medium screens */
+        padding: 0.5rem 0.85rem; /* Slightly smaller padding */
+        font-size: 1.5rem; /* Slightly smaller arrow on medium screens */
     }
 
     .start-button {
