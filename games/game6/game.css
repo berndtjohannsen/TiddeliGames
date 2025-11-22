@@ -69,8 +69,9 @@
 .game6-field {
     position: relative;
     width: 100%;
-    min-height: clamp(250px, 45vh, 580px); /* Reduced from 50vh to 45vh for better fit */
-    padding: clamp(0.75rem, 2.5vw, 2.5rem); /* Reduced padding */
+    height: clamp(250px, calc(100vh - 240px), 450px); /* Height based on viewport minus header/padding space - slightly increased */
+    max-height: calc(100vh - 210px); /* Ensure it doesn't exceed viewport minus header/padding */
+    padding: clamp(0.6rem, 2vw, 2rem); /* Reduced padding further */
     border-radius: 2rem;
     background:
         linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
@@ -81,11 +82,10 @@
     position: relative;
     overflow-y: auto; /* Allow scrolling if content exceeds height */
     overflow-x: hidden;
-    flex: 1;
     margin-bottom: clamp(0.5rem, 1.5vw, 1.5rem); /* Reduced margin */
     display: flex;
     flex-direction: column;
-    gap: clamp(1rem, 2.5vw, 2.5rem); /* Reduced gap */
+    gap: clamp(0.75rem, 2vw, 2rem); /* Reduced gap further */
     align-items: center;
 }
 

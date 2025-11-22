@@ -69,7 +69,8 @@
 .game5-field {
     position: relative;
     width: 100%;
-    min-height: clamp(250px, 45vh, 580px); /* Reduced from 50vh to 45vh for better fit */
+    height: clamp(250px, calc(100vh - 250px), 450px); /* Height based on viewport minus header/padding space - reduced to fit better */
+    max-height: calc(100vh - 220px); /* Ensure it doesn't exceed viewport minus header/padding */
     padding: clamp(0.75rem, 2.5vw, 2.5rem); /* Reduced padding */
     border-radius: 2rem;
     background:
@@ -81,7 +82,6 @@
     position: relative;
     overflow-y: auto; /* Allow scrolling if content exceeds height */
     overflow-x: hidden;
-    flex: 1;
     margin-bottom: clamp(0.5rem, 1.5vw, 1.5rem); /* Reduced margin */
     display: flex;
     flex-direction: column;
