@@ -4,6 +4,11 @@
     max-width: 960px;
     margin: 0 auto;
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Use full viewport height */
+    max-height: 100vh; /* Prevent exceeding viewport */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 /* Header arranges back button, title, and instructions */
@@ -62,7 +67,9 @@
 .game-area {
     position: relative;
     width: 100%;
-    height: clamp(280px, 55vh, 620px);
+    flex: 1; /* Fill remaining space in flex container */
+    min-height: 280px; /* Minimum height for small screens */
+    max-height: none; /* Allow flex to determine height based on available space */
     /* Layer a soft gradient over the image so circles stay readable */
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('images/background.png');
     background-size: cover;

@@ -3,6 +3,11 @@
     max-width: 1080px;
     margin: 0 auto;
     padding: clamp(0.75rem, 2vw, 2.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Use full viewport height */
+    max-height: 100vh; /* Prevent exceeding viewport */
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 /* Header container with buttons row and title below */
@@ -67,7 +72,9 @@
 .animal-field {
     position: relative;
     width: 100%;
-    min-height: clamp(280px, 50vh, 620px);
+    flex: 1; /* Fill remaining space in flex container */
+    min-height: 280px; /* Minimum height for small screens */
+    max-height: none; /* Allow flex to determine height based on available space */
     padding: clamp(1rem, 3vw, 3rem);
     border-radius: 2rem;
     background:
