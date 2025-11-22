@@ -25,27 +25,30 @@
         <span id="update-banner-text"></span>
         <button id="update-reload-btn" class="text-blue-600 hover:text-blue-800 font-medium border-none bg-transparent outline-none focus:outline-none focus:ring-0 p-0 cursor-pointer"></button>
     </div>
-    <!-- Help button (top center, discrete) -->
-    <button
-        id="help-btn"
-        class="fixed top-3 left-1/2 -translate-x-1/2 text-xs text-gray-400 hover:text-gray-600 bg-white/80 backdrop-blur w-8 h-8 rounded-full shadow-sm transition flex items-center justify-center z-10"
-        aria-label="Hjälp"
-        title="Hjälp">
-        <span class="text-sm font-medium">?</span>
-    </button>
-    <!-- Discrete Install App button (top-right, shown conditionally) -->
-    <button
-        id="install-btn"
-        class="hidden fixed top-3 right-3 text-xs text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur px-2.5 py-2 rounded-full shadow-sm transition flex items-center gap-1.5"
-        aria-label="Install"
-        title="Install">
-        <span class="text-xs font-medium">Install</span>
-        <!-- Install/Download icon (inline SVG, MIT-friendly) -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-            <path d="M12 3.75a.75.75 0 0 1 .75.75v7.19l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0l-3.75-3.75a.75.75 0 1 1 1.06-1.06l2.47 2.47V4.5a.75.75 0 0 1 .75-.75Z"/>
-            <path d="M3.75 15a3.75 3.75 0 0 1 3.75-3.75h.75a.75.75 0 0 1 0 1.5H7.5A2.25 2.25 0 0 0 5.25 15v1.5A2.25 2.25 0 0 0 7.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25V15a2.25 2.25 0 0 0-2.25-2.25h-.75a.75.75 0 0 1 0-1.5h.75A3.75 3.75 0 0 1 20.25 15v1.5A3.75 3.75 0 0 1 16.5 20.25h-9A3.75 3.75 0 0 1 3.75 16.5V15Z"/>
-        </svg>
-    </button>
+    <!-- Top right buttons container (help and install) -->
+    <div class="fixed top-3 right-3 flex items-center gap-2 z-10">
+        <!-- Discrete Install App button (shown conditionally, positioned to the left of help button) -->
+        <button
+            id="install-btn"
+            class="hidden text-xs text-gray-500 hover:text-gray-700 bg-white/80 backdrop-blur px-2.5 py-2 rounded-full shadow-sm transition flex items-center gap-1.5"
+            aria-label="Install"
+            title="Install">
+            <span class="text-xs font-medium">Install</span>
+            <!-- Install/Download icon (inline SVG, MIT-friendly) -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                <path d="M12 3.75a.75.75 0 0 1 .75.75v7.19l2.47-2.47a.75.75 0 1 1 1.06 1.06l-3.75 3.75a.75.75 0 0 1-1.06 0l-3.75-3.75a.75.75 0 1 1 1.06-1.06l2.47 2.47V4.5a.75.75 0 0 1 .75-.75Z"/>
+                <path d="M3.75 15a3.75 3.75 0 0 1 3.75-3.75h.75a.75.75 0 0 1 0 1.5H7.5A2.25 2.25 0 0 0 5.25 15v1.5A2.25 2.25 0 0 0 7.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25V15a2.25 2.25 0 0 0-2.25-2.25h-.75a.75.75 0 0 1 0-1.5h.75A3.75 3.75 0 0 1 20.25 15v1.5A3.75 3.75 0 0 1 16.5 20.25h-9A3.75 3.75 0 0 1 3.75 16.5V15Z"/>
+            </svg>
+        </button>
+        <!-- Help button (question mark) -->
+        <button
+            id="help-btn"
+            class="text-xs text-gray-400 hover:text-gray-600 bg-white/80 backdrop-blur w-8 h-8 rounded-full shadow-sm transition flex items-center justify-center"
+            aria-label="Hjälp"
+            title="Hjälp">
+            <span class="text-sm font-medium">?</span>
+        </button>
+    </div>
     <!-- Help dialog (hidden by default) -->
     <div id="help-overlay" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"></div>
     <div id="help-dialog" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-6 max-w-md w-[calc(100vw-2rem)] max-h-[80vh] overflow-y-auto z-50">

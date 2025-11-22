@@ -54,6 +54,13 @@ window.APP_STRINGS = Object.freeze({
                 description: 'Bokstavera. (5+ år)',
                 icon: '🔤',
                 path: 'games/game6/index.html'
+            },
+            {
+                id: 'game7',
+                name: 'Subtrahera',
+                description: '"Minusa" emojis. (4+ år)',
+                icon: '➖',
+                path: 'games/game7/index.html'
             }
         ]
     },

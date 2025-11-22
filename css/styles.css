@@ -128,7 +128,8 @@ html:has(.game2-wrapper),
 html:has(.game3-wrapper),
 html:has(.game4-wrapper),
 html:has(.game5-wrapper),
-html:has(.game6-wrapper) {
+html:has(.game6-wrapper),
+html:has(.game7-wrapper) {
     /* Lock vertical scrolling on mobile devices */
     overflow-y: hidden !important;
     height: 100vh;
@@ -141,7 +142,8 @@ body:has(.game2-wrapper),
 body:has(.game3-wrapper),
 body:has(.game4-wrapper),
 body:has(.game5-wrapper),
-body:has(.game6-wrapper) {
+body:has(.game6-wrapper),
+body:has(.game7-wrapper) {
     /* Lock vertical scrolling on mobile devices - prevent bounce/overscroll */
     overflow-y: hidden !important;
     height: 100vh;
@@ -159,7 +161,8 @@ body:has(.game6-wrapper) {
 .game3-wrapper,
 .game4-wrapper,
 .game5-wrapper,
-.game6-wrapper {
+.game6-wrapper,
+.game7-wrapper {
     /* Ensure game wrapper doesn't exceed viewport height */
     max-height: 100vh;
     overflow-y: auto;
