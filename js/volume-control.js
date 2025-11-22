@@ -154,7 +154,7 @@ function initVolumeControlUI() {
     const volumeDisplay = document.getElementById('volume-display');
     const muteButton = document.getElementById('mute-button');
     
-    if (!volumeSlider || !volumeDisplay) {
+    if (!volumeSlider) {
         return;
     }
     
@@ -179,7 +179,7 @@ function initVolumeControlUI() {
                     setStoredVolume(previousVolume);
                     const volumePercent = Math.round(previousVolume * 100);
                     volumeSlider.value = volumePercent;
-                    volumeDisplay.textContent = `${volumePercent}%`;
+                    if (volumeDisplay) volumeDisplay.textContent = `${volumePercent}`;
                 }
                 setMuted(false);
             }
@@ -193,7 +193,7 @@ function initVolumeControlUI() {
     const savedVolume = isMuted() ? getPreviousVolume() : getStoredVolume();
     const volumePercent = Math.round(savedVolume * 100);
     volumeSlider.value = volumePercent;
-    volumeDisplay.textContent = `${volumePercent}%`;
+    if (volumeDisplay) volumeDisplay.textContent = `${volumePercent}`;
     
     // Update volume when slider changes
     volumeSlider.addEventListener('input', (e) => {
@@ -204,7 +204,7 @@ function initVolumeControlUI() {
             updateMuteButtonIcon();
         }
         setStoredVolume(volume);
-        volumeDisplay.textContent = `${e.target.value}%`;
+        if (volumeDisplay) volumeDisplay.textContent = `${e.target.value}`;
     });
     
     // Listen for external volume changes (e.g., from another tab)
@@ -222,11 +222,11 @@ function initVolumeControlUI() {
             updateMuteButtonIcon();
             // Update slider to show the new volume when unmuting
             volumeSlider.value = Math.round(newVolume * 100);
-            volumeDisplay.textContent = `${Math.round(newVolume * 100)}%`;
+            if (volumeDisplay) volumeDisplay.textContent = `${Math.round(newVolume * 100)}`;
         } else if (!wasMuted && newVolume > 0) {
             // Normal volume change (not muting/unmuting) - update slider
             volumeSlider.value = Math.round(newVolume * 100);
-            volumeDisplay.textContent = `${Math.round(newVolume * 100)}%`;
+            if (volumeDisplay) volumeDisplay.textContent = `${Math.round(newVolume * 100)}`;
         }
         // If muted and volume is 0, don't update slider - keep it at previous position
     });

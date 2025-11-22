@@ -106,7 +106,7 @@ window.GAME6_STRINGS = Object.freeze({
         { emoji: '🍃', word: 'LÖV' },
         { emoji: '🍇', word: 'DRUVOR' },
         { emoji: '🌽', word: 'MAJS' },
-        { emoji: '🌶️', word: 'PEPPAR' },
+        
         { emoji: '🧅', word: 'LÖK' },
         // Weather (2-6 characters)
         { emoji: '💧', word: 'DROPPE' },
