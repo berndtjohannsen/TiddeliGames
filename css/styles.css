@@ -121,3 +121,50 @@ body {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* Prevent vertical scrolling/bouncing on game pages (mobile) */
+/* Target game pages by checking for game wrapper classes using :has() selector */
+html:has(.game-wrapper),
+html:has(.game2-wrapper),
+html:has(.game3-wrapper),
+html:has(.game4-wrapper),
+html:has(.game5-wrapper),
+html:has(.game6-wrapper) {
+    /* Lock vertical scrolling on mobile devices */
+    overflow-y: hidden !important;
+    height: 100vh;
+    overscroll-behavior-y: none !important;
+    overscroll-behavior-x: none;
+}
+
+body:has(.game-wrapper),
+body:has(.game2-wrapper),
+body:has(.game3-wrapper),
+body:has(.game4-wrapper),
+body:has(.game5-wrapper),
+body:has(.game6-wrapper) {
+    /* Lock vertical scrolling on mobile devices - prevent bounce/overscroll */
+    overflow-y: hidden !important;
+    height: 100vh;
+    max-height: 100vh;
+    width: 100%;
+    overscroll-behavior-y: none !important;
+    overscroll-behavior-x: none;
+    touch-action: pan-x pan-y; /* Allow touch but prevent overscroll bounce */
+}
+
+/* Fallback for browsers that don't support :has() - target game wrappers directly */
+/* Ensure game wrapper itself doesn't cause scrolling beyond viewport */
+.game-wrapper,
+.game2-wrapper,
+.game3-wrapper,
+.game4-wrapper,
+.game5-wrapper,
+.game6-wrapper {
+    /* Ensure game wrapper doesn't exceed viewport height */
+    max-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Prevent overscroll bounce */
+    overscroll-behavior-y: contain;
+}
+

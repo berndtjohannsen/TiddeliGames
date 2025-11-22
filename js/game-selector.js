@@ -81,7 +81,7 @@ function showHelpDialog() {
                 <div class="space-y-4">
                     ${formattedText}
                     <div class="mt-4 flex justify-center">
-                        <img src="${helpImage}" alt="Hjälp" class="max-w-full h-auto rounded-lg shadow-md">
+                        <img src="${helpImage}" alt="Hjälp" class="max-w-[50%] h-auto rounded-lg shadow-md">
                     </div>
                 </div>
             `;
