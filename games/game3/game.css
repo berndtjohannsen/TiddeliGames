@@ -8,6 +8,7 @@
     height: 100vh; /* Use full viewport height */
     max-height: 100vh; /* Prevent exceeding viewport */
     box-sizing: border-box; /* Include padding in height calculation */
+    overflow: hidden; /* Prevent any overflow */
 }
 
 /* Header container with back button and title */
@@ -71,10 +72,10 @@
 .fruit-field {
     position: relative;
     width: 100%;
-    flex: 1; /* Fill remaining space in flex container */
-    min-height: 280px; /* Minimum height for small screens */
+    flex: 1 1 0; /* More aggressive flex shrinking to fit available space */
+    min-height: 200px; /* Reduced minimum height for better fit on smaller screens */
     max-height: none; /* Allow flex to determine height based on available space */
-    padding: clamp(1.25rem, 3vw, 3rem); /* Increased padding for more spacing around fruits */
+    padding: clamp(1rem, 2.5vw, 2.5rem); /* Slightly reduced padding to save vertical space */
     border-radius: 2rem;
     background:
         linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
@@ -120,6 +121,8 @@
     background: rgba(255, 255, 255, 0.8);
     border-radius: 1.5rem;
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    flex-shrink: 0; /* Prevent number buttons from shrinking */
+    min-height: fit-content; /* Only take space needed */
 }
 
 /* Individual number button */
