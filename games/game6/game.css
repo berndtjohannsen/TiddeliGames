@@ -5,6 +5,7 @@
     padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.75rem, 1.5vw, 2rem); /* Reduced padding to fit content */
     display: flex;
     flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 1rem); /* Small gap between header and game area - accounted for in flex calculation */
     height: 100vh; /* Fallback for browsers that don't support dvh */
     height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
     max-height: 100vh; /* Fallback for browsers that don't support dvh */
@@ -18,8 +19,8 @@
     display: flex;
     flex-direction: column;
     gap: clamp(0.5rem, 2vw, 1.5rem);
-    margin-bottom: clamp(0.25rem, 1vw, 1rem);
     flex-shrink: 0; /* Prevent header from being compressed - it needs its natural height */
+    margin: 0; /* No margin - spacing controlled by wrapper gap */
 }
 
 /* Top row with back button */
@@ -89,7 +90,7 @@
     position: relative;
     overflow-y: hidden; /* No scrolling - content should fit */
     overflow-x: hidden;
-    margin-bottom: clamp(0.5rem, 1.5vw, 1.5rem); /* Reduced margin */
+    margin: 0; /* No margin - spacing controlled by wrapper gap */
     display: flex;
     flex-direction: column;
     gap: clamp(0.75rem, 2vw, 2rem); /* Reduced gap */
