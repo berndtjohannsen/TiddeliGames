@@ -10,6 +10,7 @@
     max-height: 100vh; /* Fallback for browsers that don't support dvh */
     max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
     box-sizing: border-box; /* Include padding in height calculation */
+    overflow: hidden; /* Prevent any overflow - background must stay within viewport */
 }
 
 /* Header container with buttons row and title below */
@@ -76,7 +77,7 @@
     position: relative;
     width: 100%;
     flex: 1; /* Fill remaining space in flex container */
-    min-height: 280px; /* Minimum height for small screens */
+    min-height: 0; /* Allow flex to shrink below content size - critical for fitting viewport */
     max-height: none; /* Allow flex to determine height based on available space */
     padding: clamp(1rem, 3vw, 3rem);
     border-radius: 2rem;

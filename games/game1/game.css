@@ -11,6 +11,7 @@
     max-height: 100vh; /* Fallback for browsers that don't support dvh */
     max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
     box-sizing: border-box; /* Include padding in height calculation */
+    overflow: hidden; /* Prevent any overflow - background must stay within viewport */
 }
 
 /* Header arranges back button, title, and instructions */
@@ -71,6 +72,7 @@
     position: relative;
     width: 100%;
     flex: 1; /* Fill remaining space in flex container */
+    min-height: 0; /* Allow flex to shrink below content size - critical for fitting viewport */
     min-height: 280px; /* Minimum height for small screens */
     max-height: none; /* Allow flex to determine height based on available space */
     /* Layer a soft gradient over the image so circles stay readable */

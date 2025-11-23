@@ -76,7 +76,7 @@
     position: relative;
     width: 100%;
     flex: 1; /* Fill remaining space in flex container */
-    min-height: 250px; /* Minimum height for small screens */
+    min-height: 0; /* Allow flex to shrink below content size - critical for fitting viewport */
     max-height: none; /* Allow flex to determine height based on available space */
     padding: clamp(1.25rem, 3vw, 3rem); /* Increased padding for more spacing around fruits */
     border-radius: 2rem;
