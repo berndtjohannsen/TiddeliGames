@@ -17,6 +17,7 @@
     flex-direction: column;
     gap: clamp(0.4rem, 1.5vw, 1rem); /* Reduced gap */
     margin-bottom: clamp(0.25rem, 0.8vw, 0.75rem); /* Reduced margin */
+    flex-shrink: 0; /* Prevent header from being compressed - it needs its natural height */
 }
 
 /* Top row with back button */
