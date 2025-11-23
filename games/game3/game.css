@@ -2,11 +2,13 @@
 .game3-wrapper {
     max-width: 1080px;
     margin: 0 auto;
-    padding: clamp(0.4rem, 1.2vw, 1.2rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1.2vw, 1.5rem); /* Reduced padding, especially top/bottom to account for header */
+    padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.75rem, 1.5vw, 2rem); /* Reduced padding to fit content */
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Use full viewport height */
-    max-height: 100vh; /* Prevent exceeding viewport */
+    height: 100vh; /* Fallback for browsers that don't support dvh */
+    height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
+    max-height: 100vh; /* Fallback for browsers that don't support dvh */
+    max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
     box-sizing: border-box; /* Include padding in height calculation */
     overflow: hidden; /* Prevent any overflow */
 }
@@ -15,8 +17,8 @@
 .game3-header {
     display: flex;
     flex-direction: column;
-    gap: clamp(0.3rem, 1.2vw, 0.8rem); /* Further reduced gap to save space */
-    margin-bottom: clamp(0.2rem, 0.6vw, 0.6rem); /* Further reduced margin */
+    gap: clamp(0.4rem, 1.5vw, 1rem); /* Reduced gap */
+    margin-bottom: clamp(0.25rem, 0.8vw, 0.75rem); /* Reduced margin */
     flex-shrink: 0; /* Prevent header from being compressed - it needs its natural height */
 }
 
@@ -73,10 +75,10 @@
 .fruit-field {
     position: relative;
     width: 100%;
-    flex: 1 1 0; /* More aggressive flex shrinking to fit available space */
-    min-height: 0; /* Allow flex to shrink below any minimum - header and buttons take priority */
+    flex: 1; /* Fill remaining space in flex container */
+    min-height: 250px; /* Minimum height for small screens */
     max-height: none; /* Allow flex to determine height based on available space */
-    padding: clamp(0.75rem, 2vw, 2rem); /* Further reduced padding to save vertical space */
+    padding: clamp(1.25rem, 3vw, 3rem); /* Increased padding for more spacing around fruits */
     border-radius: 2rem;
     background:
         linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
@@ -86,7 +88,7 @@
     box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
     position: relative;
     overflow: hidden;
-    margin-bottom: clamp(0.4rem, 1.2vw, 1.2rem); /* Further reduced margin to save space */
+    margin-bottom: clamp(0.5rem, 1.5vw, 1.5rem); /* Reduced margin */
 }
 
 /* Fruit object displayed on the game board */

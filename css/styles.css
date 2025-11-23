@@ -132,7 +132,8 @@ html:has(.game6-wrapper),
 html:has(.game7-wrapper) {
     /* Lock vertical scrolling on mobile devices */
     overflow-y: hidden !important;
-    height: 100vh;
+    height: 100vh; /* Fallback for browsers that don't support dvh */
+    height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
     overscroll-behavior-y: none !important;
     overscroll-behavior-x: none;
 }
@@ -146,8 +147,10 @@ body:has(.game6-wrapper),
 body:has(.game7-wrapper) {
     /* Lock vertical scrolling on mobile devices - prevent bounce/overscroll */
     overflow-y: hidden !important;
-    height: 100vh;
-    max-height: 100vh;
+    height: 100vh; /* Fallback for browsers that don't support dvh */
+    height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
+    max-height: 100vh; /* Fallback for browsers that don't support dvh */
+    max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
     width: 100%;
     overscroll-behavior-y: none !important;
     overscroll-behavior-x: none;
@@ -164,7 +167,8 @@ body:has(.game7-wrapper) {
 .game6-wrapper,
 .game7-wrapper {
     /* Ensure game wrapper doesn't exceed viewport height */
-    max-height: 100vh;
+    max-height: 100vh; /* Fallback for browsers that don't support dvh */
+    max-height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     /* Prevent overscroll bounce */
