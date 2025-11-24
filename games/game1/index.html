@@ -4,6 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        // Set CSS custom property with actual viewport height for PWA standalone mode
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            // Set immediately
+            setViewportHeight();
+            // Update on resize/orientation change
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
     <title>Number Pop</title>
     <!-- Tailwind CSS build output for utility classes -->
     <link rel="stylesheet" href="../../css/tailwind.output.css">

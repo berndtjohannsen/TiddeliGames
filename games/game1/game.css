@@ -310,13 +310,11 @@
     100% { box-shadow: 0 12px 18px rgba(15, 23, 42, 0.18); }
 }
 
-/* PWA standalone mode - use small viewport height to prevent overflow */
+/* PWA standalone mode - use actual viewport height from JavaScript */
 @media (display-mode: standalone) {
     .game-wrapper {
-        height: 100vh; /* Fallback for browsers that don't support svh */
-        height: 100svh; /* Small viewport height - smallest possible viewport - overrides vh if supported */
-        max-height: 100vh; /* Fallback for browsers that don't support svh */
-        max-height: 100svh; /* Prevent exceeding viewport - overrides vh if supported */
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
     }
 }
 
