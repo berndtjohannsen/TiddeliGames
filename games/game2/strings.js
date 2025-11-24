@@ -96,6 +96,36 @@ window.GAME2_STRINGS = Object.freeze({
             name: 'Jultomte',
             image: 'images/jultomte.png',
             sound: 'sounds/jultomte.mp3'
+        },
+        {
+            id: 'moped',
+            name: 'Moped',
+            image: 'images/moped.png',
+            sound: 'sounds/moped.mp3'
+        },
+        {
+            id: 'harmonica',
+            name: 'Munspel',
+            image: 'images/munspel.png',
+            sound: 'sounds/munspel.mp3'
+        },
+        {
+            id: 'humming',
+            name: 'Nynna',
+            image: 'images/nynna.png',
+            sound: 'sounds/nynna.mp3'
+        },
+        {
+            id: 'owl',
+            name: 'Uggla',
+            image: 'images/owl.png',
+            sound: 'sounds/owl.mp3'
+        },
+        {
+            id: 'tractor',
+            name: 'Traktor',
+            image: 'images/traktor.png',
+            sound: 'sounds/traktor.mp3'
         }
     ]
 });

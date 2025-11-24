@@ -484,6 +484,7 @@ async function playErrorSound() {
 
 /**
  * Plays the completion sound when word is spelled correctly.
+ * Randomly selects one of the 6 completion sound files.
  * @returns {Promise} Promise that resolves when sound finishes
  */
 async function playCompletionSound() {
@@ -507,7 +508,10 @@ async function playCompletionSound() {
     }
 
     try {
-        const buffer = await loadAudioBuffer(STRINGS.sounds.complete);
+        // Randomly select one of the 6 completion sounds (complete1.mp3 through complete6.mp3)
+        const randomIndex = Math.floor(Math.random() * 6) + 1;
+        const soundPath = `sounds/complete${randomIndex}.mp3`;
+        const buffer = await loadAudioBuffer(soundPath);
         if (buffer) {
             return playAudioBuffer(buffer, 0.8);
         }
