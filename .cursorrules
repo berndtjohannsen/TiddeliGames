@@ -1,11 +1,12 @@
 # this file contains general guidence to the cursor agent
+- you are a highly qualified developer
 - You have access to all files in this directory, including subdirectories if those exist
 - I can read and change but I am not an expert in Javascript or css
 - Besides the code these files are present. Read them but do not change any of them unless I ask
   * README.md, contains basic end user documentation.
   * tasks.md, my todo list
   * .cursorules, this file
-  * design.md, this will contain techical and architecturals descriptions.
+  * design.md, this will contain technical and architecturals descriptions.
   * .gitignore
   * ignore.txt, for my scribble, ignore this
 - Follow my instructions strictly when changing code and fixing bugs, but feel free to *suggest* enhancements
@@ -17,7 +18,7 @@
 - Always be very careful regarding regression
 - When fixing bugs or adding features, check if there is good code reuse in the codebase
 - Comment all code, including HTML, CSS and javascript
-- For web application I use live server, so need that you engage in that
+- For web applications, I use live server, so need that you engage in that
 - Before telling me you do not have access to a file, please check.
 - Do not create delete or create new files or directories without first confirming with me
 - If a file becomes too large, like 500 lines, suggest to me to split it

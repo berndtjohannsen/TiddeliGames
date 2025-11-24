@@ -54,18 +54,23 @@ body {
     box-sizing: border-box;
 }
 
-/* PWA standalone mode specific fixes for pull-to-refresh flash */
+/* PWA standalone mode specific fixes for pull-to-refresh flash and viewport sizing */
 @media (display-mode: standalone) {
-    /* Lock horizontal scrolling at root level */
+    /* Lock horizontal scrolling at root level and constrain height */
     html {
         position: relative;
         width: 100%;
         max-width: 100vw;
         overflow-x: hidden !important;
+        /* Use dynamic viewport height to account for system UI in PWA mode */
+        height: 100vh; /* Fallback for browsers that don't support dvh */
+        height: 100dvh; /* Dynamic viewport height (excludes browser/system UI) - overrides vh if supported */
+        max-height: 100vh; /* Fallback for browsers that don't support dvh */
+        max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
     }
     
     body {
-        /* Lock body to viewport width but don't break layout */
+        /* Lock body to viewport dimensions but don't break layout */
         width: 100%;
         max-width: 100vw;
         min-width: 0;
@@ -76,9 +81,16 @@ body {
         position: relative;
         margin: 0;
         padding: 0;
+        /* Use dynamic viewport height to account for system UI in PWA mode */
+        height: 100vh; /* Fallback for browsers that don't support dvh */
+        height: 100dvh; /* Dynamic viewport height (excludes browser/system UI) - overrides vh if supported */
+        max-height: 100vh; /* Fallback for browsers that don't support dvh */
+        max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
         /* Ensure safe area insets don't cause overflow */
         padding-left: env(safe-area-inset-left, 0);
         padding-right: env(safe-area-inset-right, 0);
+        padding-top: env(safe-area-inset-top, 0);
+        padding-bottom: env(safe-area-inset-bottom, 0);
         box-sizing: border-box;
     }
     
@@ -91,6 +103,47 @@ body {
     #install-btn {
         max-width: calc(100vw - 1rem) !important;
         box-sizing: border-box;
+    }
+    
+    /* Override Tailwind's min-h-screen to use dynamic viewport height in PWA mode */
+    .min-h-screen {
+        min-height: 100vh; /* Fallback for browsers that don't support dvh */
+        min-height: 100dvh; /* Dynamic viewport height (excludes browser/system UI) - overrides vh if supported */
+    }
+    
+    /* Game pages in PWA standalone mode - remove body padding so games can fill screen */
+    body:has(.game-wrapper),
+    body:has(.game2-wrapper),
+    body:has(.game3-wrapper),
+    body:has(.game4-wrapper),
+    body:has(.game5-wrapper),
+    body:has(.game6-wrapper),
+    body:has(.game7-wrapper) {
+        /* Remove safe area padding on game pages - games should fill the screen */
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        /* Ensure body height matches viewport exactly in standalone mode */
+        height: 100vh; /* Fallback for browsers that don't support dvh */
+        height: 100dvh; /* Dynamic viewport height - overrides vh if supported */
+        max-height: 100vh; /* Fallback for browsers that don't support dvh */
+        max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
+    }
+    
+    /* Game wrappers in standalone mode - ensure they fit exactly within viewport */
+    .game-wrapper,
+    .game2-wrapper,
+    .game3-wrapper,
+    .game4-wrapper,
+    .game5-wrapper,
+    .game6-wrapper,
+    .game7-wrapper {
+        /* Use exact viewport height in standalone mode (body padding removed above) */
+        height: 100vh; /* Fallback for browsers that don't support dvh */
+        height: 100dvh; /* Dynamic viewport height - overrides vh if supported */
+        max-height: 100vh; /* Fallback for browsers that don't support dvh */
+        max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
     }
 }
 
