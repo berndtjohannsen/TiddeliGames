@@ -111,7 +111,22 @@ body {
         min-height: 100dvh; /* Dynamic viewport height (excludes browser/system UI) - overrides vh if supported */
     }
     
-    /* Game pages in PWA standalone mode - remove body padding so games can fill screen */
+    /* Game pages in PWA standalone mode - use small viewport height to prevent overflow */
+    html:has(.game-wrapper),
+    html:has(.game2-wrapper),
+    html:has(.game3-wrapper),
+    html:has(.game4-wrapper),
+    html:has(.game5-wrapper),
+    html:has(.game6-wrapper),
+    html:has(.game7-wrapper) {
+        /* Use small viewport height (svh) - the smallest possible viewport - ensures no overflow */
+        height: 100vh; /* Fallback for browsers that don't support svh */
+        height: 100svh; /* Small viewport height - smallest possible viewport - overrides vh if supported */
+        max-height: 100vh; /* Fallback for browsers that don't support svh */
+        max-height: 100svh; /* Prevent exceeding viewport - overrides vh if supported */
+        overflow: hidden !important;
+    }
+    
     body:has(.game-wrapper),
     body:has(.game2-wrapper),
     body:has(.game3-wrapper),
@@ -124,14 +139,19 @@ body {
         padding-right: 0 !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
-        /* Ensure body height matches viewport exactly in standalone mode */
-        height: 100vh; /* Fallback for browsers that don't support dvh */
-        height: 100dvh; /* Dynamic viewport height - overrides vh if supported */
-        max-height: 100vh; /* Fallback for browsers that don't support dvh */
-        max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
+        margin: 0 !important;
+        /* Override min-h-screen class to prevent it from making body taller than viewport */
+        min-height: 0 !important;
+        /* Use small viewport height (svh) - ensures content never exceeds visible area */
+        height: 100vh; /* Fallback for browsers that don't support svh */
+        height: 100svh; /* Small viewport height - smallest possible viewport - overrides vh if supported */
+        max-height: 100vh; /* Fallback for browsers that don't support svh */
+        max-height: 100svh; /* Prevent exceeding viewport - overrides vh if supported */
+        overflow: hidden !important;
+        box-sizing: border-box;
     }
     
-    /* Game wrappers in standalone mode - ensure they fit exactly within viewport */
+    /* Game wrappers in standalone mode - use 100% of body height to ensure perfect fit */
     .game-wrapper,
     .game2-wrapper,
     .game3-wrapper,
@@ -139,11 +159,10 @@ body {
     .game5-wrapper,
     .game6-wrapper,
     .game7-wrapper {
-        /* Use exact viewport height in standalone mode (body padding removed above) */
-        height: 100vh; /* Fallback for browsers that don't support dvh */
-        height: 100dvh; /* Dynamic viewport height - overrides vh if supported */
-        max-height: 100vh; /* Fallback for browsers that don't support dvh */
-        max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
+        /* Use 100% of body height (which is 100svh) to ensure perfect fit */
+        height: 100% !important;
+        max-height: 100% !important;
+        box-sizing: border-box;
     }
 }
 
