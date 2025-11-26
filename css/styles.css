@@ -118,7 +118,8 @@ body {
     html:has(.game4-wrapper),
     html:has(.game5-wrapper),
     html:has(.game6-wrapper),
-    html:has(.game7-wrapper) {
+    html:has(.game7-wrapper),
+    html:has(.game8-wrapper) {
         /* Use actual viewport height from JavaScript - ensures perfect fit in PWA standalone mode */
         height: var(--actual-vh, 100svh) !important;
         max-height: var(--actual-vh, 100svh) !important;
@@ -131,7 +132,8 @@ body {
     body:has(.game4-wrapper),
     body:has(.game5-wrapper),
     body:has(.game6-wrapper),
-    body:has(.game7-wrapper) {
+    body:has(.game7-wrapper),
+    body:has(.game8-wrapper) {
         /* Remove safe area padding on game pages - games should fill the screen */
         padding-left: 0 !important;
         padding-right: 0 !important;
@@ -154,7 +156,8 @@ body {
     .game4-wrapper,
     .game5-wrapper,
     .game6-wrapper,
-    .game7-wrapper {
+    .game7-wrapper,
+    .game8-wrapper {
         /* Use CSS custom property set by JavaScript with actual viewport height */
         height: var(--actual-vh, 100svh) !important;
         max-height: var(--actual-vh, 100svh) !important;
@@ -197,7 +200,8 @@ html:has(.game3-wrapper),
 html:has(.game4-wrapper),
 html:has(.game5-wrapper),
 html:has(.game6-wrapper),
-html:has(.game7-wrapper) {
+html:has(.game7-wrapper),
+html:has(.game8-wrapper) {
     /* Lock vertical scrolling on mobile devices */
     overflow-y: hidden !important;
     height: 100vh; /* Fallback for browsers that don't support dvh */
@@ -212,7 +216,8 @@ body:has(.game3-wrapper),
 body:has(.game4-wrapper),
 body:has(.game5-wrapper),
 body:has(.game6-wrapper),
-body:has(.game7-wrapper) {
+body:has(.game7-wrapper),
+body:has(.game8-wrapper) {
     /* Lock vertical scrolling on mobile devices - prevent bounce/overscroll */
     overflow-y: hidden !important;
     height: 100vh; /* Fallback for browsers that don't support dvh */
@@ -233,7 +238,8 @@ body:has(.game7-wrapper) {
 .game4-wrapper,
 .game5-wrapper,
 .game6-wrapper,
-.game7-wrapper {
+.game7-wrapper,
+.game8-wrapper {
     /* Ensure game wrapper doesn't exceed viewport height */
     max-height: 100vh; /* Fallback for browsers that don't support dvh */
     max-height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */

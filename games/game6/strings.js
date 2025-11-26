@@ -116,7 +116,7 @@ window.GAME6_STRINGS = Object.freeze({
         { emoji: '🦁', word: 'LEJON' },
         { emoji: '🥛', word: 'MJÖLK' },
         { emoji: '🥕', word: 'MOROT' },
-        { emoji: '🧢', word: 'MÖSSA' },
+        { emoji: '🧢', word: 'KEPS' },
         { emoji: '🧸', word: 'NALLE' },
         { emoji: '🎁', word: 'PAKET' },
         { emoji: '🍐', word: 'PÄRON' },

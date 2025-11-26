@@ -1,0 +1,339 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700;900&display=swap');
+
+/* Wrapper that centers the layout and provides spacing around the game */
+.game8-wrapper {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.75rem, 1.5vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 1rem);
+    height: 100vh; /* Fallback for browsers that don't support dvh */
+    height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
+    max-height: 100vh; /* Fallback for browsers that don't support dvh */
+    max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game8-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+/* Header container with back button and title */
+.game8-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+    flex-shrink: 0;
+    margin: 0;
+}
+
+/* Top row with back button */
+.game8-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+/* Central block for title and instructions */
+.game8-header__center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+/* Back button uses soft colors and large touch target */
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 18px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+.game8-title {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.game8-instructions {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 600;
+    color: #312e81;
+    min-height: 1.5em;
+    margin: 0;
+}
+
+/* Game field container */
+.game8-field {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(1rem, 3vw, 2rem);
+    padding: clamp(0.5rem, 2vw, 1.5rem);
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('images/bakgrund.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: clamp(1rem, 3vw, 2rem);
+    box-shadow: rgba(0, 0, 0, 0.15) 0 8px 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Lowercase letter display */
+.game8-lowercase-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: clamp(80px, 15vw, 120px);
+    background: rgba(255, 165, 0, 0.9); /* Orange background */
+    border-radius: clamp(1rem, 2vw, 1.5rem);
+    padding: clamp(1rem, 2vw, 1.5rem);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px;
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+    font-size: clamp(4rem, 12vw, 8rem);
+    font-weight: 800;
+    color: #ffffff;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Instruction text display */
+.game8-instruction-text {
+    text-align: center;
+    font-size: clamp(1.2rem, 3vw, 1.8rem);
+    font-weight: 700;
+    color: #1e1b4b;
+    padding: clamp(0.5rem, 1vw, 1rem);
+    flex-shrink: 0;
+}
+
+/* Uppercase letters grid container */
+.game8-uppercase-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(50px, 8vw, 80px), 1fr));
+    gap: clamp(0.5rem, 1.5vw, 1rem);
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    padding: clamp(0.5rem, 1vw, 1rem);
+}
+
+/* Uppercase letter button */
+.game8-letter-button {
+    aspect-ratio: 1;
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: clamp(0.75rem, 1.5vw, 1rem);
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.2rem, 3.5vw, 2rem);
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px;
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(50px, 8vw, 80px);
+    padding: 0.25rem;
+    line-height: 1.1;
+    gap: 0.1em;
+}
+
+.game8-letter-button:hover {
+    transform: translateY(-2px);
+    box-shadow: rgba(0, 0, 0, 0.3) 0 6px 12px;
+}
+
+.game8-letter-button:active {
+    transform: translateY(0);
+    box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px;
+}
+
+/* Correct match state */
+.game8-letter-button--correct {
+    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    animation: correctPulse 0.5s ease;
+}
+
+@keyframes correctPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Wrong match state */
+.game8-letter-button--wrong {
+    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    animation: wrongShake 0.3s ease;
+}
+
+@keyframes wrongShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* Completion dialog styles (shared with other games) */
+/* Completion dialog overlay */
+.completion-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+/* Keep dialog hidden via hidden attribute */
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+/* The dialog content itself */
+.completion-dialog__content {
+    background: #ffffff;
+    border-radius: 1.75rem;
+    padding: clamp(2rem, 5vw, 2.5rem);
+    text-align: center;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Title in the dialog */
+.completion-dialog__title {
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+/* Message text in the dialog */
+.completion-dialog__message {
+    font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+    color: #312e81;
+    margin: 0;
+}
+
+/* Button row in the dialog */
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Base style for dialog buttons */
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Primary button (continue) */
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--primary:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 18px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 480px) {
+    .game8-uppercase-container {
+        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+        gap: 0.5rem;
+    }
+    
+    .game8-letter-button {
+        font-size: 1.2rem;
+        min-height: 45px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) and (max-height: 600px) {
+    .game8-wrapper {
+        gap: 0.25rem;
+    }
+    
+    .game8-header {
+        gap: 0.25rem;
+    }
+    
+    .game8-title {
+        font-size: clamp(1.2rem, 3vw, 1.8rem);
+    }
+    
+    .game8-instructions {
+        font-size: clamp(0.9rem, 2vw, 1.1rem);
+    }
+    
+    .game8-lowercase-container {
+        min-height: clamp(60px, 10vh, 80px);
+        font-size: clamp(3rem, 8vw, 5rem);
+    }
+    
+    .game8-instruction-text {
+        font-size: clamp(1rem, 2vw, 1.3rem);
+        padding: 0.25rem;
+    }
+    
+    .game8-field {
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+}
+

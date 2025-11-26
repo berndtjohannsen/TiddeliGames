@@ -61,6 +61,13 @@ window.APP_STRINGS = Object.freeze({
                 description: '"Minusa" emojis. (4+ år)',
                 icon: '➖',
                 path: 'games/game7/index.html'
+            },
+            {
+                id: 'game8',
+                name: 'Stora och små bokstäver',
+                description: 'Matcha stora och små. (4+ år)',
+                icon: '🔠',
+                path: 'games/game8/index.html'
             }
         ]
     },
