@@ -121,6 +121,14 @@
     margin: 0;
 }
 
+/* Reduce long-press download / save menus on tablets and phones */
+.animal-card,
+.animal-card__image {
+    -webkit-touch-callout: none; /* Suppress long-press “Save image / Download” where possible */
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 /* Small lift effect on hover/focus */
 .animal-card:hover,
 .animal-card:focus-visible {

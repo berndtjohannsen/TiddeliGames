@@ -75,6 +75,14 @@ function cacheDomElements() {
     completionMessage = document.getElementById('completion-message');
     completionVideo = document.getElementById('completion-video');
     continueButton = document.getElementById('continue-button');
+
+    // On touch devices (like tablets), prevent long-press context menu on the game area.
+    // This helps small kids avoid triggering the “download / save image” dialog by accident.
+    if (animalField) {
+        animalField.addEventListener('contextmenu', event => {
+            event.preventDefault();
+        });
+    }
 }
 
 /**
