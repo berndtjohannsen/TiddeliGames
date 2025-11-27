@@ -8,6 +8,40 @@ const STRINGS = window.GAME8_STRINGS || {};
 const SWEDISH_ALPHABET_UPPERCASE = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Å', 'Ä', 'Ö'];
 const SWEDISH_ALPHABET_LOWERCASE = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'å', 'ä', 'ö'];
 
+// Emoji that is shown next to the current lowercase letter.
+// The Swedish word for each emoji starts with this letter (for example: Apa 🐒, Boll ⚽, Cykel 🚲).
+const LETTER_TO_EMOJI = {
+    A: '🐒',
+    B: '⚽',
+    C: '🚲',
+    D: '🚪',
+    E: '🐘',
+    F: '🦋',
+    G: '🐷',
+    H: '🏠',
+    I: '🦔',
+    J: '🎄',
+    K: '🔪',
+    L: '🦁',
+    M: '🐭',
+    N: '👃',
+    O: '🐍',
+    P: '🍐',
+    Q: '',
+    R: '💍',
+    S: '☀️',
+    T: '🌳',
+    U: '🦉',
+    V: '🐺',
+    W: '',
+    X: '',
+    Y: '🪓',
+    Z: '',
+    Å: '🫏',
+    Ä: '🍎',
+    Ö: '👁️'
+};
+
 // DOM references shared between functions
 let titleEl = null;
 let instructionsEl = null;
@@ -226,9 +260,24 @@ function selectNextUnmatchedLetter() {
  * Updates the display for the current lowercase letter.
  */
 function updateDisplayForCurrentLetter() {
-    // Update lowercase letter display
+    // Update lowercase letter display (letter + matching emoji)
     if (lowercaseContainer) {
-        lowercaseContainer.textContent = state.currentLowercaseLetter;
+        // Get the uppercase version of the current letter so that we can look up the emoji
+        const uppercaseLetter = SWEDISH_ALPHABET_UPPERCASE[state.currentUppercaseIndex] || state.currentLowercaseLetter.toUpperCase();
+        const emoji = LETTER_TO_EMOJI[uppercaseLetter] || '';
+
+        // Build HTML so we can show both the letter and the emoji side by side
+        if (emoji) {
+            // Emoji on the left, letter on the right
+            lowercaseContainer.innerHTML =
+                '<span class="game8-lowercase-emoji">' + emoji + '</span>' +
+                '<span class="game8-lowercase-letter">' + state.currentLowercaseLetter + '</span>';
+        } else {
+            // Fallback – only the letter
+            lowercaseContainer.textContent = state.currentLowercaseLetter;
+        }
+
+        // Keep the accessible label focused on the letter itself
         if (STRINGS.aria && STRINGS.aria.lowercase) {
             lowercaseContainer.setAttribute('aria-label', STRINGS.aria.lowercase(state.currentLowercaseLetter));
         }

@@ -105,17 +105,32 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: clamp(80px, 15vw, 120px);
-    background: rgba(255, 165, 0, 0.9); /* Orange background */
+    gap: 0.3em; /* Small space between the letter and the emoji */
+    min-height: clamp(56px, 10vw, 88px);
+    max-width: min(420px, 90%); /* Do not span the whole width – more like a compact card */
+    align-self: center; /* Center the card in the game field */
+    background: rgba(255, 255, 255, 0.9); /* Light card, like game 7 boxes (no orange) */
     border-radius: clamp(1rem, 2vw, 1.5rem);
-    padding: clamp(1rem, 2vw, 1.5rem);
-    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px;
+    padding: clamp(0.6rem, 1.5vw, 1rem);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
     font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-    font-size: clamp(4rem, 12vw, 8rem);
+    font-size: clamp(2.4rem, 7vw, 4rem);
     font-weight: 800;
-    color: #ffffff;
+    color: #4c1d95; /* Deep purple text, similar to game 7 */
     text-align: center;
     flex-shrink: 0;
+}
+
+/* Lowercase letter and emoji inside the orange box */
+.game8-lowercase-letter {
+    /* Keep the big size from the container */
+    display: inline-block;
+}
+
+.game8-lowercase-emoji {
+    /* Emoji slightly smaller so both fit nicely */
+    font-size: 0.8em;
+    display: inline-block;
 }
 
 /* Instruction text display */
