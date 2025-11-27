@@ -68,6 +68,13 @@ window.APP_STRINGS = Object.freeze({
                 description: 'Matcha stora och små. (4+ år)',
                 icon: '🔠',
                 path: 'games/game8/index.html'
+            },
+            {
+                id: 'game9',
+                name: 'Addera siffror',
+                description: '"Plussa" siffror. (5+ år)',
+                icon: '🔢',
+                path: 'games/game9/index.html'
             }
         ]
     },
