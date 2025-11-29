@@ -35,8 +35,8 @@ test.describe('Game 1 - Numbers', () => {
     expect(count).toBeGreaterThan(0);
     
     if (count > 0) {
-      // Click first circle
-      await circles.first().click();
+      // Circles are constantly animating, so use force click to bypass stability check
+      await circles.first().click({ force: true });
       // Wait a bit for any animations/sounds
       await page.waitForTimeout(200);
     }

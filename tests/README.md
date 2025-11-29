@@ -40,6 +40,9 @@ This directory contains Playwright regression tests for TiddeliGames.
   - `game1.spec.js` - Tests for Game 1 (Numbers)
   - `game2.spec.js` - Tests for Game 2 (Animal Sounds)
   - `game3.spec.js` - Tests for Game 3 (Count Fruits)
+  - `game7.spec.js` - Tests for Game 7 (Subtraction)
+  - `game8.spec.js` - Tests for Game 8 (Uppercase/Lowercase Matching)
+  - `game9.spec.js` - Tests for Game 9 (Addition with Numbers)
   - `all-games-navigation.spec.js` - Tests navigation to all games
 
 - `pwa/` - PWA-specific tests

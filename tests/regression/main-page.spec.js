@@ -15,9 +15,9 @@ test.describe('Main Page', () => {
     const gameGrid = page.locator('#game-grid');
     await expect(gameGrid).toBeVisible();
     
-    // Check that all 6 games are present
+    // Check that all 9 games are present
     const gameCards = page.locator('[data-game-id]');
-    await expect(gameCards).toHaveCount(6);
+    await expect(gameCards).toHaveCount(9);
     
     // Verify specific games exist
     await expect(page.locator('[data-game-id="game1"]')).toBeVisible();
@@ -26,6 +26,9 @@ test.describe('Main Page', () => {
     await expect(page.locator('[data-game-id="game4"]')).toBeVisible();
     await expect(page.locator('[data-game-id="game5"]')).toBeVisible();
     await expect(page.locator('[data-game-id="game6"]')).toBeVisible();
+    await expect(page.locator('[data-game-id="game7"]')).toBeVisible();
+    await expect(page.locator('[data-game-id="game8"]')).toBeVisible();
+    await expect(page.locator('[data-game-id="game9"]')).toBeVisible();
   });
 
   test('game cards display game numbers', async ({ page }) => {
@@ -38,6 +41,9 @@ test.describe('Main Page', () => {
     
     const game6 = page.locator('[data-game-id="game6"]');
     await expect(game6.locator('text=/^6$/')).toBeVisible();
+    
+    const game9 = page.locator('[data-game-id="game9"]');
+    await expect(game9.locator('text=/^9$/')).toBeVisible();
   });
 
   test('help button is visible and clickable', async ({ page }) => {

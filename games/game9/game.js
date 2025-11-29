@@ -26,6 +26,13 @@ let backgroundBuffer = null;
 let backgroundSource = null;
 let backgroundGain = null;
 const audioBufferCache = new Map();
+// Cache for synthetic sound buffers to avoid recreating them
+let successSoundBuffer = null;
+let errorSoundBuffer = null;
+// Track active sound effect timeouts for cleanup
+const activeSoundTimeouts = new Set();
+// Track all active audio sources to ensure they're stopped
+const activeAudioSources = new Set();
 
 // Game state variables
 const state = {
@@ -35,7 +42,8 @@ const state = {
     answerOptions: [], // Array of answer options (including correct one)
     answerButtons: [], // Array of answer button elements
     audioStarted: false, // Track if ambience has successfully started
-    audioStarting: false // Prevent concurrent start attempts
+    audioStarting: false, // Prevent concurrent start attempts
+    wrongAnswerTimeout: null // Timeout ID for wrong answer feedback (so we can cancel it)
 };
 
 /**
@@ -117,7 +125,9 @@ function handleVisibilityChange() {
  * Pauses the game (stops background audio).
  */
 function pauseGame() {
-    if (backgroundSource && audioContext && audioContext.state === 'running') {
+    // Stop the background source properly instead of just suspending
+    stopBackgroundAmbience();
+    if (audioContext && audioContext.state === 'running') {
         audioContext.suspend().catch(error => {
             console.warn('Could not suspend audio context:', error);
         });
@@ -133,6 +143,27 @@ function resumeGame() {
             console.warn('Could not resume audio context:', error);
         });
     }
+}
+
+/**
+ * Stops background ambience audio loop.
+ */
+function stopBackgroundAmbience() {
+    if (backgroundSource) {
+        try {
+            backgroundSource.stop();
+        } catch (error) {
+            console.warn('Could not stop background source:', error);
+        }
+        backgroundSource.disconnect();
+        backgroundSource = null;
+    }
+    if (backgroundGain) {
+        backgroundGain.disconnect();
+        backgroundGain = null;
+    }
+    state.audioStarted = false;
+    state.audioStarting = false;
 }
 
 /**
@@ -157,23 +188,66 @@ function handleFirstInteraction() {
  * Requests background audio to start (respects autoplay policy).
  */
 function requestBackgroundAudioStart() {
+    // Prevent multiple concurrent calls
+    // Check both flags to ensure we don't start if already started or starting
     if (state.audioStarted || state.audioStarting) {
         return;
     }
+    
+    // Set flag immediately to prevent race conditions
     state.audioStarting = true;
-    startBackgroundAmbience().then(() => {
-        state.audioStarted = true;
-        state.audioStarting = false;
-    }).catch(error => {
-        console.warn('Could not start background ambience:', error);
-        state.audioStarting = false;
+    
+    // Start background ambience asynchronously
+    startBackgroundAmbience()
+        .then(() => {
+            if (audioContext && audioContext.state === 'running') {
+                state.audioStarted = true;
+            }
+        })
+        .catch(error => {
+            console.warn('Could not start background audio yet:', error);
+        })
+        .finally(() => {
+            state.audioStarting = false;
+        });
+}
+
+/**
+ * Starts a new round of the game.
+ */
+/**
+ * Stops all currently playing audio sources to prevent accumulation.
+ */
+function stopAllPlayingSounds() {
+    // Stop and disconnect all tracked audio sources
+    activeAudioSources.forEach(source => {
+        try {
+            if (source.source) {
+                try {
+                    source.source.stop();
+                } catch (e) {
+                    // Source may already be stopped
+                }
+                source.source.disconnect();
+            }
+            if (source.gain) {
+                source.gain.disconnect();
+            }
+        } catch (e) {
+            // Ignore errors during cleanup
+        }
     });
+    activeAudioSources.clear();
 }
 
 /**
  * Starts a new round of the game.
  */
 function startNewRound() {
+    // Stop all playing audio sources before starting new round
+    // This prevents audio source accumulation
+    stopAllPlayingSounds();
+    
     // Generate random numbers from 1 to 9
     state.firstNumber = Math.floor(Math.random() * MAX_NUMBER) + MIN_NUMBER;
     state.secondNumber = Math.floor(Math.random() * MAX_NUMBER) + MIN_NUMBER;
@@ -230,10 +304,38 @@ function shuffleArray(array) {
  * Displays the game: numbers and answer buttons.
  */
 function displayGame() {
-    // Clear previous content
-    if (equationContainer) equationContainer.innerHTML = '';
-    if (answerButtonsContainer) answerButtonsContainer.innerHTML = '';
+    // Cancel any pending wrong answer timeout from previous round
+    // This prevents stale callbacks from executing after buttons are removed
+    if (state.wrongAnswerTimeout) {
+        clearTimeout(state.wrongAnswerTimeout);
+        state.wrongAnswerTimeout = null;
+    }
     
+    // Cancel any pending sound effect timeouts
+    activeSoundTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    activeSoundTimeouts.clear();
+    
+    // Explicitly remove all button event listeners before clearing DOM
+    // This ensures no listeners are left hanging
+    state.answerButtons.forEach(button => {
+        // Clone and replace to remove all event listeners
+        const newButton = button.cloneNode(false);
+        button.parentNode?.replaceChild(newButton, button);
+    });
+    
+    // Clear previous content (this removes DOM nodes)
+    if (equationContainer) {
+        while (equationContainer.firstChild) {
+            equationContainer.removeChild(equationContainer.firstChild);
+        }
+    }
+    if (answerButtonsContainer) {
+        while (answerButtonsContainer.firstChild) {
+            answerButtonsContainer.removeChild(answerButtonsContainer.firstChild);
+        }
+    }
+    
+    // Clear button references
     state.answerButtons = [];
     
     // Display first number
@@ -276,9 +378,6 @@ function displayGame() {
  * @param {HTMLElement} button - The button element that was clicked
  */
 async function handleAnswerClick(selectedAnswer, button) {
-    // Ensure audio is started on first interaction
-    requestBackgroundAudioStart();
-    
     // Ensure audio context is running before playing any sounds
     await ensureAudioContext();
     if (audioContext && audioContext.state === 'suspended') {
@@ -310,11 +409,30 @@ async function handleAnswerClick(selectedAnswer, button) {
         playErrorSound().catch(error => {
             console.warn('Could not play error sound:', error);
         });
-        setTimeout(() => {
-            button.classList.remove('game9-answer--wrong');
-            // Re-enable all buttons
-            state.answerButtons.forEach(btn => {
-                btn.classList.remove('game9-answer--disabled');
+        
+        // Cancel any existing wrong answer timeout
+        if (state.wrongAnswerTimeout) {
+            clearTimeout(state.wrongAnswerTimeout);
+        }
+        
+        // Store timeout ID so we can cancel it if a new round starts
+        state.wrongAnswerTimeout = setTimeout(() => {
+            state.wrongAnswerTimeout = null;
+            
+            // Check if button still exists in DOM before manipulating it
+            // This prevents errors if a new round started before timeout fired
+            if (button.isConnected && answerButtonsContainer && answerButtonsContainer.contains(button)) {
+                button.classList.remove('game9-answer--wrong');
+            }
+            
+            // Re-enable all buttons that still exist
+            // Use a copy of the array to avoid issues if state.answerButtons changes
+            const buttonsToEnable = [...state.answerButtons];
+            buttonsToEnable.forEach(btn => {
+                // Only manipulate buttons that still exist in the DOM
+                if (btn.isConnected && answerButtonsContainer && answerButtonsContainer.contains(btn)) {
+                    btn.classList.remove('game9-answer--disabled');
+                }
             });
         }, 800);
     }
@@ -379,49 +497,60 @@ async function playSuccessSound() {
         return Promise.resolve();
     }
 
-    // Play synthetic success sound
+    // Cache the buffer to avoid recreating it every time
+    if (!successSoundBuffer) {
+        const sampleRate = audioContext.sampleRate;
+        const duration = 0.6;
+        const frames = Math.floor(sampleRate * duration);
+        successSoundBuffer = audioContext.createBuffer(1, frames, sampleRate);
+        const data = successSoundBuffer.getChannelData(0);
+
+        // Create a pleasant two-tone success sound
+        const freq1 = 523.25; // C5
+        const freq2 = 659.25; // E5
+        const attackFrames = Math.floor(sampleRate * 0.05);
+        const sustainFrames = Math.floor(sampleRate * 0.3);
+        const releaseFrames = Math.floor(sampleRate * 0.25);
+
+        for (let i = 0; i < frames; i++) {
+            let value = 0;
+            if (i < attackFrames + sustainFrames + releaseFrames) {
+                const envelope = calculateEnvelopeValue(i, attackFrames, sustainFrames, releaseFrames);
+                if (i < frames / 2) {
+                    const t = i / sampleRate;
+                    value = Math.sin(2 * Math.PI * freq1 * t) * envelope;
+                } else {
+                    const t = (i - frames / 2) / sampleRate;
+                    value = Math.sin(2 * Math.PI * freq2 * t) * envelope;
+                }
+            }
+            data[i] = value;
+        }
+    }
+
     const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
     const actualVolume = globalVolume * 0.7;
 
-    const sampleRate = audioContext.sampleRate;
-    const duration = 0.6;
-    const frames = Math.floor(sampleRate * duration);
-    const buffer = audioContext.createBuffer(1, frames, sampleRate);
-    const data = buffer.getChannelData(0);
-
-    // Create a pleasant two-tone success sound
-    const freq1 = 523.25; // C5
-    const freq2 = 659.25; // E5
-    const attackFrames = Math.floor(sampleRate * 0.05);
-    const sustainFrames = Math.floor(sampleRate * 0.3);
-    const releaseFrames = Math.floor(sampleRate * 0.25);
-
-    for (let i = 0; i < frames; i++) {
-        let value = 0;
-        if (i < attackFrames + sustainFrames + releaseFrames) {
-            const envelope = calculateEnvelopeValue(i, attackFrames, sustainFrames, releaseFrames);
-            if (i < frames / 2) {
-                const t = i / sampleRate;
-                value = Math.sin(2 * Math.PI * freq1 * t) * envelope;
-            } else {
-                const t = (i - frames / 2) / sampleRate;
-                value = Math.sin(2 * Math.PI * freq2 * t) * envelope;
-            }
-        }
-        data[i] = value * actualVolume;
-    }
-
     const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
+    source.buffer = successSoundBuffer;
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(actualVolume, audioContext.currentTime);
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Track this source for cleanup
+    const sourceRef = { source, gain: gainNode };
+    activeAudioSources.add(sourceRef);
 
     return new Promise((resolve) => {
         let resolved = false;
         const cleanup = () => {
             if (!resolved) {
                 resolved = true;
+                activeAudioSources.delete(sourceRef);
                 try {
                     source.disconnect();
+                    gainNode.disconnect();
                 } catch (e) {
                     // Ignore cleanup errors
                 }
@@ -429,10 +558,19 @@ async function playSuccessSound() {
             }
         };
 
-        source.onended = cleanup;
+        const duration = 0.6;
+        const wrappedCleanup = () => {
+            cleanup();
+        };
+        
+        source.onended = wrappedCleanup;
         try {
             source.start(0);
-            setTimeout(cleanup, (duration + 0.1) * 1000);
+            const timeoutId = setTimeout(() => {
+                activeSoundTimeouts.delete(timeoutId);
+                wrappedCleanup();
+            }, (duration + 0.1) * 1000);
+            activeSoundTimeouts.add(timeoutId);
         } catch (error) {
             console.warn('Could not start success sound:', error);
             cleanup();
@@ -464,42 +602,53 @@ async function playErrorSound() {
         return Promise.resolve();
     }
 
-    // Play synthetic error sound
+    // Cache the buffer to avoid recreating it every time
+    if (!errorSoundBuffer) {
+        const sampleRate = audioContext.sampleRate;
+        const duration = 0.2;
+        const frames = Math.floor(sampleRate * duration);
+        errorSoundBuffer = audioContext.createBuffer(1, frames, sampleRate);
+        const data = errorSoundBuffer.getChannelData(0);
+
+        // Create a low, buzzy error sound
+        const freq = 200;
+        const attackFrames = Math.floor(sampleRate * 0.02);
+        const sustainFrames = Math.floor(sampleRate * 0.1);
+        const releaseFrames = Math.floor(sampleRate * 0.08);
+
+        for (let i = 0; i < frames; i++) {
+            const envelope = calculateEnvelopeValue(i, attackFrames, sustainFrames, releaseFrames);
+            const t = i / sampleRate;
+            // Add some noise for a buzzy sound
+            const noise = (Math.random() - 0.5) * 0.3;
+            const value = (Math.sin(2 * Math.PI * freq * t) + noise) * envelope;
+            data[i] = value;
+        }
+    }
+
     const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
     const actualVolume = globalVolume * 0.4;
 
-    const sampleRate = audioContext.sampleRate;
-    const duration = 0.2;
-    const frames = Math.floor(sampleRate * duration);
-    const buffer = audioContext.createBuffer(1, frames, sampleRate);
-    const data = buffer.getChannelData(0);
-
-    // Create a low, buzzy error sound
-    const freq = 200;
-    const attackFrames = Math.floor(sampleRate * 0.02);
-    const sustainFrames = Math.floor(sampleRate * 0.1);
-    const releaseFrames = Math.floor(sampleRate * 0.08);
-
-    for (let i = 0; i < frames; i++) {
-        const envelope = calculateEnvelopeValue(i, attackFrames, sustainFrames, releaseFrames);
-        const t = i / sampleRate;
-        // Add some noise for a buzzy sound
-        const noise = (Math.random() - 0.5) * 0.3;
-        const value = (Math.sin(2 * Math.PI * freq * t) + noise) * envelope;
-        data[i] = value * actualVolume;
-    }
-
     const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(audioContext.destination);
+    source.buffer = errorSoundBuffer;
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(actualVolume, audioContext.currentTime);
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Track this source for cleanup
+    const sourceRef = { source, gain: gainNode };
+    activeAudioSources.add(sourceRef);
 
     return new Promise((resolve) => {
         let resolved = false;
         const cleanup = () => {
             if (!resolved) {
                 resolved = true;
+                activeAudioSources.delete(sourceRef);
                 try {
                     source.disconnect();
+                    gainNode.disconnect();
                 } catch (e) {
                     // Ignore cleanup errors
                 }
@@ -507,10 +656,19 @@ async function playErrorSound() {
             }
         };
 
-        source.onended = cleanup;
+        const duration = 0.2;
+        const wrappedCleanup = () => {
+            cleanup();
+        };
+        
+        source.onended = wrappedCleanup;
         try {
             source.start(0);
-            setTimeout(cleanup, (duration + 0.1) * 1000);
+            const timeoutId = setTimeout(() => {
+                activeSoundTimeouts.delete(timeoutId);
+                wrappedCleanup();
+            }, (duration + 0.1) * 1000);
+            activeSoundTimeouts.add(timeoutId);
         } catch (error) {
             console.warn('Could not start error sound:', error);
             cleanup();
@@ -574,12 +732,17 @@ function playAudioBuffer(buffer, volumeMultiplier = 1.0) {
     source.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
+    // Track this source for cleanup
+    const sourceRef = { source, gain: gainNode };
+    activeAudioSources.add(sourceRef);
+
     return new Promise((resolve) => {
         let resolved = false;
         
         const cleanup = () => {
             if (!resolved) {
                 resolved = true;
+                activeAudioSources.delete(sourceRef);
                 try {
                     source.disconnect();
                     gainNode.disconnect();
@@ -590,13 +753,21 @@ function playAudioBuffer(buffer, volumeMultiplier = 1.0) {
             }
         };
 
-        source.onended = cleanup;
+        const duration = buffer.duration;
+        const wrappedCleanup = () => {
+            cleanup();
+        };
+        
+        source.onended = wrappedCleanup;
 
         try {
-            const duration = buffer.duration;
             source.start(0);
             // Set timeout as fallback in case onended doesn't fire
-            setTimeout(cleanup, (duration + 0.1) * 1000);
+            const timeoutId = setTimeout(() => {
+                activeSoundTimeouts.delete(timeoutId);
+                wrappedCleanup();
+            }, (duration + 0.1) * 1000);
+            activeSoundTimeouts.add(timeoutId);
         } catch (error) {
             console.warn('Could not start audio buffer:', error);
             cleanup();
@@ -623,14 +794,31 @@ function calculateEnvelopeValue(frame, attackFrames, sustainFrames, releaseFrame
  * @returns {Promise} Promise that resolves when audio context is ready
  */
 async function ensureAudioContext() {
-    if (!audioContext) {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        } catch (error) {
-            console.warn('Could not create AudioContext:', error);
+    if (audioContext) {
+        if (audioContext.state === 'suspended') {
+            try {
+                await audioContext.resume();
+            } catch (error) {
+                console.warn('Could not resume AudioContext:', error);
+            }
         }
+        return;
     }
-    return Promise.resolve();
+
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // If context starts suspended, try to resume it
+        if (audioContext.state === 'suspended') {
+            try {
+                await audioContext.resume();
+            } catch (error) {
+                console.warn('Could not resume newly created AudioContext:', error);
+            }
+        }
+    } catch (error) {
+        console.warn('AudioContext could not be initialized:', error);
+        audioContext = null;
+    }
 }
 
 /**
@@ -649,6 +837,14 @@ async function loadAudioBuffer(url) {
 
     if (!audioContext) {
         return null;
+    }
+
+    // Limit cache size to prevent unbounded memory growth
+    // If cache gets too large, remove oldest entries (simple FIFO)
+    const MAX_CACHE_SIZE = 10;
+    if (audioBufferCache.size >= MAX_CACHE_SIZE) {
+        const firstKey = audioBufferCache.keys().next().value;
+        audioBufferCache.delete(firstKey);
     }
 
     try {
@@ -671,55 +867,50 @@ async function loadAudioBuffer(url) {
  * @returns {Promise} Promise that resolves when ambience starts
  */
 async function startBackgroundAmbience() {
-    if (!STRINGS.ambience || !STRINGS.ambience.track) {
-        return Promise.resolve();
+    if (!STRINGS.ambience?.track) {
+        return;
     }
 
     await ensureAudioContext();
+
     if (!audioContext) {
-        return Promise.resolve();
+        return;
     }
 
-    // Try to resume if suspended (required by autoplay policy)
+    // Ensure audio context is running before proceeding
     if (audioContext.state === 'suspended') {
         try {
             await audioContext.resume();
         } catch (error) {
-            console.warn('Could not resume AudioContext for ambience:', error);
-            return Promise.resolve();
+            console.warn('Could not resume AudioContext:', error);
+            return;
         }
     }
 
     if (audioContext.state !== 'running') {
-        return Promise.resolve();
+        return;
     }
 
-    try {
+    if (!backgroundBuffer) {
         backgroundBuffer = await loadAudioBuffer(STRINGS.ambience.track);
-        if (!backgroundBuffer) {
-            return Promise.resolve();
-        }
-
-        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
-        backgroundGain = audioContext.createGain();
-        backgroundGain.gain.setValueAtTime(globalVolume, audioContext.currentTime);
-        backgroundGain.connect(audioContext.destination);
-
-        function playLoop() {
-            if (!backgroundBuffer || !audioContext || audioContext.state !== 'running') {
-                return;
-            }
-
-            backgroundSource = audioContext.createBufferSource();
-            backgroundSource.buffer = backgroundBuffer;
-            backgroundSource.connect(backgroundGain);
-            backgroundSource.onended = playLoop;
-            backgroundSource.start(0);
-        }
-
-        playLoop();
-    } catch (error) {
-        console.warn('Could not start background ambience:', error);
     }
+
+    if (!backgroundBuffer) {
+        return;
+    }
+
+    stopBackgroundAmbience();
+
+    backgroundSource = audioContext.createBufferSource();
+    backgroundSource.buffer = backgroundBuffer;
+    backgroundSource.loop = true;
+
+    backgroundGain = audioContext.createGain();
+    const volume = window.TiddeliGamesVolume?.get() ?? 0.35;
+    backgroundGain.gain.setValueAtTime(volume, audioContext.currentTime);
+
+    backgroundSource.connect(backgroundGain);
+    backgroundGain.connect(audioContext.destination);
+    backgroundSource.start();
 }
 

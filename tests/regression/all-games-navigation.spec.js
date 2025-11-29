@@ -9,17 +9,34 @@ test.describe('Game Navigation', () => {
     { id: 'game4', path: '/games/game4/index.html' },
     { id: 'game5', path: '/games/game5/index.html' },
     { id: 'game6', path: '/games/game6/index.html' },
+    { id: 'game7', path: '/games/game7/index.html' },
+    { id: 'game8', path: '/games/game8/index.html' },
+    { id: 'game9', path: '/games/game9/index.html' },
   ];
 
   test('can navigate to all games from main page', async ({ page }) => {
     await page.goto('/');
     
+    // Wait for game cards to be rendered
+    await page.waitForSelector('[data-game-id]', { timeout: 3000 });
+    
     for (const game of games) {
-      // Click game card
-      await page.locator(`[data-game-id="${game.id}"]`).click();
+      // Wait for the specific game card to be visible and clickable
+      const gameCard = page.locator(`[data-game-id="${game.id}"]`);
+      await expect(gameCard).toBeVisible({ timeout: 3000 });
       
-      // Verify navigation (with timeout)
-      await expect(page).toHaveURL(new RegExp(game.path.replace(/\//g, '\\/')), { timeout: 5000 });
+      // Create a flexible URL pattern that matches both absolute and relative paths
+      // The path in strings.js is relative, but browser resolves it to absolute
+      const urlPattern = new RegExp(`.*${game.path.replace(/\//g, '\\/')}`, 'i');
+      
+      // Click game card and wait for navigation
+      await Promise.all([
+        page.waitForURL(urlPattern, { timeout: 5000 }), // Wait for navigation
+        gameCard.click()
+      ]);
+      
+      // Verify navigation completed
+      await expect(page).toHaveURL(urlPattern, { timeout: 5000 });
       
       // Verify page loaded - wait for DOM content, not network idle (faster)
       await page.waitForLoadState('domcontentloaded');
@@ -29,6 +46,9 @@ test.describe('Game Navigation', () => {
       
       // Go back to main page
       await page.goto('/', { waitUntil: 'domcontentloaded' });
+      
+      // Wait for game cards to be rendered again before next iteration
+      await page.waitForSelector('[data-game-id]', { timeout: 3000 });
     }
   });
 
