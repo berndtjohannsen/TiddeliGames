@@ -33,6 +33,14 @@ let errorSoundBuffer = null;
 const activeSoundTimeouts = new Set();
 // Track all active audio sources to ensure they're stopped
 const activeAudioSources = new Set();
+// Expose for debugging
+if (typeof window !== 'undefined') {
+    window.DEBUG = window.DEBUG || {};
+    Object.defineProperty(window.DEBUG, 'activeAudioSources', {
+        get: () => activeAudioSources.size,
+        enumerable: true
+    });
+}
 
 // Game state variables
 const state = {
@@ -43,8 +51,28 @@ const state = {
     answerButtons: [], // Array of answer button elements
     audioStarted: false, // Track if ambience has successfully started
     audioStarting: false, // Prevent concurrent start attempts
-    wrongAnswerTimeout: null // Timeout ID for wrong answer feedback (so we can cancel it)
+    wrongAnswerTimeout: null, // Timeout ID for wrong answer feedback (so we can cancel it)
+    answerProcessing: false // Prevent rapid clicks from causing race conditions
 };
+
+// Prevent concurrent cleanup operations
+let cleanupInProgress = false;
+
+// Add debugging for audio state
+if (typeof window !== 'undefined') {
+    Object.defineProperty(window.DEBUG, 'audioState', {
+        get: () => ({
+            context: audioContext?.state,
+            backgroundSource: !!backgroundSource,
+            audioStarted: state.audioStarted,
+            audioStarting: state.audioStarting,
+            activeSources: activeAudioSources.size,
+            processing: state.answerProcessing,
+            cleanupInProgress: cleanupInProgress
+        }),
+        enumerable: true
+    });
+}
 
 /**
  * Initializes the game when the DOM is ready.
@@ -139,9 +167,19 @@ function pauseGame() {
  */
 function resumeGame() {
     if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume().catch(error => {
-            console.warn('Could not resume audio context:', error);
-        });
+        audioContext.resume()
+            .then(() => {
+                // Restart background if we previously had it playing
+                // Check if buffer is loaded but source is stopped
+                if (!backgroundSource && backgroundBuffer) {
+                    startBackgroundAmbience().catch(err => {
+                        console.warn('Could not restart background:', err);
+                    });
+                }
+            })
+            .catch(error => {
+                console.warn('Could not resume audio context:', error);
+            });
     }
 }
 
@@ -153,17 +191,26 @@ function stopBackgroundAmbience() {
         try {
             backgroundSource.stop();
         } catch (error) {
-            console.warn('Could not stop background source:', error);
+            // Already stopped, ignore
         }
-        backgroundSource.disconnect();
+        try {
+            backgroundSource.disconnect();
+        } catch (error) {
+            // Already disconnected, ignore
+        }
         backgroundSource = null;
     }
     if (backgroundGain) {
-        backgroundGain.disconnect();
+        try {
+            backgroundGain.disconnect();
+        } catch (error) {
+            // Already disconnected, ignore
+        }
         backgroundGain = null;
     }
-    state.audioStarted = false;
-    state.audioStarting = false;
+    // DON'T reset these flags here - let resumeGame() handle restart
+    // state.audioStarted = false;
+    // state.audioStarting = false;
 }
 
 /**
@@ -219,25 +266,61 @@ function requestBackgroundAudioStart() {
  * Stops all currently playing audio sources to prevent accumulation.
  */
 function stopAllPlayingSounds() {
-    // Stop and disconnect all tracked audio sources
-    activeAudioSources.forEach(source => {
-        try {
-            if (source.source) {
-                try {
-                    source.source.stop();
-                } catch (e) {
-                    // Source may already be stopped
+    // Prevent concurrent cleanup
+    if (cleanupInProgress) {
+        return;
+    }
+    cleanupInProgress = true;
+    
+    try {
+        // Stop and disconnect all tracked audio sources
+        // Create a copy of the set to avoid modification during iteration
+        const sourcesToStop = Array.from(activeAudioSources);
+        sourcesToStop.forEach(ref => {
+            try {
+                if (ref.source) {
+                    // Remove event listeners first to prevent callbacks on stopped sources
+                    if (ref.cleanup) {
+                        try {
+                            ref.source.removeEventListener('ended', ref.cleanup);
+                            ref.source.removeEventListener('error', ref.cleanup);
+                        } catch (e) {
+                            // Ignore if listeners weren't added
+                        }
+                    }
+                    try {
+                        ref.source.stop(0);
+                    } catch (e) {
+                        // Source may already be stopped
+                    }
+                    try {
+                        ref.source.disconnect();
+                    } catch (e) {
+                        // May already be disconnected
+                    }
                 }
-                source.source.disconnect();
+                if (ref.gain) {
+                    try {
+                        ref.gain.disconnect();
+                    } catch (e) {
+                        // May already be disconnected
+                    }
+                }
+            } catch (e) {
+                // Ignore errors during cleanup
             }
-            if (source.gain) {
-                source.gain.disconnect();
-            }
-        } catch (e) {
-            // Ignore errors during cleanup
-        }
-    });
-    activeAudioSources.clear();
+        });
+        activeAudioSources.clear();
+        
+        // Clear any pending sound effect timeouts
+        activeSoundTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+        activeSoundTimeouts.clear();
+        
+        // NOTE: We do NOT stop background audio here - it should continue playing
+        // Background audio is only stopped in pauseGame() or when explicitly needed
+    } finally {
+        cleanupInProgress = false;
+    }
 }
 
 /**
@@ -258,6 +341,8 @@ function startNewRound() {
     
     // Display the game
     displayGame();
+    
+    // Background audio continues playing - we don't stop it between rounds
 }
 
 /**
@@ -268,20 +353,32 @@ function generateAnswerOptions() {
     options.add(state.correctAnswer);
     
     // Generate wrong answers
-    while (options.size < NUM_ANSWERS) {
-        // Generate a wrong answer that's different from the correct one
-        // and within reasonable range (2 to 18)
-        let wrongAnswer;
-        do {
-            // Prefer answers close to the correct answer for more challenge
-            const offset = Math.floor(Math.random() * 10) - 5; // -5 to +4
-            wrongAnswer = state.correctAnswer + offset;
-            // Ensure it's within valid range and not the correct answer
-            if (wrongAnswer < 2) wrongAnswer = 2;
-            if (wrongAnswer > MAX_SUM) wrongAnswer = MAX_SUM;
-        } while (options.has(wrongAnswer));
+    let attempts = 0;
+    const MAX_ATTEMPTS = 1000; // Safety limit
+    
+    while (options.size < NUM_ANSWERS && attempts < MAX_ATTEMPTS) {
+        attempts++;
         
-        options.add(wrongAnswer);
+        // Generate a wrong answer with a wider range
+        const offset = Math.floor(Math.random() * 16) - 8; // -8 to +7 (wider range)
+        let wrongAnswer = state.correctAnswer + offset;
+        
+        // Clamp to valid range
+        if (wrongAnswer < 2) wrongAnswer = 2;
+        if (wrongAnswer > MAX_SUM) wrongAnswer = MAX_SUM;
+        
+        // Only add if unique (no inner loop needed!)
+        if (!options.has(wrongAnswer)) {
+            options.add(wrongAnswer);
+        }
+    }
+    
+    // Fallback: if we couldn't generate enough, just fill with sequential numbers
+    if (options.size < NUM_ANSWERS) {
+        console.warn('Could not generate enough unique answers, filling with sequential');
+        for (let i = 2; i <= MAX_SUM && options.size < NUM_ANSWERS; i++) {
+            options.add(i);
+        }
     }
     
     // Convert to array and shuffle
@@ -304,6 +401,9 @@ function shuffleArray(array) {
  * Displays the game: numbers and answer buttons.
  */
 function displayGame() {
+    // Reset answer processing flag for new round
+    state.answerProcessing = false;
+    
     // Cancel any pending wrong answer timeout from previous round
     // This prevents stale callbacks from executing after buttons are removed
     if (state.wrongAnswerTimeout) {
@@ -315,15 +415,7 @@ function displayGame() {
     activeSoundTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
     activeSoundTimeouts.clear();
     
-    // Explicitly remove all button event listeners before clearing DOM
-    // This ensures no listeners are left hanging
-    state.answerButtons.forEach(button => {
-        // Clone and replace to remove all event listeners
-        const newButton = button.cloneNode(false);
-        button.parentNode?.replaceChild(newButton, button);
-    });
-    
-    // Clear previous content (this removes DOM nodes)
+    // Clear previous content (this removes DOM nodes and their event listeners)
     if (equationContainer) {
         while (equationContainer.firstChild) {
             equationContainer.removeChild(equationContainer.firstChild);
@@ -335,7 +427,7 @@ function displayGame() {
         }
     }
     
-    // Clear button references
+    // Clear button references (DOM nodes are already removed above)
     state.answerButtons = [];
     
     // Display first number
@@ -378,6 +470,12 @@ function displayGame() {
  * @param {HTMLElement} button - The button element that was clicked
  */
 async function handleAnswerClick(selectedAnswer, button) {
+    // Prevent rapid clicks from causing race conditions
+    if (state.answerProcessing) {
+        return;
+    }
+    state.answerProcessing = true;
+    
     // Ensure audio context is running before playing any sounds
     await ensureAudioContext();
     if (audioContext && audioContext.state === 'suspended') {
@@ -399,6 +497,7 @@ async function handleAnswerClick(selectedAnswer, button) {
         // Show dialog immediately, then play sound
         showCompletionDialog();
         // Play success sound (don't wait for it)
+        // Note: answerProcessing flag will be reset when continue is clicked and new round starts
         playSuccessSound().catch(error => {
             console.warn('Could not play success sound:', error);
         });
@@ -434,6 +533,9 @@ async function handleAnswerClick(selectedAnswer, button) {
                     btn.classList.remove('game9-answer--disabled');
                 }
             });
+            
+            // Reset processing flag after timeout completes
+            state.answerProcessing = false;
         }, 800);
     }
 }
@@ -478,6 +580,12 @@ function handleContinueClick() {
  * @returns {Promise} Promise that resolves when sound finishes
  */
 async function playSuccessSound() {
+    // Prevent memory leak - limit concurrent sounds
+    if (activeAudioSources.size > 10) {
+        console.warn('Too many active audio sources, aborting new sound');
+        return Promise.resolve(); // Just abort, don't try to cleanup and continue
+    }
+    
     await ensureAudioContext();
 
     if (!audioContext) {
@@ -538,16 +646,20 @@ async function playSuccessSound() {
     source.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Track this source for cleanup
-    const sourceRef = { source, gain: gainNode };
-    activeAudioSources.add(sourceRef);
-
     return new Promise((resolve) => {
         let resolved = false;
-        const cleanup = () => {
+        const duration = 0.6;
+        
+        const wrappedCleanup = () => {
             if (!resolved) {
                 resolved = true;
                 activeAudioSources.delete(sourceRef);
+                try {
+                    source.removeEventListener('ended', wrappedCleanup);
+                    source.removeEventListener('error', wrappedCleanup);
+                } catch (e) {
+                    // Ignore if listeners weren't added
+                }
                 try {
                     source.disconnect();
                     gainNode.disconnect();
@@ -557,13 +669,15 @@ async function playSuccessSound() {
                 resolve();
             }
         };
-
-        const duration = 0.6;
-        const wrappedCleanup = () => {
-            cleanup();
-        };
         
-        source.onended = wrappedCleanup;
+        // Track this source for cleanup (store cleanup function for removal)
+        const sourceRef = { source, gain: gainNode, cleanup: wrappedCleanup };
+        activeAudioSources.add(sourceRef);
+        
+        // Add event listeners for ended and error (don't use onended, use addEventListener)
+        source.addEventListener('ended', wrappedCleanup);
+        source.addEventListener('error', wrappedCleanup);
+        
         try {
             source.start(0);
             const timeoutId = setTimeout(() => {
@@ -573,7 +687,7 @@ async function playSuccessSound() {
             activeSoundTimeouts.add(timeoutId);
         } catch (error) {
             console.warn('Could not start success sound:', error);
-            cleanup();
+            wrappedCleanup();
         }
     });
 }
@@ -583,6 +697,12 @@ async function playSuccessSound() {
  * @returns {Promise} Promise that resolves when sound finishes
  */
 async function playErrorSound() {
+    // Prevent memory leak - limit concurrent sounds
+    if (activeAudioSources.size > 10) {
+        console.warn('Too many active audio sources, aborting new sound');
+        return Promise.resolve(); // Just abort, don't try to cleanup and continue
+    }
+    
     await ensureAudioContext();
 
     if (!audioContext) {
@@ -636,16 +756,20 @@ async function playErrorSound() {
     source.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Track this source for cleanup
-    const sourceRef = { source, gain: gainNode };
-    activeAudioSources.add(sourceRef);
-
     return new Promise((resolve) => {
         let resolved = false;
-        const cleanup = () => {
+        const duration = 0.2;
+        
+        const wrappedCleanup = () => {
             if (!resolved) {
                 resolved = true;
                 activeAudioSources.delete(sourceRef);
+                try {
+                    source.removeEventListener('ended', wrappedCleanup);
+                    source.removeEventListener('error', wrappedCleanup);
+                } catch (e) {
+                    // Ignore if listeners weren't added
+                }
                 try {
                     source.disconnect();
                     gainNode.disconnect();
@@ -655,13 +779,15 @@ async function playErrorSound() {
                 resolve();
             }
         };
-
-        const duration = 0.2;
-        const wrappedCleanup = () => {
-            cleanup();
-        };
         
-        source.onended = wrappedCleanup;
+        // Track this source for cleanup (store cleanup function for removal)
+        const sourceRef = { source, gain: gainNode, cleanup: wrappedCleanup };
+        activeAudioSources.add(sourceRef);
+        
+        // Add event listeners for ended and error (don't use onended, use addEventListener)
+        source.addEventListener('ended', wrappedCleanup);
+        source.addEventListener('error', wrappedCleanup);
+        
         try {
             source.start(0);
             const timeoutId = setTimeout(() => {
@@ -671,7 +797,7 @@ async function playErrorSound() {
             activeSoundTimeouts.add(timeoutId);
         } catch (error) {
             console.warn('Could not start error sound:', error);
-            cleanup();
+            wrappedCleanup();
         }
     });
 }
@@ -718,6 +844,12 @@ async function playCompletionSound() {
  * @returns {Promise} Promise that resolves when sound finishes
  */
 function playAudioBuffer(buffer, volumeMultiplier = 1.0) {
+    // Prevent memory leak - limit concurrent sounds
+    if (activeAudioSources.size > 10) {
+        console.warn('Too many active audio sources, aborting new sound');
+        return Promise.resolve(); // Just abort, don't try to cleanup and continue
+    }
+    
     if (!audioContext || audioContext.state !== 'running') {
         return Promise.resolve();
     }
@@ -732,17 +864,20 @@ function playAudioBuffer(buffer, volumeMultiplier = 1.0) {
     source.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Track this source for cleanup
-    const sourceRef = { source, gain: gainNode };
-    activeAudioSources.add(sourceRef);
-
     return new Promise((resolve) => {
         let resolved = false;
+        const duration = buffer.duration;
         
-        const cleanup = () => {
+        const wrappedCleanup = () => {
             if (!resolved) {
                 resolved = true;
                 activeAudioSources.delete(sourceRef);
+                try {
+                    source.removeEventListener('ended', wrappedCleanup);
+                    source.removeEventListener('error', wrappedCleanup);
+                } catch (e) {
+                    // Ignore if listeners weren't added
+                }
                 try {
                     source.disconnect();
                     gainNode.disconnect();
@@ -752,13 +887,14 @@ function playAudioBuffer(buffer, volumeMultiplier = 1.0) {
                 resolve();
             }
         };
-
-        const duration = buffer.duration;
-        const wrappedCleanup = () => {
-            cleanup();
-        };
         
-        source.onended = wrappedCleanup;
+        // Track this source for cleanup (store cleanup function for removal)
+        const sourceRef = { source, gain: gainNode, cleanup: wrappedCleanup };
+        activeAudioSources.add(sourceRef);
+        
+        // Add event listeners for ended and error (don't use onended, use addEventListener)
+        source.addEventListener('ended', wrappedCleanup);
+        source.addEventListener('error', wrappedCleanup);
 
         try {
             source.start(0);
@@ -770,7 +906,7 @@ function playAudioBuffer(buffer, volumeMultiplier = 1.0) {
             activeSoundTimeouts.add(timeoutId);
         } catch (error) {
             console.warn('Could not start audio buffer:', error);
-            cleanup();
+            wrappedCleanup();
         }
     });
 }
@@ -807,6 +943,8 @@ async function ensureAudioContext() {
 
     try {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Keep reference on window for debugging
+        window.__tiddeliAudioContext = audioContext;
         // If context starts suspended, try to resume it
         if (audioContext.state === 'suspended') {
             try {
@@ -840,11 +978,10 @@ async function loadAudioBuffer(url) {
     }
 
     // Limit cache size to prevent unbounded memory growth
-    // If cache gets too large, remove oldest entries (simple FIFO)
-    const MAX_CACHE_SIZE = 10;
+    // If cache gets too large, clear it entirely (simple eviction policy)
+    const MAX_CACHE_SIZE = 50;
     if (audioBufferCache.size >= MAX_CACHE_SIZE) {
-        const firstKey = audioBufferCache.keys().next().value;
-        audioBufferCache.delete(firstKey);
+        audioBufferCache.clear();
     }
 
     try {
@@ -868,6 +1005,11 @@ async function loadAudioBuffer(url) {
  */
 async function startBackgroundAmbience() {
     if (!STRINGS.ambience?.track) {
+        return;
+    }
+    
+    // Prevent starting if already running
+    if (backgroundSource) {
         return;
     }
 

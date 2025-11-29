@@ -206,20 +206,32 @@ function generateAnswerOptions() {
     options.add(state.correctAnswer);
     
     // Generate wrong answers
-    while (options.size < NUM_ANSWERS) {
-        // Generate a wrong answer that's different from the correct one
-        // and within reasonable range (1 to 20)
-        let wrongAnswer;
-        do {
-            // Prefer answers close to the correct answer for more challenge
-            const offset = Math.floor(Math.random() * 10) - 5; // -5 to +4
-            wrongAnswer = state.correctAnswer + offset;
-            // Ensure it's within valid range and not the correct answer
-            if (wrongAnswer < 1) wrongAnswer = 1;
-            if (wrongAnswer > MAX_SUM) wrongAnswer = MAX_SUM;
-        } while (options.has(wrongAnswer));
+    let attempts = 0;
+    const MAX_ATTEMPTS = 1000; // Safety limit
+    
+    while (options.size < NUM_ANSWERS && attempts < MAX_ATTEMPTS) {
+        attempts++;
         
-        options.add(wrongAnswer);
+        // Generate a wrong answer with a wider range
+        const offset = Math.floor(Math.random() * 20) - 10; // -10 to +9 (wider range)
+        let wrongAnswer = state.correctAnswer + offset;
+        
+        // Clamp to valid range
+        if (wrongAnswer < 1) wrongAnswer = 1;
+        if (wrongAnswer > MAX_SUM) wrongAnswer = MAX_SUM;
+        
+        // Only add if unique (no inner loop needed!)
+        if (!options.has(wrongAnswer)) {
+            options.add(wrongAnswer);
+        }
+    }
+    
+    // Fallback: if we couldn't generate enough, just fill with sequential numbers
+    if (options.size < NUM_ANSWERS) {
+        console.warn('Could not generate enough unique answers, filling with sequential');
+        for (let i = 1; i <= MAX_SUM && options.size < NUM_ANSWERS; i++) {
+            options.add(i);
+        }
     }
     
     // Convert to array and shuffle

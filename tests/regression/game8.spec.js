@@ -73,5 +73,85 @@ test.describe('Game 8 - Uppercase/Lowercase Matching', () => {
       await page.waitForTimeout(200);
     }
   });
+
+  /**
+   * Endurance test: Completes multiple rounds to detect memory leaks or hanging issues.
+   */
+  test('endurance: completes 10 rounds without hanging', async ({ page }) => {
+    test.setTimeout(120000); // 2 minutes
+    
+    await page.waitForTimeout(500);
+    
+    const consoleErrors = [];
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    
+    // Helper function to get the target lowercase letter
+    const getTargetLetter = async () => {
+      const lowercaseContainer = page.locator('#lowercase-container');
+      const text = await lowercaseContainer.textContent();
+      return text ? text.trim().toLowerCase() : '';
+    };
+    
+    // Helper function to find and click the matching uppercase button
+    const clickMatchingLetter = async () => {
+      const targetLetter = await getTargetLetter();
+      if (!targetLetter) return;
+      
+      const uppercaseButtons = page.locator('#uppercase-container button');
+      const count = await uppercaseButtons.count();
+      
+      // Find button with matching uppercase letter
+      for (let i = 0; i < count; i++) {
+        const buttonText = await uppercaseButtons.nth(i).textContent();
+        if (buttonText && buttonText.trim().toLowerCase() === targetLetter) {
+          await uppercaseButtons.nth(i).click({ force: true });
+          return;
+        }
+      }
+      
+      // Fallback: click first button
+      await uppercaseButtons.first().click({ force: true });
+    };
+    
+    // Complete 10 rounds (each round matches one letter)
+    for (let round = 1; round <= 10; round++) {
+      // Wait for letter buttons to be available
+      await page.waitForSelector('#uppercase-container button:not([disabled])', { 
+        timeout: 5000,
+        state: 'visible'
+      });
+      
+      // Click the matching letter
+      await clickMatchingLetter();
+      
+      // Wait a bit for feedback
+      await page.waitForTimeout(300);
+      
+      // Check if completion dialog appeared (round complete)
+      const completionDialog = page.locator('#completion-dialog');
+      const isVisible = await completionDialog.isVisible().catch(() => false);
+      
+      if (isVisible) {
+        // Click continue button
+        const continueButton = page.locator('#continue-button');
+        await continueButton.click({ force: true });
+        
+        // Wait for dialog to hide and new round to start
+        await expect(completionDialog).toBeHidden({ timeout: 2000 });
+        await page.waitForTimeout(500);
+      }
+      
+      console.log(`Round ${round}/10 completed`);
+    }
+    
+    // Final verification
+    const uppercaseButtons = page.locator('#uppercase-container button');
+    const count = await uppercaseButtons.count();
+    expect(count).toBeGreaterThan(0);
+  });
 });
 

@@ -207,47 +207,30 @@ function generateAnswerOptions() {
     
     // Generate wrong answers with safety limit to prevent infinite loops
     let attempts = 0;
-    const maxAttempts = 100; // Safety limit
+    const MAX_ATTEMPTS = 1000; // Safety limit
     
-    while (options.size < NUM_ANSWERS && attempts < maxAttempts) {
+    while (options.size < NUM_ANSWERS && attempts < MAX_ATTEMPTS) {
         attempts++;
         
-        // Generate a wrong answer that's different from the correct one
-        // and within reasonable range (1 to MAX_FIRST)
-        let wrongAnswer;
-        let innerAttempts = 0;
-        const maxInnerAttempts = 50; // Safety limit for inner loop
+        // Generate a wrong answer with a wider range
+        const offset = Math.floor(Math.random() * 12) - 6; // -6 to +5 (wider range)
+        let wrongAnswer = state.correctAnswer + offset;
         
-        do {
-            innerAttempts++;
-            if (innerAttempts > maxInnerAttempts) {
-                // Fallback: generate any number that's not in the set
-                wrongAnswer = Math.floor(Math.random() * MAX_FIRST) + 1;
-                if (!options.has(wrongAnswer)) {
-                    break;
-                }
-                // If still in set, try next number
-                wrongAnswer = ((wrongAnswer % MAX_FIRST) + 1);
-                break;
-            }
-            
-            // Prefer answers close to the correct answer for more challenge
-            const offset = Math.floor(Math.random() * 10) - 5; // -5 to +4
-            wrongAnswer = state.correctAnswer + offset;
-            // Ensure it's within valid range (>= 1, <= MAX_FIRST) and not the correct answer
-            if (wrongAnswer < 1) wrongAnswer = 1;
-            if (wrongAnswer > MAX_FIRST) wrongAnswer = MAX_FIRST;
-        } while (options.has(wrongAnswer));
+        // Clamp to valid range
+        if (wrongAnswer < 1) wrongAnswer = 1;
+        if (wrongAnswer > MAX_FIRST) wrongAnswer = MAX_FIRST;
         
-        options.add(wrongAnswer);
+        // Only add if unique (no inner loop needed!)
+        if (!options.has(wrongAnswer)) {
+            options.add(wrongAnswer);
+        }
     }
     
-    // If we still don't have enough options, fill with remaining numbers
+    // Fallback: if we couldn't generate enough, just fill with sequential numbers
     if (options.size < NUM_ANSWERS) {
+        console.warn('Could not generate enough unique answers, filling with sequential');
         for (let i = 1; i <= MAX_FIRST && options.size < NUM_ANSWERS; i++) {
-            if (!options.has(i)) {
-                options.add(i);
-            }
+            options.add(i);
         }
     }
     

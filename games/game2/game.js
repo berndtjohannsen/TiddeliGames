@@ -48,7 +48,8 @@ const state = {
     foundCount: 0,
     audioStarted: false,
     audioStarting: false,
-    currentGameAnimalCount: 0 // Number of animals in the current game
+    currentGameAnimalCount: 0, // Number of animals in the current game
+    finishGameCalled: false // Flag to prevent multiple finishGame calls
 };
 
 /**
@@ -161,8 +162,28 @@ function startNewGame() {
     state.gameRunning = true;
     state.gamePaused = false;
     state.foundCount = 0;
+    state.finishGameCalled = false; // Reset finish flag for new game
 
+    // Cancel any running animation frames from previous game FIRST
+    // This must happen before clearAnimalField() to prevent animation from accessing removed cards
+    if (selectedCardAnimationFrame) {
+        cancelAnimationFrame(selectedCardAnimationFrame);
+        selectedCardAnimationFrame = null;
+    }
+    
+    // Stop any playing animal sound
+    stopCurrentAnimalSound();
+    currentAnimalCard = null;
+    
+    // Clear the field - this removes all cards from DOM
     clearAnimalField();
+    
+    // Double-check: ensure animation frame is null after clearing
+    // (in case clearAnimalField triggered any callbacks)
+    if (selectedCardAnimationFrame) {
+        cancelAnimationFrame(selectedCardAnimationFrame);
+        selectedCardAnimationFrame = null;
+    }
     hideCompletionDialog();
     setInstructionsText(STRINGS.instructions);
 
@@ -246,6 +267,35 @@ function pauseGame() {
         animalField.classList.add('animal-field--paused');
     }
 
+    // Stop any running animations when game is paused
+    if (selectedCardAnimationFrame !== null) {
+        try {
+            cancelAnimationFrame(selectedCardAnimationFrame);
+        } catch (e) {
+            // Ignore cancellation errors
+        }
+        selectedCardAnimationFrame = null;
+    }
+    
+    // Set animation flags on all cards to stop animations
+    const cards = animalField?.querySelectorAll('.animal-card');
+    if (cards) {
+        cards.forEach(card => {
+            if (card._stopAnimation) {
+                card._stopAnimation();
+            } else if (card._animState) {
+                card._animState.shouldAnimate = false;
+                if (card._animState.frameId !== null) {
+                    try {
+                        cancelAnimationFrame(card._animState.frameId);
+                    } catch (e) {
+                        // Ignore cancellation errors
+                    }
+                }
+            }
+        });
+    }
+
     if (audioContext && audioContext.state === 'running') {
         audioContext.suspend().catch(error => {
             console.warn('Could not pause AudioContext:', error);
@@ -279,12 +329,19 @@ function resetGameUi() {
     state.gameRunning = false;
     state.gamePaused = false;
     state.foundCount = 0;
+    state.finishGameCalled = false; // Reset finish flag
 
     setInstructionsText(STRINGS.instructions);
 
     // Stop any playing animal sound and clear references
     stopCurrentAnimalSound();
     currentAnimalCard = null;
+    
+    // Cancel any running animation frames to prevent memory leaks
+    if (selectedCardAnimationFrame) {
+        cancelAnimationFrame(selectedCardAnimationFrame);
+        selectedCardAnimationFrame = null;
+    }
 
     clearAnimalField();
     if (animalField) {
@@ -369,57 +426,73 @@ function handleAnimalCardInteraction(card, animal) {
     
     // Manually animate using requestAnimationFrame for guaranteed mobile support
     // This directly manipulates transform, bypassing CSS animation issues
-    let startTime = performance.now();
     const moveDuration = 1500; // 1.5 seconds
     const pulseDuration = 1200; // 1.2 seconds
     
-    // Cancel any existing animation
-    if (selectedCardAnimationFrame) {
-        cancelAnimationFrame(selectedCardAnimationFrame);
+    // Cancel any existing animation from a previous card
+    // CRITICAL: Must cancel before starting new animation to prevent multiple loops
+    if (selectedCardAnimationFrame !== null) {
+        try {
+            cancelAnimationFrame(selectedCardAnimationFrame);
+        } catch (e) {
+            // Ignore errors when cancelling
+        }
+        selectedCardAnimationFrame = null;
     }
     
-    // Force initial paint by ensuring card is visible and triggering multiple repaints
-    // Mobile browsers need aggressive repaint forcing
-    const forceInitialPaint = () => {
-        // Scroll to ensure card is in viewport (triggers repaint)
-        const rect = card.getBoundingClientRect();
-        if (rect.top < 0 || rect.bottom > window.innerHeight) {
-            card.scrollIntoView({ behavior: 'instant', block: 'nearest' });
-        }
-        
-        // Force multiple layout recalculations
-        void card.offsetWidth;
-        void card.offsetHeight;
-        void card.getBoundingClientRect();
-        void window.getComputedStyle(card).transform;
-        
-        // Trigger scroll event to force repaint (like clicking background does)
-        window.scrollBy(0, 0.1);
-        window.scrollBy(0, -0.1);
-        
-        // Trigger resize event
-        window.dispatchEvent(new Event('resize'));
-    };
+    // Set this card as the current one
+    currentAnimalCard = card;
     
-    // Force initial paint multiple times
-    forceInitialPaint();
-    requestAnimationFrame(() => {
-        forceInitialPaint();
-        requestAnimationFrame(() => {
-            forceInitialPaint();
-        });
-    });
+    // Double-check: ensure no animation frame is scheduled
+    if (selectedCardAnimationFrame !== null) {
+        console.warn('Game2: Animation frame still set after cancellation, clearing');
+        selectedCardAnimationFrame = null;
+    }
+    
+    // Create a single animation state object stored on the card
+    // This contains all animation state in one place for easy cleanup
+    const animState = {
+        shouldAnimate: true,
+        frameId: null,
+        startTime: performance.now()
+    };
+    card._animState = animState;
+    
+    // Single stop function that stops everything in one place
+    const stopAnimation = () => {
+        if (animState.frameId !== null) {
+            try {
+                cancelAnimationFrame(animState.frameId);
+            } catch (e) {
+                // Ignore cancellation errors
+            }
+            animState.frameId = null;
+        }
+        if (selectedCardAnimationFrame === animState.frameId) {
+            selectedCardAnimationFrame = null;
+        }
+        animState.shouldAnimate = false;
+        if (card._animState === animState) {
+            delete card._animState;
+        }
+    };
+    card._stopAnimation = stopAnimation;
     
     const animate = (currentTime) => {
-        if (!card.parentNode || !card.classList.contains('animal-card--selected')) {
-            // Card was removed or deselected, stop animation
-            selectedCardAnimationFrame = null;
+        // Simplified: One compound check instead of many separate checks
+        // Check ALL stop conditions in one place BEFORE doing any work
+        // Check card existence first, then other conditions
+        if (!card || !animState || !animState.shouldAnimate || 
+            currentAnimalCard !== card || 
+            !state.gameRunning || state.gamePaused || state.finishGameCalled ||
+            !card.parentNode || !card.classList || !card.classList.contains('animal-card--selected')) {
+            stopAnimation();
             return;
         }
         
         // Calculate animation progress
-        const moveProgress = ((currentTime - startTime) % moveDuration) / moveDuration;
-        const pulseProgress = ((currentTime - startTime) % pulseDuration) / pulseDuration;
+        const moveProgress = ((currentTime - animState.startTime) % moveDuration) / moveDuration;
+        const pulseProgress = ((currentTime - animState.startTime) % pulseDuration) / pulseDuration;
         
         // Ease-in-out function
         const easeInOut = (t) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
@@ -458,27 +531,43 @@ function handleAnimalCardInteraction(card, animal) {
         const shadowBlur = 24 + 4 * Math.sin(pulseProgress * Math.PI * 2);
         const shadowY = 10 + 2 * Math.sin(pulseProgress * Math.PI * 2);
         
-        // Apply transform directly - use !important via setProperty to override any CSS
-        card.style.setProperty('transform', `scale(1.18) translate3d(${moveX}px, ${moveY}px, 0) rotate(${rotate}deg)`, 'important');
-        
-        // Apply pulse shadow
-        card.style.setProperty('box-shadow', `
-            rgba(251, 191, 36, ${pulseIntensity}) 0 0 ${shadowBlur}px,
-            rgba(251, 191, 36, ${pulseIntensity * 0.7}) 0 ${shadowY}px ${shadowBlur + 2}px,
-            rgba(0, 0, 0, 0.25) 0 4px 8px
-        `, 'important');
-        
-        // Force repaint every frame by reading computed style
-        if (Math.floor(currentTime) % 100 < 16) { // Every ~100ms
-            void card.getBoundingClientRect();
+        // Apply transform and shadow (wrap in try-catch in case card is removed)
+        try {
+            if (card && card.style) {
+                card.style.setProperty('transform', `scale(1.18) translate3d(${moveX}px, ${moveY}px, 0) rotate(${rotate}deg)`, 'important');
+                
+                // Apply pulse shadow
+                card.style.setProperty('box-shadow', `
+                    rgba(251, 191, 36, ${pulseIntensity}) 0 0 ${shadowBlur}px,
+                    rgba(251, 191, 36, ${pulseIntensity * 0.7}) 0 ${shadowY}px ${shadowBlur + 2}px,
+                    rgba(0, 0, 0, 0.25) 0 4px 8px
+                `, 'important');
+                
+                // Force repaint every frame by reading computed style (but less frequently)
+                if (Math.floor(currentTime) % 100 < 16) { // Every ~100ms
+                    void card.getBoundingClientRect();
+                }
+            }
+        } catch (error) {
+            // If DOM operations fail, stop animation
+            console.warn('Game2: Error applying animation styles, stopping:', error);
+            stopAnimation();
+            return;
         }
         
-        // Continue animation
-        selectedCardAnimationFrame = requestAnimationFrame(animate);
+        // Continue animation - schedule next frame
+        animState.frameId = requestAnimationFrame(animate);
+        selectedCardAnimationFrame = animState.frameId;
     };
     
-    // Start animation immediately
-    selectedCardAnimationFrame = requestAnimationFrame(animate);
+    // Start animation immediately - check conditions BEFORE scheduling
+    if (card && animState.shouldAnimate && card.parentNode && currentAnimalCard === card && 
+        state.gameRunning && !state.gamePaused && !state.finishGameCalled) {
+        animState.frameId = requestAnimationFrame(animate);
+        selectedCardAnimationFrame = animState.frameId;
+    } else {
+        selectedCardAnimationFrame = null;
+    }
 
     // Play sound and wait for it to finish before starting removal animation
     // Store card reference in closure to ensure we can remove it even if currentAnimalCard changes
@@ -509,12 +598,62 @@ function handleAnimalCardInteraction(card, animal) {
 
     // Check if all animals in the current game have been found
     if (state.foundCount >= state.currentGameAnimalCount) {
+        // Use a flag on state object to prevent finishGame from being called multiple times
+        // This prevents race conditions when multiple cards finish simultaneously
+        if (state.finishGameCalled) {
+            return; // Already finishing, don't call again
+        }
+        
+        // CRITICAL: Set finishGameCalled FIRST (before stopping animations)
+        // This ensures any animation frames that check it will stop immediately
+        state.finishGameCalled = true;
+        
+        // CRITICAL: Stop the animation IMMEDIATELY when game finishes
+        // Don't wait for sound - stop animation right away to prevent race conditions
+        if (card && card._stopAnimation) {
+            card._stopAnimation();
+        } else if (card && card._animState) {
+            card._animState.shouldAnimate = false;
+            if (card._animState.frameId !== null) {
+                try {
+                    cancelAnimationFrame(card._animState.frameId);
+                } catch (e) {
+                    // Ignore cancellation errors
+                }
+            }
+        }
+        if (selectedCardAnimationFrame !== null) {
+            try {
+                cancelAnimationFrame(selectedCardAnimationFrame);
+            } catch (e) {
+                // Ignore cancellation errors
+            }
+            selectedCardAnimationFrame = null;
+        }
+        
+        const callFinishGame = () => {
+            // Double-check flag to prevent race conditions
+            // Only call if flag is set (meaning we're the ones who should finish) and conditions are met
+            if (state.finishGameCalled && state.foundCount >= state.currentGameAnimalCount && state.gameRunning) {
+                finishGame();
+            }
+        };
+        
         // Wait for the last sound to finish before showing the finish popup
+        // Use a timeout as a safety fallback in case the sound promise never resolves
+        // Strict 4-second timeout means faster recovery if sound hangs
+        const finishTimeout = setTimeout(() => {
+            clearTimeout(finishTimeout);
+            callFinishGame();
+        }, 4000); // 4 second safety timeout (reduced from 8s)
+        
         soundPromise.then(() => {
-            finishGame();
-        }).catch(() => {
-            // If sound fails, still finish the game
-            finishGame();
+            clearTimeout(finishTimeout);
+            callFinishGame();
+        }).catch((error) => {
+            clearTimeout(finishTimeout);
+            console.warn('Game2: Sound failed, finishing game anyway:', error);
+            callFinishGame();
         });
     }
 }
@@ -543,13 +682,32 @@ function stopCurrentAnimalSound() {
  */
 function removeCardImmediately(card) {
     if (card && !card.classList.contains('animal-card--found')) {
+        // Stop animation using stop function if available
+        if (card._stopAnimation) {
+            card._stopAnimation();
+        } else if (card._animState) {
+            // Fallback: stop animation state
+            card._animState.shouldAnimate = false;
+            if (card._animState.frameId !== null) {
+                try {
+                    cancelAnimationFrame(card._animState.frameId);
+                } catch (e) {
+                    // Ignore cancellation errors
+                }
+            }
+        }
+        
         // Clear reference if this is the current card
         if (currentAnimalCard === card) {
             currentAnimalCard = null;
         }
         // Cancel manual animation
         if (selectedCardAnimationFrame) {
-            cancelAnimationFrame(selectedCardAnimationFrame);
+            try {
+                cancelAnimationFrame(selectedCardAnimationFrame);
+            } catch (e) {
+                // Ignore cancellation errors
+            }
             selectedCardAnimationFrame = null;
         }
         // Cancel any Web Animations API animations
@@ -566,11 +724,23 @@ function removeCardImmediately(card) {
             }
         }
         card.classList.add('animal-card--found');
-        card.addEventListener('animationend', () => {
+        
+        // Store animationend handler so we can remove it if needed
+        const animationEndHandler = () => {
             if (card && card.parentNode) {
+                // Remove the event listener before removing the card
+                card.removeEventListener('animationend', animationEndHandler);
                 card.remove();
             }
-        }, { once: true });
+            // Clean up animation stop function
+            if (card._stopAnimation) {
+                delete card._stopAnimation;
+            }
+            if (card._animState) {
+                delete card._animState;
+            }
+        };
+        card.addEventListener('animationend', animationEndHandler, { once: true });
     }
 }
 
@@ -579,10 +749,33 @@ function removeCardImmediately(card) {
  */
 function removeCardAfterSound(card) {
     if (card && card.parentNode && !card.classList.contains('animal-card--found')) {
-        // Cancel manual animation
+        // Stop animation using stop function if available
+        if (card._stopAnimation) {
+            card._stopAnimation();
+        } else if (card._animState) {
+            // Fallback: stop animation state
+            card._animState.shouldAnimate = false;
+            if (card._animState.frameId !== null) {
+                try {
+                    cancelAnimationFrame(card._animState.frameId);
+                } catch (e) {
+                    // Ignore cancellation errors
+                }
+            }
+        }
+        
+        // Cancel manual animation frame (double-check)
         if (selectedCardAnimationFrame) {
-            cancelAnimationFrame(selectedCardAnimationFrame);
+            try {
+                cancelAnimationFrame(selectedCardAnimationFrame);
+            } catch (e) {
+                // Ignore cancellation errors
+            }
             selectedCardAnimationFrame = null;
+        }
+        // Clear current animal card reference to stop animation
+        if (currentAnimalCard === card) {
+            currentAnimalCard = null;
         }
         // Cancel any Web Animations API animations
         if (card.animate && card.getAnimations) {
@@ -616,14 +809,25 @@ function removeCardAfterSound(card) {
         requestAnimationFrame(() => {
             void card.offsetHeight;
         });
-        card.addEventListener('animationend', () => {
+        // Store animationend handler so we can remove it if needed
+        const animationEndHandler = () => {
             if (card && card.parentNode) {
+                // Remove the event listener before removing the card
+                card.removeEventListener('animationend', animationEndHandler);
                 card.remove();
             }
             if (currentAnimalCard === card) {
                 currentAnimalCard = null;
             }
-        }, { once: true });
+            // Clean up animation stop function
+            if (card._stopAnimation) {
+                delete card._stopAnimation;
+            }
+            if (card._animState) {
+                delete card._animState;
+            }
+        };
+        card.addEventListener('animationend', animationEndHandler, { once: true });
     }
 }
 
@@ -631,6 +835,39 @@ function removeCardAfterSound(card) {
  * Finishes the game, shows dialog, and stops background audio.
  */
 function finishGame() {
+    // Prevent multiple calls - check if already finished
+    if (!state.gameRunning && state.finishGameCalled) {
+        return; // Already finished, don't call again
+    }
+    
+    // CRITICAL: Set finishGameCalled FIRST (before stopping animations)
+    // This ensures any animation frames that check it will stop immediately
+    state.finishGameCalled = true;
+    
+    // CRITICAL: Stop all animations BEFORE setting gameRunning to false
+    // This ensures no animation frames are scheduled after the game ends
+    if (currentAnimalCard && currentAnimalCard._stopAnimation) {
+        currentAnimalCard._stopAnimation();
+    } else if (currentAnimalCard && currentAnimalCard._animState) {
+        currentAnimalCard._animState.shouldAnimate = false;
+        if (currentAnimalCard._animState.frameId !== null) {
+            try {
+                cancelAnimationFrame(currentAnimalCard._animState.frameId);
+            } catch (e) {
+                // Ignore cancellation errors
+            }
+        }
+    }
+    if (selectedCardAnimationFrame !== null) {
+        try {
+            cancelAnimationFrame(selectedCardAnimationFrame);
+        } catch (e) {
+            // Ignore cancellation errors
+        }
+        selectedCardAnimationFrame = null;
+    }
+    
+    // Now set gameRunning to false - animations are already stopped
     state.gameRunning = false;
     state.gamePaused = false;
 
@@ -698,6 +935,39 @@ function clearAnimalField() {
     if (!animalField) {
         return;
     }
+    
+    // CRITICAL: Cancel any running animations BEFORE removing cards from DOM
+    // This prevents animation frames from trying to access removed cards
+    if (selectedCardAnimationFrame) {
+        cancelAnimationFrame(selectedCardAnimationFrame);
+        selectedCardAnimationFrame = null;
+    }
+    
+    // Set flag on all cards to stop animations
+    const cards = animalField.querySelectorAll('.animal-card');
+    cards.forEach(card => {
+        // Stop animation using stop function if available
+        if (card._stopAnimation) {
+            card._stopAnimation();
+        } else if (card._animState) {
+            card._animState.shouldAnimate = false;
+            if (card._animState.frameId !== null) {
+                try {
+                    cancelAnimationFrame(card._animState.frameId);
+                } catch (e) {
+                    // Ignore cancellation errors
+                }
+            }
+        }
+        // Remove any animationend listeners to prevent memory leaks
+        // Note: We can't easily remove listeners added with { once: true }, but they should auto-remove
+        // However, if the card is removed before animation ends, the listener might not fire
+    });
+    
+    // Clear current animal card reference
+    currentAnimalCard = null;
+    
+    // Now safe to clear the field
     animalField.innerHTML = '';
 }
 
