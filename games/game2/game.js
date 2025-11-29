@@ -948,7 +948,11 @@ function clearAnimalField() {
     cards.forEach(card => {
         // Stop animation using stop function if available
         if (card._stopAnimation) {
-            card._stopAnimation();
+            try {
+                card._stopAnimation();
+            } catch (e) {
+                // Ignore errors during cleanup
+            }
         } else if (card._animState) {
             card._animState.shouldAnimate = false;
             if (card._animState.frameId !== null) {
@@ -959,6 +963,9 @@ function clearAnimalField() {
                 }
             }
         }
+        // Clean up all animation-related properties to prevent memory leaks
+        delete card._stopAnimation;
+        delete card._animState;
         // Remove any animationend listeners to prevent memory leaks
         // Note: We can't easily remove listeners added with { once: true }, but they should auto-remove
         // However, if the card is removed before animation ends, the listener might not fire

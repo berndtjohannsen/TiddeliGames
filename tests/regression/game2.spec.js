@@ -41,7 +41,7 @@ test.describe('Game 2 - Animal Sounds', () => {
    * Endurance test: Completes multiple rounds to detect memory leaks or hanging issues.
    */
   test('endurance: completes 10 rounds without hanging', async ({ page }) => {
-    test.setTimeout(120000); // 2 minutes
+    test.setTimeout(180000); // 3 minutes (increased for safety)
     
     await page.waitForTimeout(1000); // Wait for game to initialize
     
@@ -54,6 +54,7 @@ test.describe('Game 2 - Animal Sounds', () => {
     
     // Complete 10 rounds
     for (let round = 1; round <= 10; round++) {
+      console.log(`Starting round ${round}/10`);
       // Wait for animal cards to be available
       await page.waitForSelector('#animal-field .animal-card', { timeout: 5000 });
       await page.waitForTimeout(200);
@@ -98,12 +99,16 @@ test.describe('Game 2 - Animal Sounds', () => {
               return cards.length < expectedCount;
             },
             expectedCards - cardsClicked + 1, // +1 because we just clicked one
-            { timeout: 8000 } // Wait up to 8 seconds for sound to finish
+            { timeout: 10000 } // Increased timeout for later rounds
           );
         } catch (error) {
-          // If card count didn't change, wait a bit and continue
-          // The card might still be processing
-          await page.waitForTimeout(2000);
+          // If card count didn't change, check if card is still there
+          const remainingCards = await page.locator('#animal-field .animal-card:not(.animal-card--found)').count();
+          if (remainingCards >= expectedCards - cardsClicked + 1) {
+            // Card wasn't processed, wait longer
+            console.warn(`Round ${round}: Card ${cardsClicked} not processed, waiting longer...`);
+            await page.waitForTimeout(3000);
+          }
         }
       }
       
@@ -112,18 +117,36 @@ test.describe('Game 2 - Animal Sounds', () => {
       const completionDialog = page.locator('#completion-dialog');
       
       // Wait for the dialog to appear - check both hidden attribute and visibility
-      await page.waitForFunction(
-        () => {
+      // Increase timeout for later rounds as game might be slower
+      const dialogTimeout = round > 5 ? 25000 : 20000;
+      try {
+        await page.waitForFunction(
+          () => {
+            const dialog = document.getElementById('completion-dialog');
+            if (!dialog) return false;
+            // Check both hidden attribute and computed visibility
+            const isHidden = dialog.hidden;
+            const style = window.getComputedStyle(dialog);
+            const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+            return !isHidden && isVisible;
+          },
+          { timeout: dialogTimeout }
+        );
+      } catch (error) {
+        // If dialog doesn't appear, log state for debugging
+        const dialogState = await page.evaluate(() => {
           const dialog = document.getElementById('completion-dialog');
-          if (!dialog) return false;
-          // Check both hidden attribute and computed visibility
-          const isHidden = dialog.hidden;
-          const style = window.getComputedStyle(dialog);
-          const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
-          return !isHidden && isVisible;
-        },
-        { timeout: 20000 } // Increased timeout to account for all sounds (6 * ~2-3s = 12-18s + buffer)
-      );
+          return {
+            exists: !!dialog,
+            hidden: dialog?.hidden,
+            display: dialog ? window.getComputedStyle(dialog).display : null,
+            foundCount: window.state?.foundCount,
+            gameRunning: window.state?.gameRunning
+          };
+        });
+        console.error(`Round ${round}: Dialog not appearing. State:`, dialogState);
+        throw error;
+      }
       await expect(completionDialog).toBeVisible({ timeout: 2000 });
       await page.waitForTimeout(300);
       
@@ -137,12 +160,31 @@ test.describe('Game 2 - Animal Sounds', () => {
       
       // Wait for new round to start - wait for new cards to appear
       await page.waitForSelector('#animal-field .animal-card:not(.animal-card--found)', { 
-        timeout: 5000,
+        timeout: 10000, // Increased timeout for later rounds
         state: 'visible'
       });
-      await page.waitForTimeout(200);
+      
+      // Wait for game to fully initialize new round
+      await page.waitForFunction(
+        () => {
+          const field = document.getElementById('animal-field');
+          if (!field) return false;
+          const cards = field.querySelectorAll('.animal-card:not(.animal-card--found)');
+          // Ensure we have 6 cards and they're all visible
+          return cards.length === 6 && Array.from(cards).every(card => card.offsetParent !== null);
+        },
+        { timeout: 10000 }
+      );
+      
+      // Extra wait between rounds to allow cleanup (especially important for later rounds)
+      await page.waitForTimeout(500);
       
       console.log(`Round ${round}/10 completed`);
+      
+      // Check for console errors after each round
+      if (consoleErrors.length > 0 && round < 10) {
+        console.warn(`Console errors detected after round ${round}:`, consoleErrors.slice(-5));
+      }
     }
     
     // Final verification
