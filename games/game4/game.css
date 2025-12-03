@@ -93,27 +93,39 @@
     margin: 0; /* No margin - spacing controlled by wrapper gap */
     display: flex;
     flex-direction: column;
-    gap: clamp(0.75rem, 2vw, 2rem); /* Reduced gap */
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.6rem, 1.2vw, 1.2rem); /* Reduced gap */
 }
 
-/* Images container */
+/* Emoji container - single large emoji centered */
 .game4-images {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: clamp(0.75rem, 2vw, 1.5rem); /* Reduced gap */
-    padding: clamp(0.6rem, 1.5vw, 1.2rem); /* Reduced padding */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 2rem);
     background: rgba(255, 255, 255, 0.85);
     border-radius: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     backdrop-filter: blur(4px);
+    min-height: clamp(150px, 25vw, 250px);
 }
 
-/* Word container */
+/* Single emoji display */
+.game4-emoji {
+    font-size: clamp(8rem, 20vw, 12rem);
+    text-align: center;
+    user-select: none;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    line-height: 1;
+}
+
+/* Word container - 4 word buttons in a grid */
 .game4-words {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: clamp(0.75rem, 2vw, 1.5rem); /* Reduced gap */
-    padding: clamp(0.6rem, 1.5vw, 1.2rem); /* Reduced padding */
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    padding: clamp(0.6rem, 1.5vw, 1.2rem);
     background: rgba(255, 255, 255, 0.85);
     border-radius: 1.5rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -198,11 +210,25 @@
     box-shadow: rgba(139, 92, 246, 0.4) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
 }
 
-.game4-word--matched {
-    opacity: 0;
+.game4-word--correct {
+    background: rgba(34, 197, 94, 0.95);
+    border-color: #16a34a;
+    color: #ffffff;
+    transform: scale(1.05);
+    box-shadow: rgba(34, 197, 94, 0.5) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
+}
+
+.game4-word--wrong {
+    background: rgba(239, 68, 68, 0.95);
+    border-color: #dc2626;
+    color: #ffffff;
+    transform: scale(0.95);
+    box-shadow: rgba(239, 68, 68, 0.5) 0 4px 12px, rgba(0, 0, 0, 0.2) 0 2px 4px;
+}
+
+.game4-word--disabled {
     pointer-events: none;
-    transform: scale(0);
-    transition: all 400ms ease;
+    opacity: 0.6;
 }
 
 /* Completion dialog overlay */
@@ -298,11 +324,14 @@
         font-size: 1.5rem; /* Slightly smaller arrow on medium screens */
     }
 
-    .game4-images,
     .game4-words {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
         padding: 1rem;
+    }
+    
+    .game4-emoji {
+        font-size: clamp(6rem, 25vw, 10rem);
     }
 }
 

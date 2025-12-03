@@ -1,8 +1,8 @@
-// Regression tests for Game 4 (Word-Image Matching)
+// Regression tests for Game 4 (Word Recognition - simplified)
 import { test, expect } from '@playwright/test';
 
 // Run tests serially to avoid parallel execution issues with game state
-test.describe('Game 4 - Word-Image Matching', () => {
+test.describe('Game 4 - Word Recognition', () => {
   test.describe.configure({ mode: 'serial' });
   test.beforeEach(async ({ page }) => {
     await page.goto('/games/game4/index.html');
@@ -23,34 +23,37 @@ test.describe('Game 4 - Word-Image Matching', () => {
     }
   });
 
-  test('images and words containers are displayed', async ({ page }) => {
+  test('emoji and word containers are displayed', async ({ page }) => {
     await page.waitForSelector('#images-container, #words-container', { timeout: 3000 });
     
-    const imagesContainer = page.locator('#images-container');
+    const emojiContainer = page.locator('#images-container');
     const wordsContainer = page.locator('#words-container');
     
-    const imagesCount = await imagesContainer.count();
-    const wordsCount = await wordsContainer.count();
+    await expect(emojiContainer).toBeVisible();
+    await expect(wordsContainer).toBeVisible();
     
-    expect(imagesCount).toBeGreaterThan(0);
-    expect(wordsCount).toBeGreaterThan(0);
+    // Check that emoji is displayed (single emoji, not buttons)
+    const emoji = page.locator('#images-container .game4-emoji');
+    await expect(emoji).toBeVisible({ timeout: 3000 });
+    
+    // Check that 4 word buttons are displayed
+    const wordButtons = page.locator('#words-container button.game4-word');
+    const wordCount = await wordButtons.count();
+    expect(wordCount).toBe(4);
   });
 
-  test('can interact with image and word buttons', async ({ page }) => {
-    await page.waitForSelector('#images-container button, #words-container button', { timeout: 3000 });
+  test('can interact with word buttons', async ({ page }) => {
+    await page.waitForSelector('#words-container button.game4-word', { timeout: 3000 });
     
-    const imageButtons = page.locator('#images-container button');
-    const wordButtons = page.locator('#words-container button');
-    
-    const imageCount = await imageButtons.count();
+    const wordButtons = page.locator('#words-container button.game4-word');
     const wordCount = await wordButtons.count();
     
-    expect(imageCount).toBeGreaterThan(0);
-    expect(wordCount).toBeGreaterThan(0);
+    expect(wordCount).toBe(4);
     
-    if (imageCount > 0) {
-      await imageButtons.first().click({ force: true });
-      await page.waitForTimeout(200);
+    // Click first word button
+    if (wordCount > 0) {
+      await wordButtons.first().click({ force: true });
+      await page.waitForTimeout(500); // Wait for feedback
     }
   });
 
@@ -69,36 +72,29 @@ test.describe('Game 4 - Word-Image Matching', () => {
       }
     });
     
-    // Helper function to match all pairs in a round
-    const matchAllPairs = async () => {
-      // Wait for buttons to be available
-      await page.waitForSelector('#images-container button:not(.game4-image--matched), #words-container button:not(.game4-word--matched)', { timeout: 5000 });
+    // Helper function to complete one round by selecting correct answer
+    const completeRound = async () => {
+      // Wait for emoji and word buttons to be available
+      await page.waitForSelector('#images-container .game4-emoji, #words-container button.game4-word', { timeout: 5000 });
       
-      // Match all 4 pairs
-      for (let pair = 0; pair < 4; pair++) {
-        // Get all unmatched image buttons
-        const imageButtons = page.locator('#images-container button:not(.game4-image--matched)');
-        const imageCount = await imageButtons.count();
-        
-        if (imageCount === 0) {
-          break; // All pairs matched
-        }
-        
-        // Click the first unmatched image
-        const firstImage = imageButtons.first();
-        await expect(firstImage).toBeVisible({ timeout: 3000 });
-        const imageWord = await firstImage.getAttribute('data-word');
-        await firstImage.click({ force: true });
-        await page.waitForTimeout(200);
-        
-        // Find and click the matching word button
-        const matchingWord = page.locator(`#words-container button[data-word="${imageWord}"]:not(.game4-word--matched)`);
-        await expect(matchingWord).toBeVisible({ timeout: 3000 });
-        await matchingWord.click({ force: true });
-        await page.waitForTimeout(500); // Wait for match animation and sound
-      }
+      // Get the emoji text to find the correct word
+      const emojiElement = page.locator('#images-container .game4-emoji');
+      await expect(emojiElement).toBeVisible({ timeout: 3000 });
       
-      // Wait for completion dialog - it appears after a 500ms delay
+      // Get all word buttons
+      const wordButtons = page.locator('#words-container button.game4-word');
+      const wordCount = await wordButtons.count();
+      expect(wordCount).toBe(4);
+      
+      // Find the correct answer button (has data-correct="true")
+      const correctButton = page.locator('#words-container button[data-correct="true"]');
+      await expect(correctButton).toBeVisible({ timeout: 3000 });
+      
+      // Click the correct answer
+      await correctButton.click({ force: true });
+      await page.waitForTimeout(500); // Wait for feedback animation
+      
+      // Wait for completion dialog
       const completionDialog = page.locator('#completion-dialog');
       await page.waitForFunction(
         () => {
@@ -115,21 +111,28 @@ test.describe('Game 4 - Word-Image Matching', () => {
       await expect(continueButton).toBeVisible({ timeout: 2000 });
       await continueButton.click({ force: true });
       
-      // Wait for dialog to hide
+      // Wait for dialog to hide and new round to start
       await expect(completionDialog).toBeHidden({ timeout: 2000 });
       await page.waitForTimeout(500);
     };
     
     // Complete 10 rounds
     for (let round = 1; round <= 10; round++) {
-      await matchAllPairs();
+      await completeRound();
       console.log(`Round ${round}/10 completed`);
+      
+      // Check for console errors after each round
+      if (consoleErrors.length > 0 && round < 10) {
+        console.warn(`Console errors detected after round ${round}:`, consoleErrors.slice(-5));
+      }
     }
     
-    // Final verification
-    const imageButtons = page.locator('#images-container button');
-    const count = await imageButtons.count();
-    expect(count).toBeGreaterThan(0);
+    // Final verification - check that game is still functional
+    const emoji = page.locator('#images-container .game4-emoji');
+    await expect(emoji).toBeVisible({ timeout: 3000 });
+    
+    const wordButtons = page.locator('#words-container button.game4-word');
+    const count = await wordButtons.count();
+    expect(count).toBe(4);
   });
 });
-

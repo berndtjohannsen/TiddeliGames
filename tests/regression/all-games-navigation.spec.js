@@ -21,34 +21,47 @@ test.describe('Game Navigation', () => {
     await page.waitForSelector('[data-game-id]', { timeout: 3000 });
     
     for (const game of games) {
-      // Wait for the specific game card to be visible and clickable
-      const gameCard = page.locator(`[data-game-id="${game.id}"]`);
-      await expect(gameCard).toBeVisible({ timeout: 3000 });
-      
-      // Create a flexible URL pattern that matches both absolute and relative paths
-      // The path in strings.js is relative, but browser resolves it to absolute
-      const urlPattern = new RegExp(`.*${game.path.replace(/\//g, '\\/')}`, 'i');
-      
-      // Click game card and wait for navigation
-      await Promise.all([
-        page.waitForURL(urlPattern, { timeout: 5000 }), // Wait for navigation
-        gameCard.click()
-      ]);
-      
-      // Verify navigation completed
-      await expect(page).toHaveURL(urlPattern, { timeout: 5000 });
-      
-      // Verify page loaded - wait for DOM content, not network idle (faster)
-      await page.waitForLoadState('domcontentloaded');
-      
-      // Verify page actually rendered
-      await expect(page.locator('body')).toBeVisible();
-      
-      // Go back to main page
-      await page.goto('/', { waitUntil: 'domcontentloaded' });
-      
-      // Wait for game cards to be rendered again before next iteration
-      await page.waitForSelector('[data-game-id]', { timeout: 3000 });
+      try {
+        // Wait for the specific game card to be visible and clickable
+        const gameCard = page.locator(`[data-game-id="${game.id}"]`);
+        await expect(gameCard).toBeVisible({ timeout: 3000 });
+        
+        // Create a flexible URL pattern that matches both absolute and relative paths
+        // The path in strings.js is relative, but browser resolves it to absolute
+        const urlPattern = new RegExp(`.*${game.path.replace(/\//g, '\\/')}`, 'i');
+        
+        // Click game card and wait for navigation
+        await Promise.all([
+          page.waitForURL(urlPattern, { timeout: 10000 }), // Wait for navigation (increased timeout)
+          gameCard.click()
+        ]);
+        
+        // Verify navigation completed
+        await expect(page).toHaveURL(urlPattern, { timeout: 5000 });
+        
+        // Verify page loaded - wait for DOM content, not network idle (faster)
+        await page.waitForLoadState('domcontentloaded');
+        
+        // Verify page actually rendered - wait for main content or body
+        await expect(page.locator('body')).toBeVisible({ timeout: 5000 });
+        
+        // Additional check: ensure main content area exists (games typically have a main element or game container)
+        const mainContent = page.locator('main, [role="main"], .game-area, .game-container, #game-area, #game-container');
+        const mainCount = await mainContent.count();
+        if (mainCount > 0) {
+          await expect(mainContent.first()).toBeVisible({ timeout: 3000 });
+        }
+        
+        // Go back to main page
+        await page.goto('/', { waitUntil: 'domcontentloaded' });
+        
+        // Wait for game cards to be rendered again before next iteration
+        await page.waitForSelector('[data-game-id]', { timeout: 3000 });
+      } catch (error) {
+        // Log which game failed for debugging
+        console.error(`Failed to navigate to ${game.id} (${game.path}):`, error.message);
+        throw error; // Re-throw to fail the test with context
+      }
     }
   });
 

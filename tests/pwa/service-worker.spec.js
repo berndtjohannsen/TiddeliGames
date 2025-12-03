@@ -57,7 +57,8 @@ test.describe('PWA Features', () => {
     // On localhost, service worker might not be active, so this test is lenient
     // Just verify we can attempt navigation
     // Check for null (catch returns null) or if we're on localhost
-    expect(response !== null || page.url().includes('localhost')).toBeTruthy();
+    const isLocalhost = page.url().includes('localhost') || page.url().includes('127.0.0.1');
+    expect(response !== null || isLocalhost).toBeTruthy();
     
     // Go back online
     await context.setOffline(false);

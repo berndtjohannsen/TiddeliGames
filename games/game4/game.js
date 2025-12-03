@@ -1,15 +1,15 @@
-// Spelling Game (Game 4) – game logic for matching images with words
+// Spelling Game (Game 4) – simplified: 1 emoji with 4 word choices
 'use strict';
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME4_STRINGS;
 const WORD_PAIRS = Array.isArray(STRINGS.wordPairs) ? STRINGS.wordPairs.slice() : [];
-const PAIRS_PER_ROUND = 4; // Number of word-image pairs per round
+const NUM_WORD_OPTIONS = 4; // Number of word options to show (1 correct + 3 wrong)
 
 // DOM references shared between functions
 let titleEl = null;
 let instructionsEl = null;
-let imagesContainer = null;
+let emojiContainer = null;
 let wordsContainer = null;
 let completionDialog = null;
 let completionTitle = null;
@@ -25,14 +25,13 @@ const audioBufferCache = new Map();
 
 // Game state variables
 const state = {
-    currentPairs: [], // Current 4 pairs for this round
-    imageElements: [], // Array of image button elements
-    wordElements: [], // Array of word button elements
-    selectedImage: null, // Currently selected image element
-    selectedWord: null, // Currently selected word element
-    matchedCount: 0, // Number of matched pairs
+    currentPair: null, // Current emoji-word pair
+    wrongOptions: [], // Array of 3 wrong word options
+    wordButtons: [], // Array of word button elements
     audioStarted: false, // Track if ambience has successfully started
-    audioStarting: false // Prevent concurrent start attempts
+    audioStarting: false, // Prevent concurrent start attempts
+    wrongAnswerTimeout: null, // Timeout ID for wrong answer feedback
+    answerProcessing: false // Prevent rapid clicks from causing race conditions
 };
 
 /**
@@ -52,7 +51,7 @@ window.addEventListener('DOMContentLoaded', () => {
 function cacheDomElements() {
     titleEl = document.getElementById('game4-title');
     instructionsEl = document.getElementById('instructions-text');
-    imagesContainer = document.getElementById('images-container');
+    emojiContainer = document.getElementById('images-container');
     wordsContainer = document.getElementById('words-container');
     completionDialog = document.getElementById('completion-dialog');
     completionTitle = document.getElementById('completion-title');
@@ -100,47 +99,62 @@ function attachEventListeners() {
 }
 
 /**
- * Starts a new round by selecting 4 random pairs and displaying them.
+ * Starts a new round by selecting 1 random emoji and 4 word options.
  */
 function startNewRound() {
-    if (WORD_PAIRS.length < PAIRS_PER_ROUND) {
+    if (WORD_PAIRS.length < NUM_WORD_OPTIONS) {
         console.error('Not enough word pairs defined');
         return;
     }
 
     // Reset state
-    state.matchedCount = 0;
-    state.selectedImage = null;
-    state.selectedWord = null;
-    state.imageElements = [];
-    state.wordElements = [];
+    state.currentPair = null;
+    state.wrongOptions = [];
+    state.wordButtons = [];
+    state.answerProcessing = false;
+    
+    // Cancel any pending wrong answer timeout
+    if (state.wrongAnswerTimeout) {
+        clearTimeout(state.wrongAnswerTimeout);
+        state.wrongAnswerTimeout = null;
+    }
 
     // Clear containers
-    if (imagesContainer) {
-        imagesContainer.innerHTML = '';
+    if (emojiContainer) {
+        emojiContainer.innerHTML = '';
     }
     if (wordsContainer) {
         wordsContainer.innerHTML = '';
     }
 
-    // Select 4 random pairs
+    // Select 1 random pair for the emoji
     const shuffled = shuffleArray(WORD_PAIRS.slice());
-    state.currentPairs = shuffled.slice(0, PAIRS_PER_ROUND);
+    state.currentPair = shuffled[0];
 
-    // Create image buttons
-    state.currentPairs.forEach((pair, index) => {
-        const imageBtn = createImageButton(pair, index);
-        state.imageElements.push(imageBtn);
-        if (imagesContainer) {
-            imagesContainer.appendChild(imageBtn);
-        }
-    });
+    // Select 3 wrong options from remaining pairs
+    const remainingPairs = shuffled.slice(1);
+    const shuffledRemaining = shuffleArray(remainingPairs.slice());
+    state.wrongOptions = shuffledRemaining.slice(0, NUM_WORD_OPTIONS - 1);
 
-    // Create word buttons (shuffled)
-    const shuffledWords = shuffleArray(state.currentPairs.slice());
-    shuffledWords.forEach((pair, index) => {
-        const wordBtn = createWordButton(pair, index);
-        state.wordElements.push(wordBtn);
+    // Create emoji display
+    const emojiElement = document.createElement('div');
+    emojiElement.className = 'game4-emoji';
+    emojiElement.textContent = state.currentPair.emoji;
+    emojiElement.setAttribute('aria-label', STRINGS.aria.image(state.currentPair.word));
+    if (emojiContainer) {
+        emojiContainer.appendChild(emojiElement);
+    }
+
+    // Create word buttons: 1 correct + 3 wrong (shuffled)
+    const allWordOptions = [
+        { word: state.currentPair.word, isCorrect: true },
+        ...state.wrongOptions.map(pair => ({ word: pair.word, isCorrect: false }))
+    ];
+    const shuffledWords = shuffleArray(allWordOptions);
+    
+    shuffledWords.forEach((option, index) => {
+        const wordBtn = createWordButton(option.word, option.isCorrect, index);
+        state.wordButtons.push(wordBtn);
         if (wordsContainer) {
             wordsContainer.appendChild(wordBtn);
         }
@@ -150,140 +164,97 @@ function startNewRound() {
 }
 
 /**
- * Creates an image button element.
- * @param {Object} pair - Word pair object with emoji and word
- * @param {number} index - Index of the pair
- * @returns {HTMLElement} Image button element
- */
-function createImageButton(pair, index) {
-    const button = document.createElement('button');
-    button.className = 'game4-image';
-    button.textContent = pair.emoji;
-    button.setAttribute('data-word', pair.word);
-    button.setAttribute('data-index', index);
-    button.setAttribute('aria-label', STRINGS.aria.image(pair.word));
-    button.setAttribute('type', 'button');
-    
-    button.addEventListener('click', () => handleImageClick(button));
-    
-    return button;
-}
-
-/**
  * Creates a word button element.
- * @param {Object} pair - Word pair object with emoji and word
- * @param {number} index - Index of the pair
+ * @param {string} word - The word text
+ * @param {boolean} isCorrect - Whether this is the correct answer
+ * @param {number} index - Index of the button
  * @returns {HTMLElement} Word button element
  */
-function createWordButton(pair, index) {
+function createWordButton(word, isCorrect, index) {
     const button = document.createElement('button');
     button.className = 'game4-word';
-    button.textContent = pair.word;
-    button.setAttribute('data-word', pair.word);
+    button.textContent = word;
+    button.setAttribute('data-word', word);
+    button.setAttribute('data-correct', isCorrect.toString());
     button.setAttribute('data-index', index);
-    button.setAttribute('aria-label', STRINGS.aria.word(pair.word));
+    button.setAttribute('aria-label', STRINGS.aria.word(word));
     button.setAttribute('type', 'button');
     
-    button.addEventListener('click', () => handleWordClick(button));
+    button.addEventListener('click', () => handleWordClick(button, isCorrect));
     
     return button;
-}
-
-/**
- * Handles click on an image button.
- * @param {HTMLElement} imageButton - The clicked image button
- */
-function handleImageClick(imageButton) {
-    // Ignore if already matched
-    if (imageButton.classList.contains('game4-image--matched')) {
-        return;
-    }
-
-    // If an image is already selected, deselect it
-    if (state.selectedImage && state.selectedImage !== imageButton) {
-        state.selectedImage.classList.remove('game4-image--selected');
-    }
-
-    // If a word is selected, try to match
-    if (state.selectedWord) {
-        tryMatch(state.selectedWord, imageButton);
-        return;
-    }
-
-    // Select this image
-    state.selectedImage = imageButton;
-    imageButton.classList.add('game4-image--selected');
 }
 
 /**
  * Handles click on a word button.
  * @param {HTMLElement} wordButton - The clicked word button
+ * @param {boolean} isCorrect - Whether this is the correct answer
  */
-function handleWordClick(wordButton) {
-    // Ignore if already matched
-    if (wordButton.classList.contains('game4-word--matched')) {
+async function handleWordClick(wordButton, isCorrect) {
+    // Prevent rapid clicks from causing race conditions
+    if (state.answerProcessing) {
         return;
     }
-
-    // If a word is already selected, deselect it
-    if (state.selectedWord && state.selectedWord !== wordButton) {
-        state.selectedWord.classList.remove('game4-word--selected');
+    state.answerProcessing = true;
+    
+    // Ensure audio context is running before playing any sounds
+    await ensureAudioContext();
+    if (audioContext && audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.warn('Could not resume AudioContext:', error);
+        }
     }
-
-    // If an image is selected, try to match
-    if (state.selectedImage) {
-        tryMatch(wordButton, state.selectedImage);
-        return;
-    }
-
-    // Select this word
-    state.selectedWord = wordButton;
-    wordButton.classList.add('game4-word--selected');
-}
-
-/**
- * Tries to match a word with an image.
- * @param {HTMLElement} wordButton - The word button
- * @param {HTMLElement} imageButton - The image button
- */
-function tryMatch(wordButton, imageButton) {
-    const wordText = wordButton.getAttribute('data-word');
-    const imageWord = imageButton.getAttribute('data-word');
-
-    if (wordText === imageWord) {
-        // Match! Remove both
-        wordButton.classList.add('game4-word--matched');
-        imageButton.classList.add('game4-image--matched');
-        
-        // Clear selection
-        state.selectedWord = null;
-        state.selectedImage = null;
-        
-        // Play success sound
+    
+    // Disable all buttons
+    state.wordButtons.forEach(btn => {
+        btn.classList.add('game4-word--disabled');
+    });
+    
+    if (isCorrect) {
+        // Correct answer - show feedback, show dialog, and play sound
+        wordButton.classList.add('game4-word--correct');
+        // Show dialog immediately, then play sound
+        showCompletionDialog();
+        // Play success sound (don't wait for it)
+        // Note: answerProcessing flag will be reset when continue is clicked and new round starts
         playSuccessSound().catch(error => {
             console.warn('Could not play success sound:', error);
         });
-        
-        // Increment matched count
-        state.matchedCount++;
-        
-        // Check if all matched
-        if (state.matchedCount >= PAIRS_PER_ROUND) {
-            setTimeout(() => {
-                showCompletionDialog();
-            }, 500); // Small delay to see the last match animation
-        }
     } else {
-        // No match - deselect both
-        wordButton.classList.remove('game4-word--selected');
-        imageButton.classList.remove('game4-image--selected');
-        state.selectedWord = null;
-        state.selectedImage = null;
-        
+        // Wrong answer - show feedback and play error sound
+        wordButton.classList.add('game4-word--wrong');
         // Play error sound
         playErrorSound().catch(error => {
             console.warn('Could not play error sound:', error);
         });
+        
+        // Cancel any existing wrong answer timeout
+        if (state.wrongAnswerTimeout) {
+            clearTimeout(state.wrongAnswerTimeout);
+        }
+        
+        // Store timeout ID so we can cancel it if a new round starts
+        state.wrongAnswerTimeout = setTimeout(() => {
+            state.wrongAnswerTimeout = null;
+            
+            // Check if button still exists in DOM before manipulating it
+            if (wordButton.isConnected && wordsContainer && wordsContainer.contains(wordButton)) {
+                wordButton.classList.remove('game4-word--wrong');
+            }
+            
+            // Re-enable all buttons that still exist
+            const buttonsToEnable = [...state.wordButtons];
+            buttonsToEnable.forEach(btn => {
+                if (btn.isConnected && wordsContainer && wordsContainer.contains(btn)) {
+                    btn.classList.remove('game4-word--disabled');
+                }
+            });
+            
+            // Reset processing flag after timeout completes
+            state.answerProcessing = false;
+        }, 800);
     }
 }
 
@@ -319,6 +290,7 @@ function hideCompletionDialog() {
  */
 function handleContinueClick() {
     hideCompletionDialog();
+    state.answerProcessing = false; // Reset processing flag
     startNewRound();
 }
 
@@ -541,7 +513,7 @@ async function playErrorSound() {
 }
 
 /**
- * Plays the completion sound when all matches are found.
+ * Plays the completion sound when correct answer is selected.
  * @returns {Promise} Promise that resolves when sound finishes
  */
 async function playCompletionSound() {
@@ -829,4 +801,3 @@ function loadAudioBuffer(url) {
             throw error;
         });
 }
-
