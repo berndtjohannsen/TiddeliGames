@@ -126,6 +126,30 @@ window.GAME2_STRINGS = Object.freeze({
             name: 'Traktor',
             image: 'images/traktor.png',
             sound: 'sounds/traktor.mp3'
+        },
+        {
+            id: 'ape',
+            name: 'Apa',
+            image: 'images/apa.png',
+            sound: 'sounds/apa.mp3'
+        },
+        {
+            id: 'elephant',
+            name: 'Elefant',
+            image: 'images/elefant.png',
+            sound: 'sounds/elephant.mp3'
+        },
+        {
+            id: 'guitar',
+            name: 'Gitarr',
+            image: 'images/gitarr.png',
+            sound: 'sounds/gitarr.mp3'
+        },
+        {
+            id: 'rooster',
+            name: 'Tupp',
+            image: 'images/tupp.png',
+            sound: 'sounds/tupp.mp3'
         }
     ]
 });
