@@ -224,7 +224,10 @@ function finishGame() {
     if (instructionsEl) {
         instructionsEl.textContent = STRINGS.messages.success;
     }
-    playCheerSound().catch(error => console.warn('Audio blocked on finish:', error));
+    // Use shared completion sound function
+    if (window.playSharedCompletionSound) {
+        window.playSharedCompletionSound(audioContext, 0.3).catch(error => console.warn('Audio blocked on finish:', error));
+    }
     stopAmbience().catch(error => console.warn('Unable to stop ambience:', error));
     showCompletionDialog();
 }
@@ -326,34 +329,7 @@ async function playErrorTone() {
     await playTone(261.6, 0.24, now + 0.2, 0.35);
 }
 
-async function playCheerSound() {
-    await ensureAudioContext();
-    if (!audioContext) return;
-
-    try {
-        const response = await fetch('sounds/complete.mp3', { cache: 'force-cache' });
-        if (!response.ok) {
-            throw new Error(`Completion audio failed to load: ${response.status}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = await audioContext.decodeAudioData(arrayBuffer);
-        const source = audioContext.createBufferSource();
-        source.buffer = buffer;
-        const gainNode = audioContext.createGain();
-        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
-        const actualVolume = globalVolume * 0.3;
-        gainNode.gain.setValueAtTime(actualVolume, audioContext.currentTime);
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        source.start();
-        source.addEventListener('ended', () => {
-            source.disconnect();
-            gainNode.disconnect();
-        });
-    } catch (error) {
-        console.error('Unable to play completion sound:', error);
-    }
-}
+// Removed playCheerSound() - now using shared completion sound function from js/audio.js
 
 async function loadAmbienceBuffer() {
     if (ambienceBuffer) {

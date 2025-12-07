@@ -198,14 +198,14 @@ function handleLetterClick(button) {
         // Disable the button so it can't be clicked again
         button.disabled = true;
         
-        // Play short success beep
+        // Play short success beep for individual match (synthetic sound, not MP3)
         playSuccessSound().catch(error => {
             console.warn('Could not play success sound:', error);
         });
         
         // Check if all letters are matched
         if (state.matchedLetters.size >= SWEDISH_ALPHABET_LOWERCASE.length) {
-            // All letters matched - show completion dialog
+            // All letters matched - show completion dialog (which will play the completion sound MP3)
             setTimeout(() => {
                 showCompletionDialog();
             }, 500);
@@ -353,9 +353,12 @@ function showCompletionDialog() {
     completionDialog.hidden = false;
     
     // Play completion sound (randomly select one of 6 completion sounds)
-    playCompletionSound().catch(error => {
-        console.warn('Could not play completion sound:', error);
-    });
+    // Use shared completion sound function
+    if (window.playSharedCompletionSound) {
+        window.playSharedCompletionSound(audioContext, 0.8).catch(error => {
+            console.warn('Could not play completion sound:', error);
+        });
+    }
 }
 
 /**
@@ -391,7 +394,7 @@ function shuffleArray(array) {
 }
 
 /**
- * Plays a short success beep (synthetic).
+ * Plays a short success beep (synthetic) for individual letter matches.
  * @returns {Promise} Promise that resolves when sound finishes
  */
 async function playSuccessSound() {
@@ -425,8 +428,9 @@ async function playSuccessSound() {
         oscillator.type = 'sine';
         
         // Short beep - shorter duration
+        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
         gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+        gainNode.gain.linearRampToValueAtTime(globalVolume * 0.3, audioContext.currentTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
         
         oscillator.start(audioContext.currentTime);
@@ -491,43 +495,8 @@ async function playErrorSound() {
     }
 }
 
-/**
- * Plays a completion sound (randomly selects one of 6 completion sounds).
- * @returns {Promise} Promise that resolves when sound finishes
- */
-async function playCompletionSound() {
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        return Promise.resolve();
-    }
-
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            return Promise.resolve();
-        }
-    }
-
-    if (audioContext.state !== 'running') {
-        return Promise.resolve();
-    }
-
-    try {
-        // Randomly select one of the 6 completion sounds
-        const randomIndex = Math.floor(Math.random() * 6) + 1; // 1 to 6
-        const soundPath = `sounds/complete${randomIndex}.mp3`;
-        const buffer = await loadAudioBuffer(soundPath);
-        if (buffer) {
-            return playAudioBuffer(buffer, 0.8);
-        }
-    } catch (error) {
-        console.warn('Could not load completion sound:', error);
-        return Promise.resolve();
-    }
-}
+// Removed playCompletionSound() - now using shared completion sound function from js/audio.js
+// The shared function randomly selects from 36 completion sounds in assets/shared/sounds/
 
 /**
  * Ensures the audio context is initialized.

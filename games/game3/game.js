@@ -259,10 +259,12 @@ async function handleNumberClick(selectedNumber, button) {
         button.classList.add('number-button--correct');
         // Show dialog immediately, then play sound
         showCompletionDialog();
-        // Play success sound (don't wait for it)
-        playSuccessSound().catch(error => {
-            console.warn('Could not play success sound:', error);
-        });
+        // Play success sound (don't wait for it) - using shared completion sound
+        if (window.playSharedCompletionSound) {
+            window.playSharedCompletionSound(audioContext, 0.7).catch(error => {
+                console.warn('Could not play success sound:', error);
+            });
+        }
     } else {
         // Wrong answer - show feedback and play error sound
         button.classList.add('number-button--wrong');
@@ -646,119 +648,7 @@ async function playErrorSound() {
  * Plays a synthetic success sound - a pleasant rising arpeggio.
  * @returns {Promise} Resolves when the sound finishes playing
  */
-async function playSuccessSound() {
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        console.warn('No audio context available for success sound');
-        return Promise.resolve();
-    }
-
-    // Ensure audio context is running (important for subsequent plays)
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            // Wait a moment to ensure context is fully resumed
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            console.warn('Could not resume AudioContext for success sound:', error);
-            return Promise.resolve();
-        }
-    }
-
-    // Verify context is actually running
-    if (audioContext.state !== 'running') {
-        console.warn('AudioContext not running, state:', audioContext.state);
-        return Promise.resolve();
-    }
-
-    // Get global volume and scale it for the success sound
-    const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
-    const actualVolume = globalVolume * 0.7; // Success sound volume (70% of global volume)
-
-    const sampleRate = audioContext.sampleRate;
-    const duration = 0.6; // Total duration in seconds
-    const frameCount = Math.floor(sampleRate * duration);
-    
-    // Create a fresh buffer each time
-    const buffer = audioContext.createBuffer(1, frameCount, sampleRate);
-    const data = buffer.getChannelData(0);
-
-    // Create a pleasant C major arpeggio (C-E-G-C)
-    const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C4, E4, G4, C5
-    const noteDuration = duration / frequencies.length;
-    const noteFrameCount = Math.floor(sampleRate * noteDuration);
-
-    // Generate envelope parameters
-    const attackFrames = Math.floor(sampleRate * 0.01);
-    const releaseFrames = Math.floor(sampleRate * 0.05);
-
-    for (let i = 0; i < frameCount; i += 1) {
-        const t = i / sampleRate;
-        const noteIndex = Math.min(Math.floor(t / noteDuration), frequencies.length - 1);
-        const frequency = frequencies[noteIndex];
-        
-        // Calculate position within current note
-        const noteStartFrame = noteIndex * noteFrameCount;
-        const noteFrame = i - noteStartFrame;
-        const noteTime = noteFrame / sampleRate;
-
-        // Calculate envelope for this note
-        const noteAttackFrames = Math.min(attackFrames, Math.floor(noteFrameCount * 0.2));
-        const noteReleaseFrames = Math.min(releaseFrames, Math.floor(noteFrameCount * 0.3));
-        const noteSustainFrames = noteFrameCount - noteAttackFrames - noteReleaseFrames;
-
-        const envelope = calculateEnvelopeValue(
-            noteFrame,
-            noteAttackFrames,
-            noteSustainFrames,
-            noteReleaseFrames
-        );
-
-        // Generate sine wave with envelope
-        data[i] = envelope * Math.sin(2 * Math.PI * frequency * noteTime) * 0.5;
-    }
-
-    // Create fresh source and gain node each time
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    const gainNode = audioContext.createGain();
-
-    const now = audioContext.currentTime;
-    gainNode.gain.setValueAtTime(actualVolume, now);
-    gainNode.gain.linearRampToValueAtTime(0.0001, now + duration);
-
-    source.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    return new Promise((resolve) => {
-        let resolved = false;
-        
-        const cleanup = () => {
-            if (!resolved) {
-                resolved = true;
-                try {
-                    source.disconnect();
-                    gainNode.disconnect();
-                } catch (e) {
-                    // Ignore cleanup errors
-                }
-                resolve();
-            }
-        };
-
-        source.onended = cleanup;
-
-        try {
-            // Use currentTime to ensure proper timing
-            source.start(now);
-            source.stop(now + duration + 0.05);
-        } catch (error) {
-            console.warn('Could not start success sound:', error, 'Context state:', audioContext.state);
-            cleanup();
-        }
-    });
-}
+// Removed playSuccessSound() - now using shared completion sound function from js/audio.js
 
 /**
  * Shows the completion dialog with continue option.

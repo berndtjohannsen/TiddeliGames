@@ -494,13 +494,9 @@ async function handleAnswerClick(selectedAnswer, button) {
     if (selectedAnswer === state.correctAnswer) {
         // Correct answer - show feedback, show dialog, and play sound
         button.classList.add('game9-answer--correct');
-        // Show dialog immediately, then play sound
+        // Show dialog (which will play the completion sound)
         showCompletionDialog();
-        // Play success sound (don't wait for it)
         // Note: answerProcessing flag will be reset when continue is clicked and new round starts
-        playSuccessSound().catch(error => {
-            console.warn('Could not play success sound:', error);
-        });
     } else {
         // Wrong answer - show feedback and play error sound
         button.classList.add('game9-answer--wrong');
@@ -549,9 +545,9 @@ function showCompletionDialog() {
     }
     completionDialog.hidden = false;
     
-    // Play completion sound
-    if (STRINGS.sounds && STRINGS.sounds.complete) {
-        playCompletionSound().catch(error => {
+    // Play completion sound - using shared completion sound function
+    if (window.playSharedCompletionSound) {
+        window.playSharedCompletionSound(audioContext, 0.8).catch(error => {
             console.warn('Could not play completion sound:', error);
         });
     }
@@ -575,122 +571,7 @@ function handleContinueClick() {
     startNewRound();
 }
 
-/**
- * Plays a synthetic success sound.
- * @returns {Promise} Promise that resolves when sound finishes
- */
-async function playSuccessSound() {
-    // Prevent memory leak - limit concurrent sounds
-    if (activeAudioSources.size > 10) {
-        console.warn('Too many active audio sources, aborting new sound');
-        return Promise.resolve(); // Just abort, don't try to cleanup and continue
-    }
-    
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        return Promise.resolve();
-    }
-
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            return Promise.resolve();
-        }
-    }
-
-    if (audioContext.state !== 'running') {
-        return Promise.resolve();
-    }
-
-    // Cache the buffer to avoid recreating it every time
-    if (!successSoundBuffer) {
-        const sampleRate = audioContext.sampleRate;
-        const duration = 0.6;
-        const frames = Math.floor(sampleRate * duration);
-        successSoundBuffer = audioContext.createBuffer(1, frames, sampleRate);
-        const data = successSoundBuffer.getChannelData(0);
-
-        // Create a pleasant two-tone success sound
-        const freq1 = 523.25; // C5
-        const freq2 = 659.25; // E5
-        const attackFrames = Math.floor(sampleRate * 0.05);
-        const sustainFrames = Math.floor(sampleRate * 0.3);
-        const releaseFrames = Math.floor(sampleRate * 0.25);
-
-        for (let i = 0; i < frames; i++) {
-            let value = 0;
-            if (i < attackFrames + sustainFrames + releaseFrames) {
-                const envelope = calculateEnvelopeValue(i, attackFrames, sustainFrames, releaseFrames);
-                if (i < frames / 2) {
-                    const t = i / sampleRate;
-                    value = Math.sin(2 * Math.PI * freq1 * t) * envelope;
-                } else {
-                    const t = (i - frames / 2) / sampleRate;
-                    value = Math.sin(2 * Math.PI * freq2 * t) * envelope;
-                }
-            }
-            data[i] = value;
-        }
-    }
-
-    const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
-    const actualVolume = globalVolume * 0.7;
-
-    const source = audioContext.createBufferSource();
-    source.buffer = successSoundBuffer;
-    const gainNode = audioContext.createGain();
-    gainNode.gain.setValueAtTime(actualVolume, audioContext.currentTime);
-    source.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    return new Promise((resolve) => {
-        let resolved = false;
-        const duration = 0.6;
-        
-        const wrappedCleanup = () => {
-            if (!resolved) {
-                resolved = true;
-                activeAudioSources.delete(sourceRef);
-                try {
-                    source.removeEventListener('ended', wrappedCleanup);
-                    source.removeEventListener('error', wrappedCleanup);
-                } catch (e) {
-                    // Ignore if listeners weren't added
-                }
-                try {
-                    source.disconnect();
-                    gainNode.disconnect();
-                } catch (e) {
-                    // Ignore cleanup errors
-                }
-                resolve();
-            }
-        };
-        
-        // Track this source for cleanup (store cleanup function for removal)
-        const sourceRef = { source, gain: gainNode, cleanup: wrappedCleanup };
-        activeAudioSources.add(sourceRef);
-        
-        // Add event listeners for ended and error (don't use onended, use addEventListener)
-        source.addEventListener('ended', wrappedCleanup);
-        source.addEventListener('error', wrappedCleanup);
-        
-        try {
-            source.start(0);
-            const timeoutId = setTimeout(() => {
-                activeSoundTimeouts.delete(timeoutId);
-                wrappedCleanup();
-            }, (duration + 0.1) * 1000);
-            activeSoundTimeouts.add(timeoutId);
-        } catch (error) {
-            console.warn('Could not start success sound:', error);
-            wrappedCleanup();
-        }
-    });
-}
+// Removed playSuccessSound() - now using shared completion sound function from js/audio.js
 
 /**
  * Plays a synthetic error sound.
@@ -802,40 +683,7 @@ async function playErrorSound() {
     });
 }
 
-/**
- * Plays the completion sound when all matches are found.
- * @returns {Promise} Promise that resolves when sound finishes
- */
-async function playCompletionSound() {
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        return Promise.resolve();
-    }
-
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            return Promise.resolve();
-        }
-    }
-
-    if (audioContext.state !== 'running') {
-        return Promise.resolve();
-    }
-
-    try {
-        const buffer = await loadAudioBuffer(STRINGS.sounds.complete);
-        if (buffer) {
-            return playAudioBuffer(buffer, 0.8);
-        }
-    } catch (error) {
-        console.warn('Could not load completion sound:', error);
-        return Promise.resolve();
-    }
-}
+// Removed playCompletionSound() - now using shared completion sound function from js/audio.js
 
 /**
  * Plays an audio buffer with the specified volume multiplier.

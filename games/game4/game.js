@@ -215,13 +215,9 @@ async function handleWordClick(wordButton, isCorrect) {
     if (isCorrect) {
         // Correct answer - show feedback, show dialog, and play sound
         wordButton.classList.add('game4-word--correct');
-        // Show dialog immediately, then play sound
+        // Show dialog (which will play the completion sound)
         showCompletionDialog();
-        // Play success sound (don't wait for it)
         // Note: answerProcessing flag will be reset when continue is clicked and new round starts
-        playSuccessSound().catch(error => {
-            console.warn('Could not play success sound:', error);
-        });
     } else {
         // Wrong answer - show feedback and play error sound
         wordButton.classList.add('game4-word--wrong');
@@ -267,9 +263,9 @@ function showCompletionDialog() {
     }
     completionDialog.hidden = false;
     
-    // Play completion sound
-    if (STRINGS.sounds && STRINGS.sounds.complete) {
-        playCompletionSound().catch(error => {
+    // Play completion sound - using shared completion sound function
+    if (window.playSharedCompletionSound) {
+        window.playSharedCompletionSound(audioContext, 0.8).catch(error => {
             console.warn('Could not play completion sound:', error);
         });
     }
@@ -312,103 +308,7 @@ function shuffleArray(array) {
  * Plays a success sound (audio file if available, otherwise synthetic).
  * @returns {Promise} Promise that resolves when sound finishes
  */
-async function playSuccessSound() {
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        return Promise.resolve();
-    }
-
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            return Promise.resolve();
-        }
-    }
-
-    if (audioContext.state !== 'running') {
-        return Promise.resolve();
-    }
-
-    // Play synthetic success sound
-    const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
-    const actualVolume = globalVolume * 0.7;
-
-    const sampleRate = audioContext.sampleRate;
-    const duration = 0.6;
-    const frameCount = Math.floor(sampleRate * duration);
-    const buffer = audioContext.createBuffer(1, frameCount, sampleRate);
-    const data = buffer.getChannelData(0);
-
-    const frequencies = [523.25, 659.25, 783.99, 1046.50];
-    const noteDuration = duration / frequencies.length;
-    const noteFrameCount = Math.floor(sampleRate * noteDuration);
-
-    const attackFrames = Math.floor(sampleRate * 0.01);
-    const releaseFrames = Math.floor(sampleRate * 0.05);
-
-    for (let i = 0; i < frameCount; i += 1) {
-        const t = i / sampleRate;
-        const noteIndex = Math.min(Math.floor(t / noteDuration), frequencies.length - 1);
-        const frequency = frequencies[noteIndex];
-        
-        const noteStartFrame = noteIndex * noteFrameCount;
-        const noteFrame = i - noteStartFrame;
-        const noteTime = noteFrame / sampleRate;
-
-        const noteAttackFrames = Math.min(attackFrames, Math.floor(noteFrameCount * 0.2));
-        const noteReleaseFrames = Math.min(releaseFrames, Math.floor(noteFrameCount * 0.3));
-        const noteSustainFrames = noteFrameCount - noteAttackFrames - noteReleaseFrames;
-
-        const envelope = calculateEnvelopeValue(
-            noteFrame,
-            noteAttackFrames,
-            noteSustainFrames,
-            noteReleaseFrames
-        );
-
-        data[i] = envelope * Math.sin(2 * Math.PI * frequency * noteTime) * 0.5;
-    }
-
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    const gainNode = audioContext.createGain();
-
-    const now = audioContext.currentTime;
-    gainNode.gain.setValueAtTime(actualVolume, now);
-    gainNode.gain.linearRampToValueAtTime(0.0001, now + duration);
-
-    source.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    return new Promise((resolve) => {
-        let resolved = false;
-        
-        const cleanup = () => {
-            if (!resolved) {
-                resolved = true;
-                try {
-                    source.disconnect();
-                    gainNode.disconnect();
-                } catch (e) {
-                    // Ignore cleanup errors
-                }
-                resolve();
-            }
-        };
-
-        source.onended = cleanup;
-
-        try {
-            source.start(now);
-            source.stop(now + duration + 0.05);
-        } catch (error) {
-            cleanup();
-        }
-    });
-}
+// Removed playSuccessSound() - now using shared completion sound function from js/audio.js
 
 /**
  * Plays an error sound (audio file if available, otherwise synthetic).
@@ -512,40 +412,7 @@ async function playErrorSound() {
     });
 }
 
-/**
- * Plays the completion sound when correct answer is selected.
- * @returns {Promise} Promise that resolves when sound finishes
- */
-async function playCompletionSound() {
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        return Promise.resolve();
-    }
-
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            return Promise.resolve();
-        }
-    }
-
-    if (audioContext.state !== 'running') {
-        return Promise.resolve();
-    }
-
-    try {
-        const buffer = await loadAudioBuffer(STRINGS.sounds.complete);
-        if (buffer) {
-            return playAudioBuffer(buffer, 0.8);
-        }
-    } catch (error) {
-        console.warn('Could not load completion sound:', error);
-        return Promise.resolve();
-    }
-}
+// Removed playCompletionSound() - now using shared completion sound function from js/audio.js
 
 /**
  * Plays an audio buffer with the specified volume multiplier.

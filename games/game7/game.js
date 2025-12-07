@@ -335,12 +335,8 @@ async function handleAnswerClick(selectedAnswer, button) {
         if (selectedAnswer === state.correctAnswer) {
             // Correct answer - show feedback, show dialog, and play sound
             button.classList.add('game7-answer--correct');
-            // Show dialog immediately, then play sound
+            // Show dialog (which will play the completion sound)
             showCompletionDialog();
-            // Play success sound (don't wait for it)
-            playSuccessSound().catch(error => {
-                console.warn('Could not play success sound:', error);
-            });
             // Reset flag when dialog is shown (user will click continue to start new round)
             // Flag will be reset in handleContinueClick
         } else {
@@ -384,9 +380,9 @@ function showCompletionDialog() {
         continueButton.style.pointerEvents = 'auto';
     }
     
-    // Play completion sound
-    if (STRINGS.sounds && STRINGS.sounds.complete) {
-        playCompletionSound().catch(error => {
+    // Play completion sound - using shared completion sound function
+    if (window.playSharedCompletionSound) {
+        window.playSharedCompletionSound(audioContext, 0.8).catch(error => {
             console.warn('Could not play completion sound:', error);
         });
     }
@@ -576,40 +572,7 @@ async function playErrorSound() {
     });
 }
 
-/**
- * Plays the completion sound when all matches are found.
- * @returns {Promise} Promise that resolves when sound finishes
- */
-async function playCompletionSound() {
-    await ensureAudioContext();
-
-    if (!audioContext) {
-        return Promise.resolve();
-    }
-
-    if (audioContext.state !== 'running') {
-        try {
-            await audioContext.resume();
-            await new Promise(resolve => setTimeout(resolve, 10));
-        } catch (error) {
-            return Promise.resolve();
-        }
-    }
-
-    if (audioContext.state !== 'running') {
-        return Promise.resolve();
-    }
-
-    try {
-        const buffer = await loadAudioBuffer(STRINGS.sounds.complete);
-        if (buffer) {
-            return playAudioBuffer(buffer, 0.8);
-        }
-    } catch (error) {
-        console.warn('Could not load completion sound:', error);
-        return Promise.resolve();
-    }
-}
+// Removed playCompletionSound() - now using shared completion sound function from js/audio.js
 
 /**
  * Plays an audio buffer with the specified volume multiplier.

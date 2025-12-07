@@ -1,3 +1,9 @@
-# Placeholder file to ensure shared directory is tracked by git
-# Shared assets across games will be placed here
+# Shared assets directory for resources used across multiple games
+# 
+# See README.md in this directory for detailed documentation on structure and usage.
+# 
+# Directory structure:
+#   - images/  - Shared images (common backgrounds, UI elements)
+#   - sounds/  - Shared sounds (common sound effects, UI sounds)
+#   - fonts/   - Shared fonts (if custom fonts are needed)
 

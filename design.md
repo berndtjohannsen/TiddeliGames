@@ -108,6 +108,9 @@ TiddeliGames/
 └── assets/
     ├── icons/              # PWA icons (various sizes)
     └── shared/             # Shared assets across games
+        ├── images/         # Shared images (common backgrounds, UI elements)
+        ├── sounds/         # Shared sounds (common sound effects, UI sounds)
+        └── fonts/          # Shared fonts (if custom fonts are needed)
 ```
 
 ## Module Organization
@@ -116,6 +119,61 @@ TiddeliGames/
 - Common styles in root `css/` directory
 - Games can override shared styles as needed
 - Each game can specify preferred orientation in its configuration, but must implement responsive layouts for both orientations
+
+## Shared Assets Organization
+
+### Location: `assets/shared/`
+
+Shared resources that are used across multiple games are stored in `assets/shared/` with organized subdirectories:
+- **`images/`**: Shared images (common backgrounds, UI elements, icons used by multiple games)
+- **`sounds/`**: Shared sounds (common sound effects, UI sounds used across games)
+- **`fonts/`**: Shared fonts (custom fonts if needed by multiple games)
+
+### Referencing Shared Assets
+
+From any game directory (e.g., `games/game1/`), reference shared assets using relative paths:
+
+**Path pattern:** `../../assets/shared/{type}/{filename}`
+
+**Examples:**
+- Image: `../../assets/shared/images/common-background.png`
+- Sound: `../../assets/shared/sounds/ui-click.mp3`
+- Font: `../../assets/shared/fonts/custom-font.woff2`
+
+**HTML example:**
+```html
+<img src="../../assets/shared/images/shared-icon.png" alt="Icon">
+```
+
+**JavaScript example:**
+```javascript
+const audioPath = '../../assets/shared/sounds/completion.mp3';
+```
+
+**CSS example:**
+```css
+@font-face {
+    font-family: 'CustomFont';
+    src: url('../../assets/shared/fonts/custom-font.woff2') format('woff2');
+}
+```
+
+### When to Use Shared Assets
+
+**Use `assets/shared/` for:**
+- Assets used by 2+ games (common backgrounds, UI elements, sounds)
+- Reusable components that should be consistent across games
+- Shared fonts used by multiple games
+
+**Keep in game directories for:**
+- Game-specific assets unique to a single game
+- Assets that are part of a game's core identity or gameplay
+
+### Service Worker Caching
+
+Shared assets are cached by the Service Worker. When adding new shared assets, ensure they are included in the cache strategy defined in `sw.js`.
+
+For detailed usage instructions, see `assets/shared/README.md`.
 
 ## JavaScript Module Responsibilities
 - **config.js**: App configuration and version (single source of truth)
