@@ -18,7 +18,7 @@
 - Always be very careful regarding regression
 - When fixing bugs or adding features, check if there is good code reuse in the codebase
 - Comment all code, including HTML, CSS and javascript
-- For web applications, I use live server, so need that you engage in that
+- For web applications, I use live server, so no need that you engage in that
 - Before telling me you do not have access to a file, please check.
 - Do not create delete or create new files or directories without first confirming with me
 - If a file becomes too large, like 500 lines, suggest to me to split it

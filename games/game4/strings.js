@@ -129,7 +129,7 @@ window.GAME4_STRINGS = Object.freeze({
         { emoji: '👖', word: 'BYXOR' },
         { emoji: '👗', word: 'KLÄNNING' },
         { emoji: '👟', word: 'SKO' },
-        { emoji: '🧢', word: 'MÖSSA' },
+        { emoji: '🧢', word: 'KEPS' },
         { emoji: '🧦', word: 'STRUMPA' },
         // Toys and games
         { emoji: '🧩', word: 'PUSSEL' },

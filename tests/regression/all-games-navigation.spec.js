@@ -12,6 +12,7 @@ test.describe('Game Navigation', () => {
     { id: 'game7', path: '/games/game7/index.html' },
     { id: 'game8', path: '/games/game8/index.html' },
     { id: 'game9', path: '/games/game9/index.html' },
+    { id: 'game10', path: '/games/game10/index.html' },
   ];
 
   test('can navigate to all games from main page', async ({ page }) => {

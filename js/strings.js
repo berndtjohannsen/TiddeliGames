@@ -75,6 +75,13 @@ window.APP_STRINGS = Object.freeze({
                 description: '"Plussa" siffror. (5+ år)',
                 icon: '🔢',
                 path: 'games/game9/index.html'
+            },
+            {
+                id: 'game10',
+                name: 'Första bokstaven',
+                description: 'Hitta första bokstaven? (4+ år)',
+                icon: '🔤',
+                path: 'games/game10/index.html'
             }
         ]
     },

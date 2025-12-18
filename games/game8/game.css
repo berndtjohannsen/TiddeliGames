@@ -88,8 +88,10 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: clamp(1rem, 3vw, 2rem);
-    padding: clamp(0.5rem, 2vw, 1.5rem);
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.6rem, 1.2vw, 1.2rem);
+    padding: clamp(0.6rem, 2vw, 2rem);
     background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('images/bakgrund.png');
     background-size: cover;
     background-position: center;
@@ -100,37 +102,43 @@
     -webkit-overflow-scrolling: touch;
 }
 
-/* Lowercase letter display */
+/* Lowercase letter display - styled like game 4's emoji container */
 .game8-lowercase-container {
     display: flex;
-    justify-content: center;
     align-items: center;
-    gap: 0.3em; /* Small space between the letter and the emoji */
-    min-height: clamp(56px, 10vw, 88px);
-    max-width: min(420px, 90%); /* Do not span the whole width – more like a compact card */
-    align-self: center; /* Center the card in the game field */
-    background: rgba(255, 255, 255, 0.9); /* Light card, like game 7 boxes (no orange) */
-    border-radius: clamp(1rem, 2vw, 1.5rem);
-    padding: clamp(0.6rem, 1.5vw, 1rem);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
-    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-    font-size: clamp(2.4rem, 7vw, 4rem);
-    font-weight: 800;
-    color: #4c1d95; /* Deep purple text, similar to game 7 */
-    text-align: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    min-height: clamp(150px, 25vw, 250px);
+    width: 100%;
+    max-width: min(600px, 90%);
+    align-self: center;
     flex-shrink: 0;
+    gap: clamp(1rem, 3vw, 2rem);
 }
 
-/* Lowercase letter and emoji inside the orange box */
+/* Lowercase letter and emoji - larger and more prominent */
 .game8-lowercase-letter {
-    /* Keep the big size from the container */
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+    font-size: clamp(6rem, 15vw, 10rem);
+    font-weight: 800;
+    color: #4c1d95;
+    text-align: center;
     display: inline-block;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    user-select: none;
 }
 
 .game8-lowercase-emoji {
-    /* Emoji slightly smaller so both fit nicely */
-    font-size: 0.8em;
+    font-size: clamp(6rem, 15vw, 10rem);
     display: inline-block;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    user-select: none;
 }
 
 /* Instruction text display */
@@ -143,55 +151,73 @@
     flex-shrink: 0;
 }
 
-/* Uppercase letters grid container */
+/* Uppercase letters grid container - grouped container similar to game 4 */
 .game8-uppercase-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(clamp(50px, 8vw, 80px), 1fr));
-    gap: clamp(0.5rem, 1.5vw, 1rem);
+    display: flex;
+    justify-content: center;
+    align-items: center;
     width: 100%;
     flex: 1;
     min-height: 0;
     padding: clamp(0.5rem, 1vw, 1rem);
 }
 
-/* Uppercase letter button */
+/* Inner grid container for the 8 letter buttons */
+.game8-letters-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    padding: clamp(0.6rem, 1.5vw, 1.2rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    width: 100%;
+    max-width: min(600px, 90%);
+}
+
+/* Uppercase letter button - styled like game 4 word buttons */
 .game8-letter-button {
-    aspect-ratio: 1;
-    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-    color: #ffffff;
-    border: none;
-    border-radius: clamp(0.75rem, 1.5vw, 1rem);
-    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-    font-size: clamp(1.2rem, 3.5vw, 2rem);
-    font-weight: 800;
-    cursor: pointer;
-    box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px;
-    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: clamp(50px, 8vw, 80px);
-    padding: 0.25rem;
+    min-height: clamp(60px, 8vw, 100px);
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #8b5cf6;
+    border-radius: 1.5rem;
+    font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.2rem, 3vw, 2rem);
+    font-weight: 700;
+    color: #4c1d95;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     line-height: 1.1;
     gap: 0.1em;
+    flex-direction: column;
 }
 
-.game8-letter-button:hover {
+.game8-letter-button:hover:not(.game8-letter-button--correct):not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-color: #7c3aed;
+}
+
+.game8-letter-button:active:not(.game8-letter-button--correct):not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: rgba(0, 0, 0, 0.3) 0 6px 12px;
 }
 
-.game8-letter-button:active {
-    transform: translateY(0);
-    box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px;
-}
-
-/* Correct match state */
+/* Correct match state - styled like game 4 */
 .game8-letter-button--correct {
-    background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+    background: rgba(34, 197, 94, 0.95);
+    border-color: #16a34a;
+    color: #ffffff;
+    transform: scale(1.05);
+    box-shadow: rgba(34, 197, 94, 0.5) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
     animation: correctPulse 0.5s ease;
 }
 
@@ -204,9 +230,13 @@
     }
 }
 
-/* Wrong match state */
+/* Wrong match state - styled like game 4 */
 .game8-letter-button--wrong {
-    background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+    background: rgba(239, 68, 68, 0.95);
+    border-color: #dc2626;
+    color: #ffffff;
+    transform: scale(0.95);
+    box-shadow: rgba(239, 68, 68, 0.5) 0 4px 12px, rgba(0, 0, 0, 0.2) 0 2px 4px;
     animation: wrongShake 0.3s ease;
 }
 
@@ -306,15 +336,23 @@
 }
 
 /* Responsive adjustments for smaller screens */
+@media (max-width: 640px) {
+    .game8-letters-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        padding: 1rem;
+    }
+}
+
 @media (max-width: 480px) {
-    .game8-uppercase-container {
-        grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
-        gap: 0.5rem;
+    .game8-letters-grid {
+        gap: 0.75rem;
+        padding: 0.6rem;
     }
     
     .game8-letter-button {
-        font-size: 1.2rem;
-        min-height: 45px;
+        font-size: clamp(1.8rem, 6vw, 2.5rem);
+        min-height: clamp(70px, 15vw, 100px);
     }
 }
 

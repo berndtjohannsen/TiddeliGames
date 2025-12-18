@@ -1,0 +1,316 @@
+/* Wrapper that centers the layout and provides spacing around the game */
+.game10-wrapper {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.75rem, 1.5vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 1rem);
+    height: 100vh; /* Fallback for browsers that don't support dvh */
+    height: 100dvh; /* Use dynamic viewport height (excludes browser UI on mobile) - overrides vh if supported */
+    max-height: 100vh; /* Fallback for browsers that don't support dvh */
+    max-height: 100dvh; /* Prevent exceeding viewport - overrides vh if supported */
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Header container with back button and title */
+.game10-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+    flex-shrink: 0;
+    margin: 0;
+}
+
+/* Top row with back button */
+.game10-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+/* Central block for title and instructions */
+.game10-header__center {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+}
+
+/* Back button uses soft colors and large touch target */
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 10px 18px, rgba(0, 0, 0, 0.2) 0 6px 6px;
+}
+
+/* Game title */
+.game10-title {
+    font-size: clamp(1.8rem, 4vw, 3.4rem);
+    font-weight: 800;
+    color: #1e1b4b;
+}
+
+/* Instruction text below the title */
+.game10-instructions {
+    font-size: clamp(1rem, 2vw, 1.6rem);
+    font-weight: 600;
+    color: #312e81;
+}
+
+/* Game board with background image */
+.game10-field {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    padding: clamp(0.6rem, 2vw, 2rem);
+    border-radius: 2rem;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
+        url('images/background.png');
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.6rem, 1.2vw, 1.2rem);
+}
+
+/* Icon container - single large icon centered */
+.game10-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 2rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+    min-height: clamp(150px, 25vw, 250px);
+    width: 100%;
+    max-width: min(600px, 90%);
+}
+
+/* Single icon display */
+.game10-icon {
+    font-size: clamp(8rem, 20vw, 12rem);
+    text-align: center;
+    user-select: none;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+    line-height: 1;
+}
+
+/* Answer buttons container */
+.game10-answers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    width: 100%;
+    max-width: 600px;
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(4px);
+}
+
+/* Answer button */
+.game10-answer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(60px, 8vw, 80px);
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    background: rgba(255, 255, 255, 0.95);
+    border: 3px solid #8b5cf6;
+    border-radius: 1.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    color: #4c1d95;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    user-select: none;
+}
+
+.game10-answer:hover:not(.game10-answer--disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-color: #7c3aed;
+}
+
+.game10-answer:active:not(.game10-answer--disabled) {
+    transform: translateY(-2px);
+}
+
+.game10-answer--correct {
+    background: rgba(187, 247, 208, 0.95);
+    border-color: #10b981;
+    transform: scale(1.05) translateY(-2px);
+    box-shadow: rgba(16, 185, 129, 0.4) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
+}
+
+.game10-answer--wrong {
+    background: rgba(254, 226, 226, 0.95);
+    border-color: #ef4444;
+    animation: shake 0.3s ease;
+}
+
+.game10-answer--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+/* Completion dialog styles (shared with other games) */
+.completion-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    pointer-events: auto;
+}
+
+.completion-dialog[hidden] {
+    display: none;
+}
+
+.completion-dialog__content {
+    background: white;
+    border-radius: 2rem;
+    padding: clamp(2rem, 4vw, 3.5rem);
+    max-width: 90vw;
+    width: clamp(280px, 50vw, 500px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    animation: fadeInScale 0.3s ease;
+    position: relative;
+    z-index: 1001;
+    pointer-events: auto;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.2rem, 2.5vw, 1.8rem);
+    font-weight: 600;
+    color: #312e81;
+    margin-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.completion-dialog__actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.completion-dialog__btn {
+    padding: clamp(0.75rem, 2vw, 1.25rem) clamp(2rem, 4vw, 3rem);
+    border: none;
+    border-radius: 1rem;
+    font-size: clamp(1.1rem, 2.5vw, 1.6rem);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 200ms ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 1002;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(139, 92, 246, 0.3);
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.completion-dialog__btn--primary:hover {
+    transform: translateY(-2px);
+    box-shadow: rgba(139, 92, 246, 0.4) 0 12px 24px, rgba(0, 0, 0, 0.2) 0 6px 12px;
+}
+
+.completion-dialog__btn--primary:active {
+    transform: translateY(0);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 480px) {
+    .back-button {
+        font-size: 1.2rem;
+        padding: 0.5rem 0.85rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .back-button {
+        padding: 0.5rem 0.85rem;
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .game10-answers {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* PWA standalone mode - use actual viewport height from JavaScript */
+@media (display-mode: standalone) {
+    .game10-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+

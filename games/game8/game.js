@@ -4,9 +4,9 @@
 // Loads local strings and resource definitions
 const STRINGS = window.GAME8_STRINGS || {};
 
-// Swedish alphabet: A-Z plus Å, Ä, Ö (29 letters total)
-const SWEDISH_ALPHABET_UPPERCASE = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'Å', 'Ä', 'Ö'];
-const SWEDISH_ALPHABET_LOWERCASE = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'å', 'ä', 'ö'];
+// Swedish alphabet: A-Z plus Å, Ä, Ö, excluding Q, W, X, Z (25 letters total)
+const SWEDISH_ALPHABET_UPPERCASE = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Å', 'Ä', 'Ö'];
+const SWEDISH_ALPHABET_LOWERCASE = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'r', 's', 't', 'u', 'v', 'y', 'å', 'ä', 'ö'];
 
 // Emoji that is shown next to the current lowercase letter.
 // The Swedish word for each emoji starts with this letter (for example: Apa 🐒, Boll ⚽, Cykel 🚲).
@@ -27,16 +27,12 @@ const LETTER_TO_EMOJI = {
     N: '👃',
     O: '🐍',
     P: '🍐',
-    Q: '',
     R: '💍',
     S: '☀️',
     T: '🌳',
     U: '🦉',
     V: '🐺',
-    W: '',
-    X: '',
     Y: '🪓',
-    Z: '',
     Å: '🫏',
     Ä: '🍎',
     Ö: '👁️'
@@ -66,6 +62,7 @@ const state = {
     currentUppercaseIndex: -1, // Index of the correct uppercase letter
     letterButtons: [], // Array of uppercase letter button elements
     matchedLetters: new Set(), // Set of indices of matched letters
+    currentLetterOptions: [], // Array of 8 letter indices to show (includes correct answer + 7 wrong)
     audioStarted: false, // Track if ambience has successfully started
     audioStarting: false // Prevent concurrent start attempts
 };
@@ -167,6 +164,7 @@ function startNewRound() {
     // Reset state for a new game
     state.letterButtons = [];
     state.matchedLetters.clear();
+    state.currentLetterOptions = [];
 
     // Start with first unmatched letter
     selectNextUnmatchedLetter();
@@ -229,8 +227,32 @@ function handleLetterClick(button) {
 }
 
 /**
- * Selects the next unmatched lowercase letter.
+ * Selects up to 8 letters to show: the correct answer plus wrong options.
+ * If fewer than 8 unmatched letters remain, shows all available unmatched letters.
+ * @param {number} correctIndex - The index of the correct letter
+ * @returns {Array<number>} Array of letter indices (includes correct answer, shuffled)
  */
+function selectLetterOptions(correctIndex) {
+    // Get all unmatched indices (excluding the correct one)
+    const unmatchedIndices = [];
+    for (let i = 0; i < SWEDISH_ALPHABET_LOWERCASE.length; i++) {
+        if (!state.matchedLetters.has(i) && i !== correctIndex) {
+            unmatchedIndices.push(i);
+        }
+    }
+    
+    // Select up to 7 wrong options randomly (or all available if fewer than 7)
+    const shuffledWrong = shuffleArray(unmatchedIndices.slice());
+    const numWrongOptions = Math.min(7, shuffledWrong.length);
+    const wrongOptions = shuffledWrong.slice(0, numWrongOptions);
+    
+    // Combine correct answer with wrong options
+    const options = [correctIndex, ...wrongOptions];
+    
+    // Shuffle the array so the correct answer isn't always first
+    return shuffleArray(options);
+}
+
 function selectNextUnmatchedLetter() {
     // Get all unmatched indices
     const unmatchedIndices = [];
@@ -251,6 +273,9 @@ function selectNextUnmatchedLetter() {
     const selectedIndex = unmatchedIndices[randomIndex];
     state.currentLowercaseLetter = SWEDISH_ALPHABET_LOWERCASE[selectedIndex];
     state.currentUppercaseIndex = selectedIndex;
+    
+    // Select 8 letters to show (correct answer + 7 wrong options)
+    state.currentLetterOptions = selectLetterOptions(selectedIndex);
     
     // Update display
     updateDisplayForCurrentLetter();
@@ -288,58 +313,47 @@ function updateDisplayForCurrentLetter() {
         }
     }
     
-    // Create or update uppercase letter buttons if not already created
-    if (uppercaseContainer && state.letterButtons.length === 0) {
+    // Create or update uppercase letter buttons - only show 8 letters at a time
+    if (uppercaseContainer) {
+        // Clear existing buttons
         uppercaseContainer.innerHTML = '';
+        state.letterButtons = [];
         
-        // Create uppercase letter buttons (in alphabetical order)
-        SWEDISH_ALPHABET_UPPERCASE.forEach((letter, index) => {
-            const button = document.createElement('button');
-            button.className = 'game8-letter-button';
-            
-            // If this letter is already matched, show both characters stacked vertically
-            if (state.matchedLetters.has(index)) {
-                button.innerHTML = letter + '<br>' + SWEDISH_ALPHABET_LOWERCASE[index];
-                button.disabled = true;
-                button.classList.add('game8-letter-button--correct');
-            } else {
-                button.textContent = letter;
-                button.disabled = false;
-            }
-            
-            button.setAttribute('data-letter', letter);
-            button.setAttribute('data-index', index);
-            if (STRINGS.aria && STRINGS.aria.uppercase) {
-                button.setAttribute('aria-label', STRINGS.aria.uppercase(letter));
-            }
-            button.setAttribute('type', 'button');
-            button.addEventListener('click', () => handleLetterClick(button));
-            state.letterButtons.push(button);
-            if (uppercaseContainer) {
-                uppercaseContainer.appendChild(button);
-            }
-        });
-    } else if (uppercaseContainer && state.letterButtons.length > 0) {
-        // Update existing buttons - re-enable unmatched ones, keep matched ones disabled
-        state.letterButtons.forEach((button, index) => {
-            if (state.matchedLetters.has(index)) {
-                // Already matched - keep it disabled and showing both characters
-                button.disabled = true;
-                if (!button.classList.contains('game8-letter-button--correct')) {
+        // Create a grid container for the buttons (similar to game 4's word container)
+        const lettersGrid = document.createElement('div');
+        lettersGrid.className = 'game8-letters-grid';
+        
+        // Only show the letters in currentLetterOptions (up to 8 letters)
+        if (state.currentLetterOptions && state.currentLetterOptions.length > 0) {
+            state.currentLetterOptions.forEach((letterIndex) => {
+                const letter = SWEDISH_ALPHABET_UPPERCASE[letterIndex];
+                const button = document.createElement('button');
+                button.className = 'game8-letter-button';
+                
+                // If this letter is already matched, show both characters stacked vertically
+                if (state.matchedLetters.has(letterIndex)) {
+                    button.innerHTML = letter + '<br>' + SWEDISH_ALPHABET_LOWERCASE[letterIndex];
+                    button.disabled = true;
                     button.classList.add('game8-letter-button--correct');
+                } else {
+                    button.textContent = letter;
+                    button.disabled = false;
                 }
-                // Ensure it shows both characters stacked vertically
-                const expectedContent = SWEDISH_ALPHABET_UPPERCASE[index] + '<br>' + SWEDISH_ALPHABET_LOWERCASE[index];
-                if (button.innerHTML !== expectedContent) {
-                    button.innerHTML = expectedContent;
+                
+                button.setAttribute('data-letter', letter);
+                button.setAttribute('data-index', letterIndex);
+                if (STRINGS.aria && STRINGS.aria.uppercase) {
+                    button.setAttribute('aria-label', STRINGS.aria.uppercase(letter));
                 }
-            } else {
-                // Not matched yet - enable it and show only uppercase
-                button.disabled = false;
-                button.classList.remove('game8-letter-button--correct', 'game8-letter-button--wrong');
-                button.textContent = SWEDISH_ALPHABET_UPPERCASE[index];
-            }
-        });
+                button.setAttribute('type', 'button');
+                button.addEventListener('click', () => handleLetterClick(button));
+                state.letterButtons.push(button);
+                lettersGrid.appendChild(button);
+            });
+            
+            // Append the grid container to the uppercase container
+            uppercaseContainer.appendChild(lettersGrid);
+        }
     }
 }
 
