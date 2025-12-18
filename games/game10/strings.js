@@ -60,7 +60,7 @@ window.GAME10_STRINGS = Object.freeze({
         { emoji: '🍊', word: 'Apelsin' },
         { emoji: '🍓', word: 'Jordgubbe' },
         
-        { emoji: '🍉', word: 'Vattenmelon' },
+        { emoji: '🍉', word: 'Melon' },
         { emoji: '🥕', word: 'Morot' },
         { emoji: '🍞', word: 'Bröd' },
         { emoji: '🧀', word: 'Ost' },
