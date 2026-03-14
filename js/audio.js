@@ -45,8 +45,10 @@ async function playSharedCompletionSound(gameAudioContext = null, volumeMultipli
     try {
         // Randomly select one of the 36 completion sounds (complete_1.mp3 through complete_36.mp3)
         const randomIndex = Math.floor(Math.random() * 36) + 1; // 1 to 36
-        // Path from game directories: go up two levels to root, then to shared assets
-        const soundPath = `../../assets/shared/sounds/complete_${randomIndex}.mp3`;
+        const relativeSharedPath = `shared/sounds/complete_${randomIndex}.mp3`;
+        const soundPath = (window.TiddeliAssets && window.TiddeliAssets.resolveSharedAsset)
+            ? window.TiddeliAssets.resolveSharedAsset(relativeSharedPath)
+            : `../../assets/${relativeSharedPath}`;
         
         // Load the audio file
         const response = await fetch(soundPath, { cache: 'force-cache' });

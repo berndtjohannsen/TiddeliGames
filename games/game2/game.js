@@ -3,6 +3,15 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME2_STRINGS;
+const GAME2_ASSETS = window.TiddeliAssets;
+
+function resolveGame2Asset(path) {
+    if (!path) return '';
+    if (GAME2_ASSETS && typeof GAME2_ASSETS.resolveGameAsset === 'function') {
+        return GAME2_ASSETS.resolveGameAsset('game2', path);
+    }
+    return path;
+}
 const ANIMALS = Array.isArray(STRINGS.animals) ? STRINGS.animals.slice() : [];
 
 // Constants for animations and timing
@@ -76,6 +85,26 @@ function cacheDomElements() {
     completionMessage = document.getElementById('completion-message');
     completionVideo = document.getElementById('completion-video');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the animal field from shared assets
+    if (animalField) {
+        const bgPath = 'images/background.png';
+        const bgUrl = resolveGame2Asset(bgPath);
+        animalField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
+    }
+
+    // Resolve completion video source from shared assets and assign to video element so the URL is actually requested
+    if (completionVideo) {
+        const videoPath = completionVideo.getAttribute('data-asset') || 'video/katt.mp4';
+        const resolvedUrl = resolveGame2Asset(videoPath);
+        completionVideo.src = resolvedUrl;
+        const sourceEl = completionVideo.querySelector('source');
+        if (sourceEl) {
+            sourceEl.src = resolvedUrl;
+        }
+        completionVideo.load(); // ensure the browser loads from the resolved URL
+    }
 
     // On touch devices (like tablets), prevent long-press context menu on the game area.
     // This helps small kids avoid triggering the “download / save image” dialog by accident.
@@ -245,7 +274,9 @@ function startNewGame() {
     ensureAudioContext().then(() => {
         if (audioContext && audioContext.state === 'running') {
             const preloadPromises = animalsToUse.map(animal => {
-                const result = loadAudioBuffer(animal.sound);
+                const soundPath = animal.sound || '';
+                const resolvedPath = resolveGame2Asset(soundPath);
+                const result = loadAudioBuffer(resolvedPath);
                 // If it's already cached (returns buffer directly), wrap in resolved promise
                 // Otherwise it's already a promise
                 return result instanceof Promise ? result : Promise.resolve(result);
@@ -367,7 +398,7 @@ function createAnimalCard(animal) {
     card.setAttribute('aria-label', ariaLabel);
 
     const image = document.createElement('img');
-    image.src = animal.image || '';
+    image.src = resolveGame2Asset(animal.image || '');
     image.alt = animal.name || '';
     image.className = 'animal-card__image';
 
@@ -1055,7 +1086,7 @@ async function playAnimalSound(animal) {
     }
 
     // Load buffer - if cached, this returns immediately
-    const buffer = loadAudioBuffer(animal.sound);
+    const buffer = loadAudioBuffer(resolveGame2Asset(animal.sound));
     if (!buffer) {
         return Promise.resolve();
     }
@@ -1145,7 +1176,7 @@ async function startBackgroundAmbience() {
     }
 
     if (!backgroundBuffer) {
-        backgroundBuffer = await loadAudioBuffer(STRINGS.ambience.track);
+        backgroundBuffer = await loadAudioBuffer(resolveGame2Asset(STRINGS.ambience.track));
     }
 
     if (!backgroundBuffer) {

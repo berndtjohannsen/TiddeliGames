@@ -5,6 +5,8 @@ const MIN_DISTANCE_BETWEEN_CIRCLES = 12;
 const MAX_PLACEMENT_ATTEMPTS = 80;
 
 const STRINGS = window.GAME_STRINGS;
+const GAME1_ASSETS = window.TiddeliAssets;
+
 
 // DOM references
 let titleEl = null;
@@ -14,6 +16,7 @@ let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let continueButton = null;
+let completionDogImage = null;
 
 // Game state
 const state = {
@@ -29,7 +32,9 @@ let ambienceBuffer = null;
 let ambienceStarted = false;
 let ambienceStarting = false;
 
-const AMBIENCE_AUDIO_PATH = 'sounds/background.mp3';
+const AMBIENCE_AUDIO_PATH = GAME1_ASSETS && typeof GAME1_ASSETS.resolveGameAsset === 'function'
+    ? GAME1_ASSETS.resolveGameAsset('game1', 'sounds/background.mp3')
+    : 'sounds/background.mp3';
 const CLICK_SCALE_FREQUENCIES = [523.25, 587.33, 659.25, 698.46, 783.99, 880.0, 987.77];
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -53,6 +58,21 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-dialog-title');
     completionMessage = document.getElementById('completion-dialog-message');
     continueButton = document.getElementById('continue-button');
+    completionDogImage = document.getElementById('completion-dog-image');
+
+    if (completionDogImage) {
+        const dogPath = completionDogImage.getAttribute('data-asset') || 'images/dog.png';
+        completionDogImage.src = (GAME1_ASSETS && typeof GAME1_ASSETS.resolveGameAsset === 'function')
+            ? GAME1_ASSETS.resolveGameAsset('game1', dogPath)
+            : dogPath;
+    }
+
+    // Set background image for the game area using the shared assets base
+    if (circleContainer && GAME1_ASSETS && typeof GAME1_ASSETS.resolveGameAsset === 'function') {
+        const bgUrl = GAME1_ASSETS.resolveGameAsset('game1', 'images/background.png');
+        circleContainer.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('${bgUrl}')`;
+    }
 }
 
 function populateStaticTexts() {

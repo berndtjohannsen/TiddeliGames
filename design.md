@@ -24,17 +24,18 @@ Games may have a preferred orientation (portrait or landscape), but all games mu
 
 - **HTML5 Audio API** - *Implemented*
   - Sound effects for game interactions (clicks, pops, success/error sounds)
-  - Background ambient sounds for games (Game 2: animal sounds, Game 6: background ambience)
+  - Background ambient sounds per game (each game defines its own ambience track)
+  - Shared completion sounds (36 variants) played via a common helper in `js/audio.js`
   - Global volume control accessible from main page (slider and mute button)
   - Volume persistence via localStorage across sessions
   - Volume events broadcast to all games via custom `volumechange` event
 
-- **Tone.js (via CDN)** - *Planned for future implementation*
+- **Tone.js (via CDN)** - *Optional for future use*
   - Audio library for background music, synthesized sounds, loops, and effects
   - CDN version: `https://cdn.jsdelivr.net/npm/tone@next/build/Tone.js`
   - MIT license (commercial-safe)
-  - Currently: `js/audio.js` is a placeholder file
-  - Future: Hybrid approach with HTML5 Audio for simple sounds, Tone.js for complex audio
+  - Currently: core audio (ambient tracks and shared completion sounds) is implemented with the HTML5 Audio API
+  - Future: Hybrid approach with HTML5 Audio for simple sounds, Tone.js for more complex synthesized audio if needed
 
 ## Media & Assets:
 - **Images**: WebP format (with PNG/JPG fallbacks for compatibility)
@@ -122,67 +123,68 @@ TiddeliGames/
 
 ## Shared Assets Organization
 
-### Location: `assets/shared/`
+### Location: external `TiddeliGames-assets` repository
 
-Shared resources that are used across multiple games are stored in `assets/shared/` with organized subdirectories:
-- **`images/`**: Shared images (common backgrounds, UI elements, icons used by multiple games)
-- **`sounds/`**: Shared sounds (common sound effects, UI sounds used across games)
-- **`fonts/`**: Shared fonts (custom fonts if needed by multiple games)
+All media assets (images, sounds, videos) live in a separate repository, typically deployed to a static host (e.g. Netlify). The app never bundles large media files in this repo; instead it resolves them at runtime via a shared helper.
 
-### Referencing Shared Assets
+The external assets repo mirrors the game structure:
 
-From any game directory (e.g., `games/game1/`), reference shared assets using relative paths:
+- Per‑game assets: `games/{gameId}/images/...`, `games/{gameId}/sounds/...`, `games/{gameId}/video/...`
+- Shared assets: `assets/shared/images/...`, `assets/shared/sounds/...`, etc.
 
-**Path pattern:** `../../assets/shared/{type}/{filename}`
+### Asset resolution (`window.TiddeliAssets`)
 
-**Examples:**
-- Image: `../../assets/shared/images/common-background.png`
-- Sound: `../../assets/shared/sounds/ui-click.mp3`
-- Font: `../../assets/shared/fonts/custom-font.woff2`
+In the browser, `js/assets.js` exposes a small helper:
 
-**HTML example:**
-```html
-<img src="../../assets/shared/images/shared-icon.png" alt="Icon">
-```
+- `TiddeliAssets.getBaseUrl()` – returns the effective base URL for assets.
+- `TiddeliAssets.resolveGameAsset(gameId, relativePath)` – returns a full URL for a per‑game asset.
+- `TiddeliAssets.resolveSharedAsset(relativePath)` – returns a full URL for a shared asset.
 
-**JavaScript example:**
+Base URL rules:
+
+- **Local development:** When running on `localhost` / `127.0.0.1`, the base URL is `/TiddeliGames-assets`. You serve the external assets folder at that mount point.
+- **Production:** For all other hosts, the base URL is `APP_CONFIG.assetBaseUrl` from `js/config.js` (e.g. `https://tiddeligames-assets.netlify.app`).
+
+### Referencing assets from games
+
+Games never hard‑code `../../assets/...` paths any more. Instead they resolve URLs at runtime:
+
+**Per‑game asset example (JS):**
 ```javascript
-const audioPath = '../../assets/shared/sounds/completion.mp3';
+const imageUrl = TiddeliAssets.resolveGameAsset('game2', 'images/hund.png');
+const soundUrl = TiddeliAssets.resolveGameAsset('game2', 'sounds/hund.mp3');
 ```
 
-**CSS example:**
-```css
-@font-face {
-    font-family: 'CustomFont';
-    src: url('../../assets/shared/fonts/custom-font.woff2') format('woff2');
-}
+**Shared asset example (JS):**
+```javascript
+const completionUrl = TiddeliAssets.resolveSharedAsset('shared/sounds/complete_1.mp3');
 ```
 
-### When to Use Shared Assets
+For CSS backgrounds, games set the `background-image` inline from JavaScript using the resolved URL, instead of hard‑coding `url('images/...')` in the CSS file. This keeps all path logic in one place and makes switching asset hosts trivial.
 
-**Use `assets/shared/` for:**
-- Assets used by 2+ games (common backgrounds, UI elements, sounds)
-- Reusable components that should be consistent across games
-- Shared fonts used by multiple games
+### When to add to the assets repo
 
-**Keep in game directories for:**
-- Game-specific assets unique to a single game
-- Assets that are part of a game's core identity or gameplay
+**Use the external assets repo for:**
+- All game media (images, sounds, videos), whether shared or game‑specific.
+- Any large static files that would bloat the main app repo.
+
+**Keep in the main app repo:**
+- HTML, JS, and CSS for the games and shell.
+- PWA icons and small app‑shell assets under `assets/icons/`.
 
 ### Service Worker Caching
 
-Shared assets are cached by the Service Worker. When adding new shared assets, ensure they are included in the cache strategy defined in `sw.js`.
-
-For detailed usage instructions, see `assets/shared/README.md`.
+The Service Worker (`sw.js`) is responsible for caching the shell and may also cache some external assets depending on strategy. When adding new asset types or changing the base URL, review the caching rules in `sw.js` to ensure correct offline behavior.
 
 ## JavaScript Module Responsibilities
 - **config.js**: App configuration and version (single source of truth)
 - **app.js**: Main app logic, cache-busting, remote version checking, update banner management
+- **assets.js**: Resolves game and shared asset URLs via `window.TiddeliAssets` for both local and production environments
 - **game-selector.js**: Game selection page logic, game grid rendering, version display, help dialog
 - **pwa.js**: Service Worker registration, install prompt handling, PWA lifecycle management
 - **volume-control.js**: Global volume control system for all games (slider, mute button, localStorage persistence)
 - **strings.js**: Localization strings for main page (games, help text, update messages, etc.)
-- **audio.js**: Placeholder for future Tone.js audio management
+- **audio.js**: Shared completion sound helper (plays one of 36 completion sounds from shared assets using the HTML5 Audio API)
 
 # Version management and updates
 
@@ -267,10 +269,10 @@ For detailed usage instructions, see `assets/shared/README.md`.
   - `npm run test:headed` - Run with visible browser
   - `npm run test:debug` - Debug mode
   - `npm run test:report` - Show test report
-- **Test coverage**: All 6 games, navigation, PWA features, volume control, help dialog
+- **Test coverage**: All 11 games, navigation, PWA features, volume control, help dialog
 
 ## Test Areas
-- Game selection page functionality (all 6 games implemented)
+- Game selection page functionality (all 11 games implemented)
 - Individual game mechanics (all games fully functional)
 - Audio playback (HTML5 Audio API - implemented)
 - Responsive design across screen sizes (mobile-first, prevents unwanted scrolling)

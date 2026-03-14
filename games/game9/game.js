@@ -3,6 +3,15 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME9_STRINGS;
+const GAME9_ASSETS = window.TiddeliAssets;
+
+function resolveGame9Asset(path) {
+    if (!path) return '';
+    if (GAME9_ASSETS && typeof GAME9_ASSETS.resolveGameAsset === 'function') {
+        return GAME9_ASSETS.resolveGameAsset('game9', path);
+    }
+    return path;
+}
 
 // Constants
 const MIN_NUMBER = 1; // Minimum number (1-9)
@@ -33,14 +42,6 @@ let errorSoundBuffer = null;
 const activeSoundTimeouts = new Set();
 // Track all active audio sources to ensure they're stopped
 const activeAudioSources = new Set();
-// Expose for debugging
-if (typeof window !== 'undefined') {
-    window.DEBUG = window.DEBUG || {};
-    Object.defineProperty(window.DEBUG, 'activeAudioSources', {
-        get: () => activeAudioSources.size,
-        enumerable: true
-    });
-}
 
 // Game state variables
 const state = {
@@ -57,22 +58,6 @@ const state = {
 
 // Prevent concurrent cleanup operations
 let cleanupInProgress = false;
-
-// Add debugging for audio state
-if (typeof window !== 'undefined') {
-    Object.defineProperty(window.DEBUG, 'audioState', {
-        get: () => ({
-            context: audioContext?.state,
-            backgroundSource: !!backgroundSource,
-            audioStarted: state.audioStarted,
-            audioStarting: state.audioStarting,
-            activeSources: activeAudioSources.size,
-            processing: state.answerProcessing,
-            cleanupInProgress: cleanupInProgress
-        }),
-        enumerable: true
-    });
-}
 
 /**
  * Initializes the game when the DOM is ready.
@@ -97,6 +82,15 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the game field from shared assets
+    const gameField = document.getElementById('game9-field');
+    if (gameField) {
+        const bgPath = 'images/background.png';
+        const bgUrl = resolveGame9Asset(bgPath);
+        gameField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
+    }
 }
 
 /**
@@ -882,7 +876,9 @@ async function startBackgroundAmbience() {
     }
 
     if (!backgroundBuffer) {
-        backgroundBuffer = await loadAudioBuffer(STRINGS.ambience.track);
+        const trackPath = STRINGS.ambience.track;
+        const resolvedTrack = resolveGame9Asset(trackPath);
+        backgroundBuffer = await loadAudioBuffer(resolvedTrack);
     }
 
     if (!backgroundBuffer) {

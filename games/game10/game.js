@@ -3,6 +3,16 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME10_STRINGS;
+const GAME10_ASSETS = window.TiddeliAssets;
+
+function resolveGame10Asset(path) {
+    if (!path) return '';
+    if (GAME10_ASSETS && typeof GAME10_ASSETS.resolveGameAsset === 'function') {
+        return GAME10_ASSETS.resolveGameAsset('game10', path);
+    }
+    return path;
+}
+
 const ICONS = Array.isArray(STRINGS.icons) ? STRINGS.icons.slice() : [];
 
 // Constants
@@ -60,6 +70,15 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the game field from shared assets
+    const gameField = document.getElementById('game10-field');
+    if (gameField) {
+        const bgPath = 'images/background.png';
+        const bgUrl = resolveGame10Asset(bgPath);
+        gameField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
+    }
 }
 
 /**
@@ -432,7 +451,9 @@ async function startBackgroundAmbience() {
         return Promise.resolve();
     }
     
-    const ambiencePath = STRINGS.ambience?.track;
+    const ambiencePath = STRINGS.ambience?.track
+        ? resolveGame10Asset(STRINGS.ambience.track)
+        : '';
     if (!ambiencePath) {
         return Promise.resolve();
     }

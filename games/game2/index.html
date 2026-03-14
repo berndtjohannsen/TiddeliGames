@@ -49,21 +49,23 @@
         </main>
     </div>
 
-    <!-- Completion dialog shown when all animals are found -->
-    <div id="completion-dialog" class="completion-dialog" hidden>
-        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
-            <h2 id="completion-title" class="completion-dialog__title"></h2>
-            <video id="completion-video" class="completion-dialog__video" autoplay playsinline>
-                <source src="video/katt.mp4" type="video/mp4">
-            </video>
-            <p id="completion-message" class="completion-dialog__message"></p>
-            <div class="completion-dialog__actions">
-                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+        <!-- Completion dialog shown when all animals are found -->
+        <div id="completion-dialog" class="completion-dialog" hidden>
+            <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+                <h2 id="completion-title" class="completion-dialog__title"></h2>
+                <video id="completion-video" class="completion-dialog__video" autoplay playsinline data-asset="video/katt.mp4">
+                    <source src="" type="video/mp4">
+                </video>
+                <p id="completion-message" class="completion-dialog__message"></p>
+                <div class="completion-dialog__actions">
+                    <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                </div>
             </div>
         </div>
-    </div>
 
     <!-- Localization and logic -->
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
     <script src="../../js/volume-control.js" defer></script>
     <script src="strings.js" defer></script>
     <script src="game.js" defer></script>

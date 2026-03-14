@@ -3,6 +3,16 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME7_STRINGS;
+const GAME7_ASSETS = window.TiddeliAssets;
+
+function resolveGame7Asset(path) {
+    if (!path) return '';
+    if (GAME7_ASSETS && typeof GAME7_ASSETS.resolveGameAsset === 'function') {
+        return GAME7_ASSETS.resolveGameAsset('game7', path);
+    }
+    return path;
+}
+
 const EMOJIS = Array.isArray(STRINGS.emojis) ? STRINGS.emojis.slice() : [];
 
 // Constants
@@ -64,6 +74,15 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the game field from shared assets
+    const gameField = document.getElementById('game7-field');
+    if (gameField) {
+        const bgPath = 'images/background.png';
+        const bgUrl = resolveGame7Asset(bgPath);
+        gameField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
+    }
 }
 
 /**
@@ -735,7 +754,9 @@ async function startBackgroundAmbience() {
     }
 
     try {
-        backgroundBuffer = await loadAudioBuffer(STRINGS.ambience.track);
+        const trackPath = STRINGS.ambience.track;
+        const resolvedTrack = resolveGame7Asset(trackPath);
+        backgroundBuffer = await loadAudioBuffer(resolvedTrack);
         if (!backgroundBuffer) {
             return Promise.resolve();
         }

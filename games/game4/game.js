@@ -3,6 +3,16 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME4_STRINGS;
+const GAME4_ASSETS = window.TiddeliAssets;
+
+function resolveGame4Asset(path) {
+    if (!path) return '';
+    if (GAME4_ASSETS && typeof GAME4_ASSETS.resolveGameAsset === 'function') {
+        return GAME4_ASSETS.resolveGameAsset('game4', path);
+    }
+    return path;
+}
+
 const WORD_PAIRS = Array.isArray(STRINGS.wordPairs) ? STRINGS.wordPairs.slice() : [];
 const NUM_WORD_OPTIONS = 4; // Number of word options to show (1 correct + 3 wrong)
 
@@ -57,6 +67,15 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the game field from shared assets
+    const gameField = document.getElementById('game4-field');
+    if (gameField) {
+        const bgPath = 'images/background.png';
+        const bgUrl = resolveGame4Asset(bgPath);
+        gameField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
+    }
 }
 
 /**
@@ -582,7 +601,9 @@ async function startBackgroundAmbience() {
     }
 
     try {
-        const buffer = await loadAudioBuffer(STRINGS.ambience.track);
+        const trackPath = STRINGS.ambience.track;
+        const resolvedTrack = resolveGame4Asset(trackPath);
+        const buffer = await loadAudioBuffer(resolvedTrack);
         if (!buffer) {
             return;
         }

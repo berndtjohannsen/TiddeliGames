@@ -82,8 +82,7 @@
     padding: clamp(0.6rem, 2vw, 2rem); /* Reduced padding */
     border-radius: 2rem;
     background:
-        linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)),
-        url('images/background.png');
+        linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0));
     background-size: cover;
     background-position: center;
     box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);

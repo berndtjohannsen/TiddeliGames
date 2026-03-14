@@ -76,8 +76,9 @@
     min-height: 0; /* Allow flex to shrink below content size - critical for fitting viewport */
     min-height: 280px; /* Minimum height for small screens */
     max-height: none; /* Allow flex to determine height based on available space */
-    /* Layer a soft gradient over the image so circles stay readable */
-    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('images/background.png');
+    /* Layer a soft gradient over the image so circles stay readable.
+       The actual background image is now set from JavaScript via TiddeliAssets. */
+    background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38));
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

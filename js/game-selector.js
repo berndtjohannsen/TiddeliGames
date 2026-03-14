@@ -66,23 +66,28 @@ function showHelpDialog() {
         const helpData = window.APP_STRINGS?.help;
         const helpText = helpData?.text || 'Hjälptext kommer här...';
         const helpImage = helpData?.image;
+        const textAfterImage = helpData?.textAfterImage || '';
         
         // Format text with line breaks and links
-        let formattedText = helpText
+        const formatHelpText = (text) => (text || '')
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
             .replace(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" class="text-blue-600 hover:text-blue-800 underline">$1</a>')
             .replace(/\n/g, '<br>');
         
-        // Build content with image if available
+        let formattedText = formatHelpText(helpText);
+        let formattedTextAfterImage = formatHelpText(textAfterImage);
+        
+        // Build content with image if available, and optional text after image
         let contentHTML = `<div class="space-y-4">${formattedText}</div>`;
         
-        if (helpImage) {
+        if (helpImage || formattedTextAfterImage) {
             contentHTML = `
                 <div class="space-y-4">
                     ${formattedText}
-                    <div class="mt-4 flex justify-center">
+                    ${helpImage ? `<div class="mt-4 flex justify-center">
                         <img src="${helpImage}" alt="Hjälp" class="max-w-[50%] h-auto rounded-lg shadow-md">
-                    </div>
+                    </div>` : ''}
+                    ${formattedTextAfterImage ? `<div class="mt-4 whitespace-pre-line">${formattedTextAfterImage}</div>` : ''}
                 </div>
             `;
         }

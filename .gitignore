@@ -7,6 +7,9 @@ node_modules/
 # Personal notes (should not be in repository)
 ignore.txt
 
+# Local assets folder (game media lives in separate TiddeliGames-assets repo for deployment)
+TiddeliGames-assets/
+
 # Test files (but keep tests/ directory for Playwright tests)
 testindex.html
 test*.html

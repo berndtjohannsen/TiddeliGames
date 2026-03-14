@@ -1,0 +1,80 @@
+<!-- Color Match Game (Game 11) -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        // Set CSS custom property with actual viewport height for PWA standalone mode
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            // Set immediately
+            setViewportHeight();
+            // Update on resize/orientation change
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Färger</title>
+    <!-- Shared Tailwind styles for consistent layout -->
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <!-- Shared app styles -->
+    <link rel="stylesheet" href="../../css/styles.css">
+    <!-- Animation helpers -->
+    <link rel="stylesheet" href="../../css/animations.css">
+    <!-- Game-specific styles -->
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-violet-200 via-white to-rose-200">
+    <!-- Wrapper that centers the entire game experience -->
+    <div class="game11-wrapper">
+        <!-- Page header with back link and title -->
+        <header class="game11-header">
+            <div class="game11-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game11-header__center">
+                <h1 class="game11-title" id="game11-title"></h1>
+                <p class="game11-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <!-- Game board with background image -->
+        <main id="game11-field" class="game11-field" aria-live="polite">
+            <!-- Container for target objects (top row) -->
+            <div id="targets-container" class="game11-targets" role="group" aria-label="Saker med olika färger">
+                <!-- Targets are placed dynamically by game.js -->
+            </div>
+
+            <!-- Container for draggable color dots (bottom row) -->
+            <div id="dots-container" class="game11-dots" role="group" aria-label="Färgade prickar">
+                <!-- Dots are placed dynamically by game.js -->
+            </div>
+        </main>
+    </div>
+
+    <!-- Completion dialog shown when all colors are matched -->
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Localization and logic -->
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>
+

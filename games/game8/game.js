@@ -3,6 +3,15 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME8_STRINGS || {};
+const GAME8_ASSETS = window.TiddeliAssets;
+
+function resolveGame8Asset(path) {
+    if (!path) return '';
+    if (GAME8_ASSETS && typeof GAME8_ASSETS.resolveGameAsset === 'function') {
+        return GAME8_ASSETS.resolveGameAsset('game8', path);
+    }
+    return path;
+}
 
 // Swedish alphabet: A-Z plus Å, Ä, Ö, excluding Q, W, X, Z (25 letters total)
 const SWEDISH_ALPHABET_UPPERCASE = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Å', 'Ä', 'Ö'];
@@ -103,6 +112,15 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the game field from shared assets
+    const gameField = document.getElementById('game8-field');
+    if (gameField) {
+        const bgPath = 'images/bakgrund.png';
+        const bgUrl = resolveGame8Asset(bgPath);
+        gameField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('${bgUrl}')`;
+    }
 }
 
 /**
@@ -638,7 +656,9 @@ async function loadBackgroundAudio() {
     }
 
     try {
-        backgroundBuffer = await loadAudioBuffer('sounds/background.mp3');
+        const trackPath = 'sounds/background.mp3';
+        const resolvedTrack = resolveGame8Asset(trackPath);
+        backgroundBuffer = await loadAudioBuffer(resolvedTrack);
         if (backgroundBuffer) {
             startBackgroundAudio();
         } else {

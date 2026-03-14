@@ -79,16 +79,23 @@ window.APP_STRINGS = Object.freeze({
             {
                 id: 'game10',
                 name: 'Första bokstaven',
-                description: 'Hitta första bokstaven? (4+ år)',
+                description: 'Hitta första bokstaven. (4+ år)',
                 icon: '🔤',
                 path: 'games/game10/index.html'
+            },
+            {
+                id: 'game11',
+                name: 'Färger',
+                description: 'Matcha prickar med samma färg. (3+ år)',
+                icon: '🎨',
+                path: 'games/game11/index.html'
             }
         ]
     },
     version: version => `Version ${version}`,
     help: {
         text: `Dessa spel är till för små barn (+1 år). Spelen är tänkta att lära ut något (och ha kul samtidigt). 
-        Fokus på bokstäver, ord och siffror. Det finns ingen reklam. Det finns inga tävlingsmoment
+        Fokus på bokstäver, ord och siffror. Det finns ingen reklam. Det finns inga tävlingsmoment.
 
 Programkoden (och mer teknisk info) ligger här: https://github.com/berndtjohannsen/TiddeliGames  
 
@@ -99,10 +106,16 @@ https://tiddelipom.com
 Barn ska inte ha för mycket skärmtid!
 Men:
 - Det är bättre med skärmtid framför ett lärorikt spel än att sitta passiv själv framför en TV.
-- Spelen spelas bäst/helst tillsammans med en förälder (eller motsvarande)
+- Spelen spelas bäst/helst tillsammans med en förälder (eller motsvarande).
 
 Kontakt: info@tiddelipom.com`,
-        image: 'help.png'
+        image: 'help.png',
+        textAfterImage: `
+CREDITS:
+Some of the music and sound is created with Suno AI for non-commercial purposes.
+Some of the music and sound is created with Elevenlabs for non-commercial purposes.`
     }
+
+    
 });
 

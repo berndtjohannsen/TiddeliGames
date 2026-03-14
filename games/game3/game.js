@@ -3,6 +3,16 @@
 
 // Loads local strings and resource definitions
 const STRINGS = window.GAME3_STRINGS;
+const GAME3_ASSETS = window.TiddeliAssets;
+
+function resolveGame3Asset(path) {
+    if (!path) return '';
+    if (GAME3_ASSETS && typeof GAME3_ASSETS.resolveGameAsset === 'function') {
+        return GAME3_ASSETS.resolveGameAsset('game3', path);
+    }
+    return path;
+}
+
 const FRUITS = Array.isArray(STRINGS.fruits) ? STRINGS.fruits.slice() : [];
 
 // Constants for positioning and layout
@@ -103,6 +113,14 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+
+    // Resolve background image for the fruit field from shared assets
+    if (fruitField) {
+        const bgPath = 'images/background.png';
+        const bgUrl = resolveGame3Asset(bgPath);
+        fruitField.style.backgroundImage =
+            `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
+    }
 }
 
 /**
@@ -442,7 +460,9 @@ async function startBackgroundAmbience() {
     }
 
     if (!backgroundBuffer) {
-        backgroundBuffer = await loadAudioBuffer(STRINGS.ambience.track);
+        const trackPath = STRINGS.ambience.track;
+        const resolvedTrack = resolveGame3Asset(trackPath);
+        backgroundBuffer = await loadAudioBuffer(resolvedTrack);
     }
 
     if (!backgroundBuffer) {
