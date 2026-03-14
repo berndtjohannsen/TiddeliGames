@@ -95,15 +95,27 @@ const GAME11_ASSETS = window.TiddeliAssets;
 
 /**
  * Resolves a game11-local asset path via TiddeliAssets (same as other games).
+ * Falls back to APP_CONFIG.assetBaseUrl when TiddeliAssets is not yet available (e.g. script order on deploy).
  * @param {string} path Relative path like "images/ballRed.jpg" or "sounds/background.mp3"
  * @returns {string} Resolved URL
  */
 function resolveGame11Asset(path) {
     if (!path) return '';
+    const cleanPath = (path || '').replace(/^\.?\//, '');
     if (GAME11_ASSETS && typeof GAME11_ASSETS.resolveGameAsset === 'function') {
         return GAME11_ASSETS.resolveGameAsset('game11', path);
     }
-    return (path || '').replace(/^\.?\//, '');
+    // Fallback when assets.js did not run or TiddeliAssets is missing (e.g. production deploy)
+    let base = '';
+    try {
+        if (typeof APP_CONFIG !== 'undefined' && APP_CONFIG && APP_CONFIG.assetBaseUrl) {
+            base = APP_CONFIG.assetBaseUrl.replace(/\/+$/, '');
+        }
+    } catch (_) {}
+    if (base) {
+        return `${base}/games/game11/${cleanPath}`;
+    }
+    return cleanPath;
 }
 
 /**
