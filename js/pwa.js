@@ -91,25 +91,46 @@ async function registerServiceWorker() {
         const registration = await navigator.serviceWorker.register(swUrl);
         console.log('Service Worker registered successfully:', registration);
 
-        // If there's an updated SW waiting, request immediate activation
+        // If there's an updated SW waiting, handle according to install state
         if (registration.waiting) {
-            registration.waiting.postMessage('SKIP_WAITING');
+            if (checkIfInstalled()) {
+                // Installed PWA: let user decide when to reload
+                showUpdateBanner(() => {
+                    if (window.setUserConfirmedUpdate) {
+                        window.setUserConfirmedUpdate();
+                    }
+                    registration.waiting.postMessage('SKIP_WAITING');
+                });
+            } else {
+                // Not installed: activate and refresh automatically
+                if (window.setUserConfirmedUpdate) {
+                    window.setUserConfirmedUpdate();
+                }
+                registration.waiting.postMessage('SKIP_WAITING');
+            }
         }
 
-        // Detect a new installing SW and request activation when installed
+        // Detect a new installing SW and handle when installed
         registration.addEventListener('updatefound', () => {
             const newSW = registration.installing;
             if (!newSW) return;
             newSW.addEventListener('statechange', () => {
                 if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                    // Show update banner and let user trigger reload
-                    showUpdateBanner(() => {
-                        // Mark that user confirmed the update
+                    if (checkIfInstalled()) {
+                        // Installed PWA: show update banner and let user trigger reload
+                        showUpdateBanner(() => {
+                            if (window.setUserConfirmedUpdate) {
+                                window.setUserConfirmedUpdate();
+                            }
+                            newSW.postMessage('SKIP_WAITING');
+                        });
+                    } else {
+                        // Not installed: activate and refresh automatically
                         if (window.setUserConfirmedUpdate) {
                             window.setUserConfirmedUpdate();
                         }
                         newSW.postMessage('SKIP_WAITING');
-                    });
+                    }
                 }
             });
         });
