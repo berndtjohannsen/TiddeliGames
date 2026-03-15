@@ -7,11 +7,8 @@
 /* Custom styles below */
 
 /* Prevent horizontal overflow and flash during pull-to-refresh */
-/* Explicit overflow-y: auto so Chrome Android (browser tab) can scroll the first screen; standalone/game pages override below */
 html {
     overflow-x: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     max-width: 100vw;
     position: relative;
     width: 100%;
@@ -55,6 +52,25 @@ body {
 .container {
     max-width: 100vw;
     box-sizing: border-box;
+}
+
+/*
+ * When NOT installed as PWA (e.g. Chrome Android in browser tab): make body the scroll
+ * container so the first screen can scroll. Standalone and game pages override below.
+ */
+@media not (display-mode: standalone) {
+    html {
+        height: 100%;
+    }
+    body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        max-height: 100dvh;
+        box-sizing: border-box;
+    }
 }
 
 /* PWA standalone mode specific fixes for pull-to-refresh flash and viewport sizing */
