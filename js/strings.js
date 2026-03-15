@@ -7,6 +7,9 @@ window.APP_STRINGS = Object.freeze({
         buttonTitle: 'Installera app',
         srLabel: 'Installera app'
     },
+    fullscreen: {
+        prompt: 'Tryck för helskärm'
+    },
     header: {
         title: 'TiddeliGames',
         subtitle: 'Välj ett spel!'

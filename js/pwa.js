@@ -49,6 +49,61 @@ function hideInstallButton() {
 }
 
 /**
+ * Check if Fullscreen API is available
+ */
+function canRequestFullscreen() {
+    const doc = document.documentElement;
+    return !!(doc.requestFullscreen || doc.webkitRequestFullscreen || doc.webkitEnterFullscreen);
+}
+
+/**
+ * Request fullscreen (with vendor prefix for WebKit)
+ */
+function requestFullscreen() {
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+        return el.requestFullscreen();
+    }
+    if (el.webkitRequestFullscreen) {
+        return el.webkitRequestFullscreen();
+    }
+    if (el.webkitEnterFullscreen) {
+        return el.webkitEnterFullscreen();
+    }
+    return Promise.reject(new Error('Fullscreen not supported'));
+}
+
+/**
+ * Show fullscreen prompt when running in browser (not installed PWA).
+ * One tap enters fullscreen and hides the prompt.
+ */
+function initFullscreenPrompt() {
+    if (checkIfInstalled() || !canRequestFullscreen()) return;
+
+    const overlay = document.getElementById('fullscreen-prompt');
+    const btn = document.getElementById('fullscreen-prompt-btn');
+    if (!overlay || !btn) return;
+
+    const text = (window.APP_STRINGS && window.APP_STRINGS.fullscreen && window.APP_STRINGS.fullscreen.prompt)
+        ? window.APP_STRINGS.fullscreen.prompt
+        : 'Tryck för helskärm';
+    btn.textContent = text;
+
+    function enterFullscreenAndHide() {
+        requestFullscreen().then(() => {
+            overlay.classList.add('hidden');
+        }).catch(() => {});
+    }
+
+    btn.addEventListener('click', enterFullscreenAndHide);
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) enterFullscreenAndHide();
+    });
+
+    overlay.classList.remove('hidden');
+}
+
+/**
  * Handle install button click
  */
 function handleInstallClick() {
@@ -208,6 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (installBtn) {
         installBtn.addEventListener('click', handleInstallClick);
     }
+
+    // When in browser (not PWA), show one-tap fullscreen prompt
+    initFullscreenPrompt();
 
     // Register Service Worker
     registerServiceWorker();
