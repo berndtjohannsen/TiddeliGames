@@ -20,8 +20,8 @@
     <!-- Update banner (hidden by default) -->
     <!-- Modal overlay for update (blocks interaction) -->
     <div id="update-overlay" class="hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"></div>
-    <!-- Fullscreen prompt: shown in browser (not PWA) so one tap enters fullscreen; top row -->
-    <div id="fullscreen-prompt" class="hidden fixed top-3 left-1/2 -translate-x-1/2 z-30">
+    <!-- Fullscreen prompt: shown in browser (not PWA) so one tap enters fullscreen; top row, slightly right to avoid volume control -->
+    <div id="fullscreen-prompt" class="hidden fixed top-3 left-1/2 translate-x-6 -translate-x-1/2 z-30">
         <button type="button" id="fullscreen-prompt-btn" class="bg-white/95 backdrop-blur text-gray-800 px-4 py-2 rounded-full shadow-lg text-sm font-medium border-0 cursor-pointer hover:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500" aria-label="Helskärm"></button>
     </div>
 
