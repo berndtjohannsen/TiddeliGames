@@ -86,7 +86,7 @@ window.APP_STRINGS = Object.freeze({
             {
                 id: 'game11',
                 name: 'Färger',
-                description: 'Matcha prickar med samma färg. (3+ år)',
+                description: 'Matcha färg, drag&drop. (3+ år)',
                 icon: '🎨',
                 path: 'games/game11/index.html'
             }
