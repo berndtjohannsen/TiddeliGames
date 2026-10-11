@@ -4,7 +4,7 @@ This is an app that includes several simple small childrens games. It is a web (
 
 The game can optionally (user selection) be installed as an app or just run in the browser.
 
-Try here: https://berndtjohannsen.github.io/TiddeliGames/
+Try here: https://tiddelipom.com
 
 ## Features
 Several games have an element of learning. Letters, words, numbers and simple arithmetics. Best played sitting in the knee of your parents or grand-parents.
