@@ -4,7 +4,8 @@ window.GAME2_STRINGS = Object.freeze({
     instructions: '',
     completionMessage: '',
     labels: {
-        continue: 'Fortsätt'
+        continue: 'Fortsätt',
+        back: 'Tillbaka'
     },
     dialog: {
         title: '',

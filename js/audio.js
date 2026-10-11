@@ -2,8 +2,14 @@
 'use strict';
 
 /**
+ * Indices of available shared completion sounds (complete_N.mp3).
+ * Contiguous range: complete_1.mp3 through complete_71.mp3.
+ */
+const COMPLETE_SOUND_COUNT = 71;
+
+/**
  * Shared completion sound utility for all games.
- * Randomly selects and plays one of the 36 completion sounds from shared assets.
+ * Randomly selects and plays one of the shared completion sounds from assets.
  * 
  * This function can work with any game's audio context or create its own if needed.
  * It respects the global volume settings and handles audio context initialization.
@@ -43,12 +49,12 @@ async function playSharedCompletionSound(gameAudioContext = null, volumeMultipli
     }
     
     try {
-        // Randomly select one of the 36 completion sounds (complete_1.mp3 through complete_36.mp3)
-        const randomIndex = Math.floor(Math.random() * 36) + 1; // 1 to 36
+        // Randomly select one completion sound (complete_1.mp3 … complete_71.mp3)
+        const randomIndex = Math.floor(Math.random() * COMPLETE_SOUND_COUNT) + 1;
         const relativeSharedPath = `shared/sounds/complete_${randomIndex}.mp3`;
         const soundPath = (window.TiddeliAssets && window.TiddeliAssets.resolveSharedAsset)
             ? window.TiddeliAssets.resolveSharedAsset(relativeSharedPath)
-            : `../../assets/${relativeSharedPath}`;
+            : `../../TiddeliGames-assets/assets/${relativeSharedPath}`;
         
         // Load the audio file
         const response = await fetch(soundPath, { cache: 'force-cache' });

@@ -16,6 +16,7 @@ let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let continueButton = null;
+let dialogBackButton = null;
 let completionDogImage = null;
 
 // Game state
@@ -58,6 +59,7 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-dialog-title');
     completionMessage = document.getElementById('completion-dialog-message');
     continueButton = document.getElementById('continue-button');
+    dialogBackButton = document.getElementById('dialog-back-button');
     completionDogImage = document.getElementById('completion-dog-image');
 
     if (completionDogImage) {
@@ -69,7 +71,7 @@ function cacheDomElements() {
 
     // Set background image for the game area using the shared assets base
     if (circleContainer && GAME1_ASSETS && typeof GAME1_ASSETS.resolveGameAsset === 'function') {
-        const bgUrl = GAME1_ASSETS.resolveGameAsset('game1', 'images/background.png');
+        const bgUrl = GAME1_ASSETS.resolveGameAsset('game1', 'images/background.webp');
         circleContainer.style.backgroundImage =
             `linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('${bgUrl}')`;
     }
@@ -91,11 +93,17 @@ function populateStaticTexts() {
     if (continueButton) {
         continueButton.textContent = STRINGS.labels.continue;
     }
+    if (dialogBackButton) {
+        dialogBackButton.textContent = STRINGS.labels.back;
+    }
 }
 
 function attachEventListeners() {
     if (continueButton) {
         continueButton.addEventListener('click', handleContinueClick);
+    }
+    if (dialogBackButton) {
+        dialogBackButton.addEventListener('click', handleDialogBackClick);
     }
     window.addEventListener('volumechange', handleVolumeChange);
 }
@@ -265,6 +273,14 @@ function hideCompletionDialog() {
     if (completionDialog) {
         completionDialog.hidden = true;
     }
+}
+
+
+/**
+ * Handles the back button on the completion dialog - return to game menu.
+ */
+function handleDialogBackClick() {
+    window.location.href = '../../index.html';
 }
 
 function handleContinueClick() {

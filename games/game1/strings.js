@@ -2,7 +2,8 @@ window.GAME_STRINGS = Object.freeze({
     title: '',
     instructions: '',
     labels: {
-        continue: 'Fortsätt'
+        continue: 'Fortsätt',
+        back: 'Tillbaka'
     },
     messages: {
         success: 'Hurra! Alla siffror är klara.'

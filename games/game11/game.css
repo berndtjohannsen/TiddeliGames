@@ -320,6 +320,13 @@
     color: white;
 }
 
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.2) 0 10px 10px;
+}
+
+
 .completion-dialog__btn--primary:hover {
     transform: translateY(-2px);
     box-shadow: rgba(139, 92, 246, 0.4) 0 12px 24px, rgba(0, 0, 0, 0.2) 0 6px 12px;

@@ -37,6 +37,7 @@ let completionTitle = null;
 let completionMessage = null;
 let completionVideo = null;
 let continueButton = null;
+let dialogBackButton = null;
 
 // Audio-related resources
 let audioContext = null;
@@ -85,10 +86,11 @@ function cacheDomElements() {
     completionMessage = document.getElementById('completion-message');
     completionVideo = document.getElementById('completion-video');
     continueButton = document.getElementById('continue-button');
+    dialogBackButton = document.getElementById('dialog-back-button');
 
     // Resolve background image for the animal field from shared assets
     if (animalField) {
-        const bgPath = 'images/background.png';
+        const bgPath = 'images/background.webp';
         const bgUrl = resolveGame2Asset(bgPath);
         animalField.style.backgroundImage =
             `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
@@ -125,6 +127,9 @@ function populateStaticTexts() {
     if (continueButton) {
         continueButton.textContent = STRINGS.labels.continue;
     }
+    if (dialogBackButton) {
+        dialogBackButton.textContent = STRINGS.labels.back;
+    }
     if (completionTitle) {
         completionTitle.textContent = STRINGS.dialog.title;
     }
@@ -139,6 +144,9 @@ function populateStaticTexts() {
 function attachEventListeners() {
     if (continueButton) {
         continueButton.addEventListener('click', handleContinueClick);
+    }
+    if (dialogBackButton) {
+        dialogBackButton.addEventListener('click', handleDialogBackClick);
     }
     document.addEventListener('visibilitychange', handleVisibilityChange);
     // Listen for volume changes from main page
@@ -1010,8 +1018,12 @@ function clearAnimalField() {
 }
 
 /**
- * Handles the continue button click - restarts the game.
+ * Handles the back button on the completion dialog - return to game menu.
  */
+function handleDialogBackClick() {
+    window.location.href = '../../index.html';
+}
+
 function handleContinueClick() {
     hideCompletionDialog();
     startNewGame();

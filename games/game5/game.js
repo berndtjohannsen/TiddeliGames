@@ -29,6 +29,7 @@ let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let continueButton = null;
+let dialogBackButton = null;
 
 // Audio-related resources
 let audioContext = null;
@@ -73,11 +74,12 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+    dialogBackButton = document.getElementById('dialog-back-button');
 
     // Resolve background image for the game field from shared assets
     const gameField = document.getElementById('game5-field');
     if (gameField) {
-        const bgPath = 'images/background.png';
+        const bgPath = 'images/background.webp';
         const bgUrl = resolveGame5Asset(bgPath);
         gameField.style.backgroundImage =
             `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
@@ -96,6 +98,9 @@ function populateStaticTexts() {
     }
     if (continueButton) {
         continueButton.textContent = STRINGS.labels.continue;
+    }
+    if (dialogBackButton) {
+        dialogBackButton.textContent = STRINGS.labels.back;
     }
     if (completionTitle) {
         completionTitle.textContent = STRINGS.dialog.title;
@@ -120,6 +125,9 @@ function attachEventListeners() {
     // Dialog button handler
     if (continueButton) {
         continueButton.addEventListener('click', handleContinueClick);
+    }
+    if (dialogBackButton) {
+        dialogBackButton.addEventListener('click', handleDialogBackClick);
     }
 }
 
@@ -390,6 +398,14 @@ function hideCompletionDialog() {
 /**
  * Handles continue button click in completion dialog.
  */
+
+/**
+ * Handles the back button on the completion dialog - return to game menu.
+ */
+function handleDialogBackClick() {
+    window.location.href = '../../index.html';
+}
+
 function handleContinueClick() {
     hideCompletionDialog();
     startNewRound();

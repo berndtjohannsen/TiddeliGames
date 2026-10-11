@@ -37,6 +37,7 @@ let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let continueButton = null;
+let dialogBackButton = null;
 
 // Audio-related resources
 let audioContext = null;
@@ -81,6 +82,9 @@ function attachEventListeners() {
     if (continueButton) {
         continueButton.addEventListener('click', handleContinueClick);
     }
+    if (dialogBackButton) {
+        dialogBackButton.addEventListener('click', handleDialogBackClick);
+    }
 }
 
 /**
@@ -113,10 +117,11 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+    dialogBackButton = document.getElementById('dialog-back-button');
 
     // Resolve background image for the fruit field from shared assets
     if (fruitField) {
-        const bgPath = 'images/background.png';
+        const bgPath = 'images/background.webp';
         const bgUrl = resolveGame3Asset(bgPath);
         fruitField.style.backgroundImage =
             `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
@@ -687,6 +692,9 @@ function showCompletionDialog() {
     if (continueButton) {
         continueButton.textContent = STRINGS.labels.continue;
     }
+    if (dialogBackButton) {
+        dialogBackButton.textContent = STRINGS.labels.back;
+    }
     
     completionDialog.hidden = false;
 }
@@ -701,8 +709,12 @@ function hideCompletionDialog() {
 }
 
 /**
- * Handles the continue button click - starts a new round.
+ * Handles the back button on the completion dialog - return to game menu.
  */
+function handleDialogBackClick() {
+    window.location.href = '../../index.html';
+}
+
 function handleContinueClick() {
     hideCompletionDialog();
     startNewRound();

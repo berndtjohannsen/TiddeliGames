@@ -57,6 +57,7 @@ let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let continueButton = null;
+let dialogBackButton = null;
 
 // Audio-related resources
 let audioContext = null;
@@ -65,13 +66,16 @@ let backgroundSource = null;
 let backgroundGain = null;
 const audioBufferCache = new Map();
 
+// How many letters are used in one round (fixed set that shrinks until the round ends)
+const ROUND_LETTER_COUNT = 8;
+
 // Game state variables
 const state = {
     currentLowercaseLetter: '', // Current lowercase letter to match
     currentUppercaseIndex: -1, // Index of the correct uppercase letter
     letterButtons: [], // Array of uppercase letter button elements
-    matchedLetters: new Set(), // Set of indices of matched letters
-    currentLetterOptions: [], // Array of 8 letter indices to show (includes correct answer + 7 wrong)
+    matchedLetters: new Set(), // Set of indices of matched letters in this round
+    currentLetterOptions: [], // Fixed letter indices for this round (does not refresh mid-round)
     audioStarted: false, // Track if ambience has successfully started
     audioStarting: false // Prevent concurrent start attempts
 };
@@ -112,11 +116,12 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+    dialogBackButton = document.getElementById('dialog-back-button');
 
     // Resolve background image for the game field from shared assets
     const gameField = document.getElementById('game8-field');
     if (gameField) {
-        const bgPath = 'images/bakgrund.png';
+        const bgPath = 'images/background.webp';
         const bgUrl = resolveGame8Asset(bgPath);
         gameField.style.backgroundImage =
             `linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.38)), url('${bgUrl}')`;
@@ -139,6 +144,9 @@ function populateStaticTexts() {
     }
     if (continueButton && STRINGS.labels) {
         continueButton.textContent = STRINGS.labels.continue || '';
+    }
+    if (dialogBackButton && STRINGS.labels) {
+        dialogBackButton.textContent = STRINGS.labels.back || 'Tillbaka';
     }
     if (completionTitle && STRINGS.dialog) {
         completionTitle.textContent = STRINGS.dialog.title || '';
@@ -164,10 +172,13 @@ function attachEventListeners() {
     if (continueButton) {
         continueButton.addEventListener('click', handleContinueClick);
     }
+    if (dialogBackButton) {
+        dialogBackButton.addEventListener('click', handleDialogBackClick);
+    }
 }
 
 /**
- * Starts a new round by selecting a random lowercase letter and displaying all uppercase letters.
+ * Starts a new round with a fixed set of letters that shrinks until all are matched.
  */
 function startNewRound() {
     // Hide completion dialog first
@@ -179,13 +190,29 @@ function startNewRound() {
         return;
     }
     
-    // Reset state for a new game
+    // Reset state and pick a new fixed set of letters for this round
     state.letterButtons = [];
     state.matchedLetters.clear();
-    state.currentLetterOptions = [];
+    state.currentLetterOptions = selectRoundLetters(ROUND_LETTER_COUNT);
 
-    // Start with first unmatched letter
+    // Start with first unmatched letter from that fixed set
     selectNextUnmatchedLetter();
+}
+
+/**
+ * Plays the shared wrong-choice feedback (visual shake + error sound).
+ * Used for incorrect letters and already-matched letters.
+ * @param {HTMLElement} button - The clicked button element
+ */
+function playWrongChoiceFeedback(button) {
+    button.classList.add('game8-letter-button--wrong');
+    setTimeout(() => {
+        button.classList.remove('game8-letter-button--wrong');
+    }, 300);
+
+    playErrorSound().catch(error => {
+        console.warn('Could not play error sound:', error);
+    });
 }
 
 /**
@@ -195,6 +222,12 @@ function startNewRound() {
 function handleLetterClick(button) {
     const clickedIndex = parseInt(button.getAttribute('data-index'), 10);
     const clickedLetter = button.getAttribute('data-letter');
+
+    // Already matched (taken) – same feedback as an incorrect choice
+    if (state.matchedLetters.has(clickedIndex)) {
+        playWrongChoiceFeedback(button);
+        return;
+    }
     
     if (clickedIndex === state.currentUppercaseIndex) {
         // Correct match!
@@ -210,92 +243,67 @@ function handleLetterClick(button) {
             button.setAttribute('aria-label', 
                 `${STRINGS.aria.uppercase(clickedLetter)} och ${STRINGS.aria.lowercase(state.currentLowercaseLetter)}`);
         }
-        
-        // Disable the button so it can't be clicked again
-        button.disabled = true;
+
+        // Keep clickable so tapping a taken letter can trigger the error sound
         
         // Play short success beep for individual match (synthetic sound, not MP3)
         playSuccessSound().catch(error => {
             console.warn('Could not play success sound:', error);
         });
         
-        // Check if all letters are matched
-        if (state.matchedLetters.size >= SWEDISH_ALPHABET_LOWERCASE.length) {
-            // All letters matched - show completion dialog (which will play the completion sound MP3)
+        // Round ends when every letter in this round's fixed set is matched
+        if (state.matchedLetters.size >= state.currentLetterOptions.length) {
             setTimeout(() => {
                 showCompletionDialog();
             }, 500);
         } else {
-            // Continue to next unmatched letter
+            // Keep the same letter set; only pick the next unmatched target
             setTimeout(() => {
                 selectNextUnmatchedLetter();
             }, 500);
         }
     } else {
-        // Wrong letter - play error sound and show visual feedback
-        button.classList.add('game8-letter-button--wrong');
-        setTimeout(() => {
-            button.classList.remove('game8-letter-button--wrong');
-        }, 300);
-        
-        playErrorSound().catch(error => {
-            console.warn('Could not play error sound:', error);
-        });
+        // Wrong letter - same feedback as clicking an already taken letter
+        playWrongChoiceFeedback(button);
     }
 }
 
 /**
- * Selects up to 8 letters to show: the correct answer plus wrong options.
- * If fewer than 8 unmatched letters remain, shows all available unmatched letters.
- * @param {number} correctIndex - The index of the correct letter
- * @returns {Array<number>} Array of letter indices (includes correct answer, shuffled)
+ * Picks a fixed set of letter indices for one round (shuffled sample from the alphabet).
+ * @param {number} count - How many letters to include in the round
+ * @returns {Array<number>} Shuffled letter indices for this round
  */
-function selectLetterOptions(correctIndex) {
-    // Get all unmatched indices (excluding the correct one)
-    const unmatchedIndices = [];
+function selectRoundLetters(count) {
+    const allIndices = [];
     for (let i = 0; i < SWEDISH_ALPHABET_LOWERCASE.length; i++) {
-        if (!state.matchedLetters.has(i) && i !== correctIndex) {
-            unmatchedIndices.push(i);
-        }
+        allIndices.push(i);
     }
-    
-    // Select up to 7 wrong options randomly (or all available if fewer than 7)
-    const shuffledWrong = shuffleArray(unmatchedIndices.slice());
-    const numWrongOptions = Math.min(7, shuffledWrong.length);
-    const wrongOptions = shuffledWrong.slice(0, numWrongOptions);
-    
-    // Combine correct answer with wrong options
-    const options = [correctIndex, ...wrongOptions];
-    
-    // Shuffle the array so the correct answer isn't always first
-    return shuffleArray(options);
+    const shuffled = shuffleArray(allIndices);
+    return shuffled.slice(0, Math.min(count, shuffled.length));
 }
 
+/**
+ * Picks the next unmatched letter from the current round's fixed set.
+ * Does not refresh/replace the letter options mid-round.
+ */
 function selectNextUnmatchedLetter() {
-    // Get all unmatched indices
-    const unmatchedIndices = [];
-    for (let i = 0; i < SWEDISH_ALPHABET_LOWERCASE.length; i++) {
-        if (!state.matchedLetters.has(i)) {
-            unmatchedIndices.push(i);
-        }
-    }
-    
-    // If all are matched, we're done (shouldn't happen, but safety check)
+    // Only consider letters that belong to this round and are not yet matched
+    const unmatchedIndices = state.currentLetterOptions.filter(
+        (index) => !state.matchedLetters.has(index)
+    );
+
+    // If all round letters are matched, show completion
     if (unmatchedIndices.length === 0) {
         showCompletionDialog();
         return;
     }
-    
-    // Select a random unmatched letter
-    const randomIndex = Math.floor(Math.random() * unmatchedIndices.length);
-    const selectedIndex = unmatchedIndices[randomIndex];
+
+    // Select a random unmatched letter from the fixed round set
+    const selectedIndex = unmatchedIndices[Math.floor(Math.random() * unmatchedIndices.length)];
     state.currentLowercaseLetter = SWEDISH_ALPHABET_LOWERCASE[selectedIndex];
     state.currentUppercaseIndex = selectedIndex;
-    
-    // Select 8 letters to show (correct answer + 7 wrong options)
-    state.currentLetterOptions = selectLetterOptions(selectedIndex);
-    
-    // Update display
+
+    // Update display (same letter buttons; matched ones stay visible but disabled)
     updateDisplayForCurrentLetter();
 }
 
@@ -349,9 +357,10 @@ function updateDisplayForCurrentLetter() {
                 button.className = 'game8-letter-button';
                 
                 // If this letter is already matched, show both characters stacked vertically
+                // Keep enabled so clicking a taken letter can play the error sound
                 if (state.matchedLetters.has(letterIndex)) {
                     button.innerHTML = letter + '<br>' + SWEDISH_ALPHABET_LOWERCASE[letterIndex];
-                    button.disabled = true;
+                    button.disabled = false;
                     button.classList.add('game8-letter-button--correct');
                 } else {
                     button.textContent = letter;
@@ -404,8 +413,12 @@ function hideCompletionDialog() {
 }
 
 /**
- * Handles the continue button click - starts a new round.
+ * Handles the back button on the completion dialog - return to game menu.
  */
+function handleDialogBackClick() {
+    window.location.href = '../../index.html';
+}
+
 function handleContinueClick() {
     hideCompletionDialog();
     startNewRound();
@@ -528,7 +541,7 @@ async function playErrorSound() {
 }
 
 // Removed playCompletionSound() - now using shared completion sound function from js/audio.js
-// The shared function randomly selects from 36 completion sounds in assets/shared/sounds/
+// The shared function randomly selects from completion sounds in TiddeliGames-assets
 
 /**
  * Ensures the audio context is initialized.

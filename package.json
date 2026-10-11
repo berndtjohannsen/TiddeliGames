@@ -5,6 +5,8 @@
   "scripts": {
     "build-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --minify",
     "watch-css": "tailwindcss -i ./css/styles.css -o ./css/tailwind.output.css --watch",
+    "serve": "live-server --port=5502 --open=/index.html --watch=css,js,games,index.html,sw.js,manifest.json",
+    "dev": "concurrently -k -n css,serve -c blue,green \"npm run watch-css\" \"npm run serve\"",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
@@ -13,6 +15,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
+    "concurrently": "^10.0.6",
+    "live-server": "^1.2.2",
     "tailwindcss": "^3.4.0"
   },
   "dependencies": {

@@ -43,21 +43,21 @@
             </div>
         </header>
 
-        <!-- Game board -->
+        <!-- Game board: prompt on top, letter choices below (avoids overlap) -->
         <main id="game8-field" class="game8-field" aria-live="polite">
-            <!-- Uppercase letters grid -->
-            <div id="uppercase-container" class="game8-uppercase-container" role="group" aria-label="Bokstäver">
-                <!-- Uppercase letter buttons are placed dynamically by game.js -->
-            </div>
-
-            <!-- Lowercase letter display -->
+            <!-- Target lowercase letter + emoji -->
             <div id="lowercase-container" class="game8-lowercase-container" role="text" aria-label="Bokstav">
                 <!-- Lowercase letter is placed dynamically by game.js -->
             </div>
 
-            <!-- Instruction text -->
+            <!-- Instruction text (optional) -->
             <div class="game8-instruction-text" id="instruction-text-display">
                 <!-- Instruction text is placed dynamically by game.js -->
+            </div>
+
+            <!-- Uppercase letters grid -->
+            <div id="uppercase-container" class="game8-uppercase-container" role="group" aria-label="Bokstäver">
+                <!-- Uppercase letter buttons are placed dynamically by game.js -->
             </div>
         </main>
     </div>
@@ -69,6 +69,7 @@
             <p id="completion-message" class="completion-dialog__message"></p>
             <div class="completion-dialog__actions">
                 <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
             </div>
         </div>
     </div>

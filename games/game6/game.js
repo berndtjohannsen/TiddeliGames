@@ -25,6 +25,7 @@ let completionDialog = null;
 let completionTitle = null;
 let completionMessage = null;
 let continueButton = null;
+let dialogBackButton = null;
 
 // Audio-related resources
 let audioContext = null;
@@ -69,11 +70,12 @@ function cacheDomElements() {
     completionTitle = document.getElementById('completion-title');
     completionMessage = document.getElementById('completion-message');
     continueButton = document.getElementById('continue-button');
+    dialogBackButton = document.getElementById('dialog-back-button');
 
     // Resolve background image for the game field from shared assets
     const gameField = document.getElementById('game6-field');
     if (gameField) {
-        const bgPath = 'images/background.png';
+        const bgPath = 'images/background.webp';
         const bgUrl = resolveGame6Asset(bgPath);
         gameField.style.backgroundImage =
             `linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.0)), url('${bgUrl}')`;
@@ -92,6 +94,9 @@ function populateStaticTexts() {
     }
     if (continueButton) {
         continueButton.textContent = STRINGS.labels.continue;
+    }
+    if (dialogBackButton) {
+        dialogBackButton.textContent = STRINGS.labels.back;
     }
     if (completionTitle) {
         completionTitle.textContent = STRINGS.dialog.title;
@@ -116,6 +121,9 @@ function attachEventListeners() {
     // Dialog button handler
     if (continueButton) {
         continueButton.addEventListener('click', handleContinueClick);
+    }
+    if (dialogBackButton) {
+        dialogBackButton.addEventListener('click', handleDialogBackClick);
     }
 }
 
@@ -232,12 +240,16 @@ function handleCharClick(charButton, char) {
         // Check if word is complete
         if (state.selectedIndex >= state.wordChars.length) {
             // Word is complete - show dialog (which will play the completion sound)
-            // Only play completion sound, no intermediate success sound for last letter
+            // Skip short beep on last letter so it does not overlap the completion sound
             setTimeout(() => {
                 showCompletionDialog();
             }, 500); // Small delay to see the last character
+        } else {
+            // Correct intermediate letter - short success beep
+            playSuccessSound().catch(error => {
+                console.warn('Could not play success sound:', error);
+            });
         }
-        // Note: No success sound for intermediate letters to avoid duplicate sounds
     } else {
         // Wrong character - play error sound
         playErrorSound().catch(error => {
@@ -274,8 +286,12 @@ function hideCompletionDialog() {
 }
 
 /**
- * Handles the continue button click - starts a new round.
+ * Handles the back button on the completion dialog - return to game menu.
  */
+function handleDialogBackClick() {
+    window.location.href = '../../index.html';
+}
+
 function handleContinueClick() {
     hideCompletionDialog();
     startNewRound();
@@ -295,7 +311,56 @@ function shuffleArray(array) {
     return shuffled;
 }
 
-// Removed playSuccessSound() - now using shared completion sound function from js/audio.js
+/**
+ * Plays a short success beep (synthetic) for correct character clicks.
+ * @returns {Promise} Promise that resolves when sound finishes
+ */
+async function playSuccessSound() {
+    await ensureAudioContext();
+
+    if (!audioContext) {
+        return Promise.resolve();
+    }
+
+    if (audioContext.state !== 'running') {
+        try {
+            await audioContext.resume();
+            await new Promise(resolve => setTimeout(resolve, 10));
+        } catch (error) {
+            return Promise.resolve();
+        }
+    }
+
+    if (audioContext.state !== 'running') {
+        return Promise.resolve();
+    }
+
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 523.25; // C5
+        oscillator.type = 'sine';
+
+        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+        gainNode.gain.linearRampToValueAtTime(globalVolume * 0.3, audioContext.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.15);
+
+        return new Promise(resolve => {
+            setTimeout(resolve, 150);
+        });
+    } catch (error) {
+        console.warn('Could not play success sound:', error);
+        return Promise.resolve();
+    }
+}
 
 /**
  * Plays an error sound (synthetic).
@@ -400,7 +465,7 @@ async function playErrorSound() {
 }
 
 // Removed playCompletionSound() - now using shared completion sound function from js/audio.js
-// The shared function randomly selects from 36 completion sounds in assets/shared/sounds/
+// The shared function randomly selects from completion sounds in TiddeliGames-assets
 
 /**
  * Plays an audio buffer with the specified volume multiplier.

@@ -3,7 +3,8 @@ window.GAME5_STRINGS = Object.freeze({
     title: '',
     instructions: '',
     labels: {
-        continue: 'Fortsätt'
+        continue: 'Fortsätt',
+        back: 'Tillbaka'
     },
     dialog: {
         title: 'Rätt!',
@@ -59,7 +60,6 @@ window.GAME5_STRINGS = Object.freeze({
         '🎵', // Music
         '⚽', // Ball
         '🧸', // Teddy bear
-        '📚', // Books
         '🎮', // Game
         '🎯', // Target
         '🎪', // Circus
