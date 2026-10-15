@@ -545,6 +545,12 @@ function showCompletionDialog() {
     if (!completionDialog) {
         return;
     }
+
+    // Stop background music so the completion moment is clear
+    stopBackgroundAmbience();
+    state.audioStarted = false;
+    state.audioStarting = false;
+
     completionDialog.hidden = false;
     
     // Play completion sound - using shared completion sound function
@@ -578,6 +584,8 @@ function handleDialogBackClick() {
 
 function handleContinueClick() {
     hideCompletionDialog();
+    // Restart ambience after it was stopped for the completion dialog
+    requestBackgroundAudioStart();
     startNewRound();
 }
 

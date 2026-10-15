@@ -366,12 +366,47 @@ async function handleAnswerClick(selectedAnswer, button) {
 }
 
 /**
+ * Stops the background ambience track if it is playing.
+ */
+function stopBackgroundAmbience() {
+    if (backgroundSource) {
+        try {
+            // Clear onended so stop does not trigger the manual loop restart
+            backgroundSource.onended = null;
+            backgroundSource.stop();
+        } catch (error) {
+            // Already stopped
+        }
+        try {
+            backgroundSource.disconnect();
+        } catch (error) {
+            // Already disconnected
+        }
+        backgroundSource = null;
+    }
+    if (backgroundGain) {
+        try {
+            backgroundGain.disconnect();
+        } catch (error) {
+            // Already disconnected
+        }
+        backgroundGain = null;
+    }
+    state.audioStarted = false;
+    state.audioStarting = false;
+}
+
+/**
  * Shows the completion dialog and plays the completion sound.
  */
 function showCompletionDialog() {
     if (!completionDialog) {
         return;
     }
+
+    // Stop background music so the completion moment is clear
+    stopBackgroundAmbience();
+
     completionDialog.hidden = false;
     
     // Play completion sound
@@ -408,6 +443,8 @@ function handleDialogBackClick() {
 
 function handleContinueClick() {
     hideCompletionDialog();
+    // Restart ambience after it was stopped for the completion dialog
+    requestBackgroundAudioStart();
     startNewRound();
 }
 

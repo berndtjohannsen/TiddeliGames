@@ -1,0 +1,64 @@
+<!-- Match Words Game (Game 12) – drag words onto matching emoji images -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        // Set CSS custom property with actual viewport height for PWA standalone mode
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Matcha ord</title>
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-violet-200 via-white to-rose-200">
+    <div class="game12-wrapper">
+        <header class="game12-header">
+            <div class="game12-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game12-header__center">
+                <h1 class="game12-title" id="game12-title"></h1>
+                <p class="game12-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <main id="game12-field" class="game12-field" aria-live="polite">
+            <!-- Drop targets: 4 emoji images -->
+            <div id="targets-container" class="game12-targets" role="group" aria-label="Bilder"></div>
+            <!-- Draggable word tiles -->
+            <div id="words-container" class="game12-words" role="group" aria-label="Ord"></div>
+        </main>
+    </div>
+
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>

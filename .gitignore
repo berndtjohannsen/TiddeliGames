@@ -14,8 +14,11 @@ TiddeliGames-assets/
 testindex.html
 test*.html
 
-# Netlify functions (may contain sensitive data)
-netlify/
+# Netlify: commit function source; never commit secrets
+netlify/.env
+netlify/**/.env
+.env
+.env.*
 
 # Playwright test results and cache
 test-results/
@@ -25,3 +28,5 @@ playwright/.auth/
 promptgenerator/
 
 FutureAssets/
+
+temp/

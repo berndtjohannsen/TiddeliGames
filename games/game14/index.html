@@ -1,0 +1,86 @@
+<!-- Var står det? (Game 14) – hear a word, tap the matching written word -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Var står det?</title>
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-violet-200 via-white to-rose-200">
+    <div class="game14-wrapper">
+        <header class="game14-header">
+            <div class="game14-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game14-header__center">
+                <h1 class="game14-title" id="game14-title"></h1>
+                <p class="game14-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <main id="game14-field" class="game14-field" aria-live="polite">
+            <!-- Replay spoken prompt – friendly kid face instead of a speaker icon -->
+            <button id="listen-button" class="game14-listen" type="button" aria-label="Spela om frågan">
+                <span class="game14-listen__face" aria-hidden="true">
+                    <svg class="game14-face" viewBox="0 0 80 80" width="100%" height="100%" focusable="false">
+                        <!-- Head -->
+                        <circle cx="40" cy="40" r="34" fill="#FFD7A8"/>
+                        <!-- Hair fringe -->
+                        <path d="M12 36c2-18 18-28 28-28s26 10 28 28c-6-10-16-14-28-14S18 26 12 36z" fill="#5B3A29"/>
+                        <!-- Cheeks -->
+                        <ellipse class="game14-face__cheek" cx="22" cy="48" rx="6" ry="4" fill="#FF9AA2" opacity="0.75"/>
+                        <ellipse class="game14-face__cheek" cx="58" cy="48" rx="6" ry="4" fill="#FF9AA2" opacity="0.75"/>
+                        <!-- Eyes -->
+                        <circle class="game14-face__eye" cx="28" cy="38" r="4.5" fill="#2D1B0E"/>
+                        <circle class="game14-face__eye" cx="52" cy="38" r="4.5" fill="#2D1B0E"/>
+                        <circle cx="29.5" cy="36.5" r="1.4" fill="#fff"/>
+                        <circle cx="53.5" cy="36.5" r="1.4" fill="#fff"/>
+                        <!-- Smile (idle) -->
+                        <path class="game14-face__smile" d="M28 54c4 7 20 7 24 0" fill="none" stroke="#2D1B0E" stroke-width="3" stroke-linecap="round"/>
+                        <!-- Open mouth while speaking -->
+                        <ellipse class="game14-face__mouth-open" cx="40" cy="56" rx="8" ry="7" fill="#C45C6A"/>
+                    </svg>
+                </span>
+                <span class="game14-listen__label" id="listen-label"></span>
+            </button>
+
+            <!-- Four written word choices -->
+            <div id="answer-buttons" class="game14-answers" role="group" aria-label="Ord"></div>
+        </main>
+    </div>
+
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>

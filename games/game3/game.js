@@ -683,6 +683,9 @@ function showCompletionDialog() {
         return;
     }
 
+    // Stop background music so the completion moment is clear
+    stopBackgroundAmbience();
+
     if (completionTitle) {
         completionTitle.textContent = STRINGS.dialog.title;
     }

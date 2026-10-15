@@ -1,0 +1,20 @@
+# Netlify site config for TiddeliGames
+# Set GEMINI_API_KEY in Netlify → Site settings → Environment variables (never commit the key).
+#
+# Public TTS URL is /api/tts (host-neutral). On Netlify it is rewritten to the
+# serverless function below; a self-hosted container can implement the same path.
+
+[build]
+  # Static site; CSS is built separately via npm run build-css when needed
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Game 15 (and any future clients) call /api/tts — not /.netlify/functions/...
+[[redirects]]
+  from = "/api/tts"
+  to = "/.netlify/functions/tts"
+  status = 200
+  force = true

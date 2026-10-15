@@ -1,0 +1,82 @@
+<!-- Prata med oss (Game 15) – build text, tap figures for Cloud TTS speech -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Prata med oss</title>
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-amber-100 via-white to-sky-100">
+    <div class="game15-wrapper">
+        <header class="game15-header">
+            <div class="game15-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game15-header__center">
+                <h1 class="game15-title" id="game15-title"></h1>
+                <p class="game15-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <main id="game15-field" class="game15-field">
+            <!-- Text the child builds (letters can be dropped anywhere on the field) -->
+            <div class="game15-compose">
+                <div
+                    id="text-field"
+                    class="game15-text-field"
+                    role="textbox"
+                    aria-multiline="false"
+                    tabindex="0"
+                    contenteditable="false"
+                ></div>
+                <div class="game15-compose__tools">
+                    <button id="backspace-button" class="game15-tool-btn" type="button" aria-label="Ta bort sista bokstaven"></button>
+                    <button id="clear-button" class="game15-tool-btn" type="button" aria-label="Rensa text"></button>
+                </div>
+                <!-- Progress: how many times the robot has spoken this round -->
+                <p id="progress-text" class="game15-progress" aria-live="polite"></p>
+            </div>
+
+            <!-- Robot stage + icon-only play button (built in JS) -->
+            <div id="figures" class="game15-figures" role="group" aria-label="Robot som pratar"></div>
+
+            <!-- On-screen alphabet (click or drag onto the field) -->
+            <div id="alphabet" class="game15-alphabet" role="group" aria-label="Alfabet"></div>
+        </main>
+    </div>
+
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>

@@ -937,6 +937,12 @@ video {
   background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
 }
 
+.from-amber-100 {
+  --tw-gradient-from: #fef3c7 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(254 243 199 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
 .from-blue-100 {
   --tw-gradient-from: #dbeafe var(--tw-gradient-from-position);
   --tw-gradient-to: rgb(219 234 254 / 0) var(--tw-gradient-to-position);
@@ -970,6 +976,10 @@ video {
 
 .to-rose-200 {
   --tw-gradient-to: #fecdd3 var(--tw-gradient-to-position);
+}
+
+.to-sky-100 {
+  --tw-gradient-to: #e0f2fe var(--tw-gradient-to-position);
 }
 
 .p-0 {
@@ -1318,7 +1328,11 @@ body {
     html:has(.game6-wrapper),
     html:has(.game7-wrapper),
     html:has(.game8-wrapper),
-    html:has(.game9-wrapper) {
+    html:has(.game9-wrapper),
+    html:has(.game12-wrapper),
+    html:has(.game13-wrapper),
+    html:has(.game14-wrapper),
+    html:has(.game15-wrapper) {
     /* Use actual viewport height from JavaScript - ensures perfect fit in PWA standalone mode */
     height: var(--actual-vh, 100svh) !important;
     max-height: var(--actual-vh, 100svh) !important;
@@ -1333,7 +1347,11 @@ body {
     body:has(.game6-wrapper),
     body:has(.game7-wrapper),
     body:has(.game8-wrapper),
-    body:has(.game9-wrapper) {
+    body:has(.game9-wrapper),
+    body:has(.game12-wrapper),
+    body:has(.game13-wrapper),
+    body:has(.game14-wrapper),
+    body:has(.game15-wrapper) {
     /* Remove safe area padding on game pages - games should fill the screen */
     padding-left: 0 !important;
     padding-right: 0 !important;
@@ -1359,7 +1377,11 @@ body {
     .game6-wrapper,
     .game7-wrapper,
     .game8-wrapper,
-    .game9-wrapper {
+    .game9-wrapper,
+    .game12-wrapper,
+    .game13-wrapper,
+    .game14-wrapper,
+    .game15-wrapper {
     /* Use CSS custom property set by JavaScript with actual viewport height */
     height: var(--actual-vh, 100svh) !important;
     max-height: var(--actual-vh, 100svh) !important;
@@ -1408,7 +1430,11 @@ html:has(.game5-wrapper),
 html:has(.game6-wrapper),
 html:has(.game7-wrapper),
 html:has(.game8-wrapper),
-html:has(.game9-wrapper) {
+html:has(.game9-wrapper),
+html:has(.game12-wrapper),
+html:has(.game13-wrapper),
+html:has(.game14-wrapper),
+html:has(.game15-wrapper) {
   /* Lock vertical scrolling on mobile devices */
   overflow-y: hidden !important;
   height: 100vh;
@@ -1427,7 +1453,11 @@ body:has(.game5-wrapper),
 body:has(.game6-wrapper),
 body:has(.game7-wrapper),
 body:has(.game8-wrapper),
-body:has(.game9-wrapper) {
+body:has(.game9-wrapper),
+body:has(.game12-wrapper),
+body:has(.game13-wrapper),
+body:has(.game14-wrapper),
+body:has(.game15-wrapper) {
   /* Lock vertical scrolling on mobile devices - prevent bounce/overscroll */
   overflow-y: hidden !important;
   height: 100vh;
@@ -1457,7 +1487,11 @@ body:has(.game9-wrapper) {
 .game6-wrapper,
 .game7-wrapper,
 .game8-wrapper,
-.game9-wrapper {
+.game9-wrapper,
+.game12-wrapper,
+.game13-wrapper,
+.game14-wrapper,
+.game15-wrapper {
   /* Ensure game wrapper doesn't exceed viewport height */
   max-height: 100vh;
   /* Fallback for browsers that don't support dvh */
@@ -1467,6 +1501,92 @@ body:has(.game9-wrapper) {
   -webkit-overflow-scrolling: touch;
   /* Prevent overscroll bounce */
   overscroll-behavior-y: contain;
+}
+
+/* ------------------------------------------------------------------ */
+
+/* Shared success / completion dialog polish (all games)               */
+
+/* Soft sunrise card + sparkles; per-game CSS supplies layout sizes.   */
+
+/* ------------------------------------------------------------------ */
+
+.completion-dialog {
+  /* Warm celebratory veil instead of flat dark grey */
+  background: radial-gradient(ellipse at center, rgba(255, 196, 120, 0.28) 0%, rgba(30, 20, 40, 0.45) 70%) !important;
+}
+
+.completion-dialog__content {
+  overflow: hidden;
+}
+
+/* Soft highlight bloom behind the title area */
+
+.completion-dialog__content::before {
+  content: '';
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 55%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.75) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Twinkling sparkle dots around the card */
+
+.completion-dialog__content::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+        radial-gradient(circle, #fbbf24 0 1.5px, transparent 2px),
+        radial-gradient(circle, #fb7185 0 1.5px, transparent 2px),
+        radial-gradient(circle, #34d399 0 1.5px, transparent 2px),
+        radial-gradient(circle, #60a5fa 0 1.5px, transparent 2px),
+        radial-gradient(circle, #f472b6 0 1.2px, transparent 1.8px);
+  background-size: 14px 14px, 12px 12px, 16px 16px, 13px 13px, 10px 10px;
+  background-position:
+        8% 18%,
+        92% 14%,
+        12% 82%,
+        88% 78%,
+        50% 8%;
+  background-repeat: no-repeat;
+  animation: completion-sparkle 2.2s ease-in-out infinite;
+  opacity: 0.9;
+}
+
+.completion-dialog__content > * {
+  position: relative;
+  z-index: 1;
+}
+
+.completion-dialog__title {
+  background: linear-gradient(120deg, #c2410c 0%, #db2777 45%, #059669 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  text-shadow: none;
+  filter: drop-shadow(0 2px 0 rgba(255, 255, 255, 0.65));
+  letter-spacing: 0.01em;
+}
+
+.completion-dialog__message {
+  color: #7c2d12 !important;
+}
+
+@keyframes completion-sparkle {
+  0%, 100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
 }
 
 .hover\:scale-105:hover {

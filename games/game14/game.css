@@ -1,0 +1,374 @@
+/* Var står det? (Game 14) – listen and tap the matching written word */
+
+.game14-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game14-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game14-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game14-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.game14-header__center {
+    text-align: center;
+}
+
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+.game14-title {
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.game14-instructions {
+    font-size: clamp(1rem, 2.2vw, 1.4rem);
+    font-weight: 600;
+    color: #312e81;
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.game14-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: clamp(0.5rem, 1.5vmin, 1.25rem);
+    border-radius: 2rem;
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.75rem, 2.5vmin, 1.5rem);
+}
+
+/* Large replay / listen control */
+.game14-listen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: clamp(7rem, 28vmin, 11rem);
+    height: clamp(7rem, 28vmin, 11rem);
+    border: 3px solid #7c3aed;
+    border-radius: 1.5rem;
+    cursor: pointer;
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.15) 45%, transparent 70%),
+        linear-gradient(165deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%);
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 8px 20px rgba(91, 33, 182, 0.25);
+    transition: filter 150ms ease, transform 150ms ease;
+    flex-shrink: 0;
+}
+
+.game14-listen:hover,
+.game14-listen:focus-visible {
+    filter: brightness(1.05);
+}
+
+.game14-listen:active {
+    transform: scale(0.97);
+}
+
+.game14-listen:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+/* Kid face icon inside the listen button */
+.game14-listen__face {
+    display: block;
+    width: clamp(3.2rem, 14vmin, 5.5rem);
+    height: clamp(3.2rem, 14vmin, 5.5rem);
+    line-height: 0;
+}
+
+.game14-face {
+    display: block;
+    overflow: visible;
+}
+
+/* Idle: closed smile; speaking: open mouth */
+.game14-face__mouth-open {
+    opacity: 0;
+}
+
+.game14-listen--playing .game14-face__smile {
+    opacity: 0;
+}
+
+.game14-listen--playing .game14-face__mouth-open {
+    opacity: 1;
+    transform-origin: 40px 56px;
+    animation: game14-talk 0.35s ease-in-out infinite;
+}
+
+.game14-listen--playing .game14-face__eye {
+    animation: game14-blink 2.4s ease-in-out infinite;
+}
+
+.game14-listen__label {
+    font-size: clamp(0.85rem, 2.5vmin, 1.15rem);
+    font-weight: 800;
+    color: #4c1d95;
+}
+
+/* Soft pulse while the spoken prompt is playing */
+.game14-listen--playing {
+    animation: game14-listen-pulse 1s ease-in-out infinite;
+}
+
+@keyframes game14-listen-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+}
+
+@keyframes game14-talk {
+    0%, 100% { transform: scaleY(0.55); }
+    50% { transform: scaleY(1); }
+}
+
+@keyframes game14-blink {
+    0%, 42%, 48%, 100% { transform: scaleY(1); }
+    45% { transform: scaleY(0.15); }
+}
+
+/* 2x2 word choices */
+.game14-answers {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, auto);
+    gap: clamp(0.5rem, 2vmin, 1rem);
+    width: min(100%, 34rem);
+    z-index: 5;
+}
+
+.game14-answer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(3.4rem, 11vmin, 5rem);
+    padding: clamp(0.55rem, 1.8vmin, 1rem) clamp(0.5rem, 2vmin, 1.1rem);
+    background: #ffffff;
+    border: 3px solid #8b5cf6;
+    border-radius: 1.25rem;
+    font-size: clamp(1.25rem, 4.5vmin, 2rem);
+    font-weight: 800;
+    color: #4c1d95;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    box-shadow: rgba(0, 0, 0, 0.18) 0 8px 16px;
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.game14-answer:hover:not(:disabled),
+.game14-answer:focus-visible:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: rgba(91, 33, 182, 0.28) 0 10px 20px;
+}
+
+.game14-answer:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.game14-answer:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.game14-answer--wrong {
+    border-color: #ef4444;
+    animation: game14-shake 0.35s ease;
+}
+
+.game14-answer--correct {
+    border-color: #16a34a;
+    background: #dcfce7;
+    color: #14532d;
+    pointer-events: none;
+    animation: game14-found-out 0.38s ease forwards;
+}
+
+/* Invisible but still occupies its grid cell so siblings do not shift */
+.game14-answer--removed,
+.game14-answer--correct:disabled {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    box-shadow: none;
+}
+
+/* Correct word fades away so the child can find the next one */
+@keyframes game14-found-out {
+    0% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.82); }
+}
+
+@keyframes game14-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+/* Completion dialog */
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 252, 220, 0.98) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(255, 170, 150, 0.55) 0%, transparent 38%),
+        radial-gradient(circle at 70% 95%, rgba(120, 220, 190, 0.4) 0%, transparent 48%),
+        linear-gradient(165deg, #fff9ef 0%, #ffe6c8 45%, #ffd5df 100%);
+    border: 3px solid rgba(251, 191, 36, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+        0 22px 50px rgba(234, 88, 12, 0.22),
+        0 0 48px rgba(250, 204, 21, 0.22);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    color: #312e81;
+    margin: 0;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+    .game14-wrapper {
+        padding: 0.25rem 0.5rem 0.35rem;
+        gap: 0.15rem;
+    }
+
+    .game14-listen {
+        width: clamp(4.5rem, 22vh, 7rem);
+        height: clamp(4.5rem, 22vh, 7rem);
+        border-radius: 1.1rem;
+    }
+
+    .game14-listen__face {
+        width: clamp(2.4rem, 12vh, 4rem);
+        height: clamp(2.4rem, 12vh, 4rem);
+    }
+
+    .game14-listen__label {
+        font-size: clamp(0.7rem, 3vh, 0.95rem);
+    }
+
+    .game14-answer {
+        min-height: clamp(2.4rem, 14vh, 3.4rem);
+        font-size: clamp(1rem, 5vh, 1.5rem);
+        padding: 0.35rem 0.6rem;
+    }
+
+    .game14-field {
+        gap: 0.5rem;
+        padding: 0.4rem;
+    }
+}

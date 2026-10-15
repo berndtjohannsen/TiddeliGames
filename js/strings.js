@@ -92,6 +92,34 @@ window.APP_STRINGS = Object.freeze({
                 description: 'Matcha färg, drag&drop. (3+ år)',
                 icon: '🎨',
                 path: 'games/game11/index.html'
+            },
+            {
+                id: 'game12',
+                name: 'Matcha ord',
+                description: 'Drag ordet till bilden. (4+ år)',
+                icon: '🧩',
+                path: 'games/game12/index.html'
+            },
+            {
+                id: 'game13',
+                name: 'Räkna enkelt',
+                description: 'Drag till rätt svar. (4+ år)',
+                icon: '🧮',
+                path: 'games/game13/index.html'
+            },
+            {
+                id: 'game14',
+                name: 'Var står det?',
+                description: 'Hör ordet, hitta det. (4+ år)',
+                icon: '👂',
+                path: 'games/game14/index.html'
+            },
+            {
+                id: 'game15',
+                name: 'Prata med oss',
+                description: 'Skriv och hör roboten. (4+ år)',
+                icon: '🤖',
+                path: 'games/game15/index.html'
             }
         ]
     },

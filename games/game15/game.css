@@ -1,0 +1,674 @@
+/* Prata med oss (Game 15) – alphabet + text field + speaking figures */
+
+.game15-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game15-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game15-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game15-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.game15-header__center {
+    text-align: center;
+}
+
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+.game15-title {
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.game15-instructions {
+    font-size: clamp(0.95rem, 2.2vw, 1.3rem);
+    font-weight: 600;
+    color: #312e81;
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.game15-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: clamp(0.4rem, 1.2vmin, 1rem);
+    border-radius: 2rem;
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: clamp(0.45rem, 1.5vmin, 0.9rem);
+}
+
+/* Compose area: text field + tools */
+.game15-compose {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.game15-text-field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    min-height: clamp(2.8rem, 9vmin, 4rem);
+    padding: clamp(0.5rem, 1.5vmin, 0.85rem) clamp(0.75rem, 2vmin, 1.1rem);
+    background: #ffffff;
+    border: 3px solid #f59e0b;
+    border-radius: 1.1rem;
+    font-size: clamp(1.35rem, 4.5vmin, 2.1rem);
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #9a3412;
+    text-align: center;
+    word-break: break-word;
+    box-shadow: rgba(0, 0, 0, 0.12) 0 6px 14px;
+    outline: none;
+    cursor: text;
+}
+
+/* Individual letters — click left/right half to place the caret */
+.game15-char {
+    display: inline-block;
+    line-height: 1.1;
+    cursor: text;
+}
+
+/* Spaces need explicit width in a flex text field or they disappear */
+.game15-char--space {
+    min-width: 0.4em;
+    white-space: pre;
+}
+
+/* Blinking insert caret between letters */
+.game15-caret {
+    display: inline-block;
+    width: 0.18rem;
+    height: 1.05em;
+    margin: 0 0.05rem;
+    border-radius: 2px;
+    background: #ea580c;
+    vertical-align: middle;
+    animation: game15-caret-blink 1s step-end infinite;
+}
+
+@keyframes game15-caret-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+.game15-field--drop {
+    outline: 3px dashed rgba(22, 163, 74, 0.65);
+    outline-offset: -6px;
+}
+
+.game15-text-field--drop {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.game15-text-field--shake {
+    animation: game15-shake 0.35s ease;
+}
+
+.game15-compose__tools {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.game15-tool-btn {
+    padding: 0.4rem 1rem;
+    border: none;
+    border-radius: 9999px;
+    background: #fde68a;
+    color: #78350f;
+    font-weight: 800;
+    font-size: clamp(0.9rem, 2.5vmin, 1.1rem);
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.15) 0 4px 10px;
+}
+
+.game15-tool-btn:active {
+    transform: translateY(1px);
+}
+
+.game15-progress {
+    margin: 0;
+    text-align: center;
+    font-size: clamp(0.85rem, 2vmin, 1.05rem);
+    font-weight: 700;
+    color: #1e3a8a;
+}
+
+/* Single hero robot + play control */
+.game15-figures {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+    z-index: 5;
+}
+
+.game15-speaker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.45rem, 1.5vmin, 0.85rem);
+}
+
+/* Icon-only play button (no visible text) */
+.game15-play-btn {
+    width: clamp(3.2rem, 11vmin, 4.25rem);
+    height: clamp(3.2rem, 11vmin, 4.25rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 3px solid #f59e0b;
+    border-radius: 50%;
+    background: linear-gradient(165deg, #fff7ed, #fdba74);
+    color: #9a3412;
+    cursor: pointer;
+    box-shadow: rgba(234, 88, 12, 0.28) 0 8px 18px;
+    transition: transform 120ms ease, filter 120ms ease, border-color 120ms ease;
+    touch-action: manipulation;
+}
+
+.game15-play-btn__icon {
+    width: 58%;
+    height: 58%;
+    display: block;
+    /* Nudge triangle optically toward center */
+    margin-left: 4%;
+}
+
+.game15-play-btn:hover:not(:disabled),
+.game15-play-btn:focus-visible:not(:disabled) {
+    transform: scale(1.06);
+    filter: brightness(1.05);
+}
+
+.game15-play-btn:active:not(:disabled) {
+    transform: scale(0.96);
+}
+
+.game15-play-btn:disabled {
+    cursor: default;
+    opacity: 0.75;
+}
+
+.game15-play-btn--waiting {
+    border-color: #38bdf8;
+    color: #0369a1;
+    background: linear-gradient(165deg, #e0f2fe, #7dd3fc);
+    animation: game15-play-pulse 0.9s ease-in-out infinite;
+}
+
+.game15-play-btn--speaking {
+    border-color: #f59e0b;
+    animation: game15-play-pulse 0.45s ease-in-out infinite;
+}
+
+.game15-figure {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: min(42vmin, 220px);
+    max-width: 90%;
+    padding: 0.5rem;
+    border: 3px solid transparent;
+    border-radius: 1.5rem;
+    cursor: pointer;
+    background:
+        radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.9), transparent 50%),
+        linear-gradient(165deg, #ecfeff, #e0f2fe 55%, #ffedd5);
+    box-shadow: rgba(0, 0, 0, 0.16) 0 10px 22px;
+    transition: transform 120ms ease, border-color 120ms ease, filter 120ms ease;
+    touch-action: manipulation;
+    user-select: none;
+    /* Gentle idle sway */
+    animation: game15-idle-breathe 3.2s ease-in-out infinite;
+}
+
+.game15-figure:hover:not(:disabled),
+.game15-figure:focus-visible:not(:disabled) {
+    transform: translateY(-4px);
+    filter: brightness(1.04);
+}
+
+.game15-figure:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.game15-figure:disabled {
+    cursor: default;
+    opacity: 1;
+    animation: none;
+}
+
+.game15-figure--spoken {
+    border-color: #22c55e;
+}
+
+/* Waiting for TTS — thought bubble + antenna lights + bounce */
+.game15-figure--waiting {
+    border-color: #38bdf8;
+    animation: game15-think-bounce 0.7s ease-in-out infinite;
+}
+
+/* Audio playing — CSS bounce under amplitude bob from JS */
+.game15-figure--speaking {
+    border-color: #f59e0b;
+    animation: game15-speak-bounce 0.4s ease-in-out infinite;
+}
+
+.game15-figure--busy-others {
+    opacity: 0.45;
+    filter: grayscale(0.25);
+}
+
+/* Robot portrait image + mouth overlay */
+.game15-figure__avatar {
+    position: relative;
+    width: clamp(7rem, 28vmin, 11rem);
+    height: clamp(7rem, 28vmin, 11rem);
+    line-height: 0;
+    transform-origin: center bottom;
+    will-change: transform;
+}
+
+.game15-figure__img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    pointer-events: none;
+    filter: drop-shadow(0 8px 14px rgba(14, 116, 144, 0.25));
+}
+
+/* Soft “mouth” glow near lower face — opacity/scale from lip-sync JS */
+.game15-figure__mouth-open {
+    position: absolute;
+    left: 50%;
+    top: 58%;
+    width: 18%;
+    height: 10%;
+    margin-left: -9%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(251, 113, 133, 0.95), rgba(244, 63, 94, 0.15) 70%, transparent);
+    opacity: 0;
+    transform: scaleY(0.35);
+    transform-origin: center center;
+    pointer-events: none;
+}
+
+.game15-figure--speaking .game15-figure__mouth-open {
+    opacity: 1;
+}
+
+/* Antenna / status lights (visible while thinking) */
+.game15-figure__lights {
+    display: none;
+    position: absolute;
+    top: 0.55rem;
+    right: 0.65rem;
+    gap: 0.28rem;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.game15-figure--waiting .game15-figure__lights {
+    display: flex;
+}
+
+.game15-figure__light {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.9);
+    animation: game15-light-blink 0.7s ease-in-out infinite;
+}
+
+.game15-figure__light:nth-child(2) {
+    animation-delay: 0.15s;
+    background: #a78bfa;
+    box-shadow: 0 0 8px rgba(167, 139, 250, 0.9);
+}
+
+.game15-figure__light:nth-child(3) {
+    animation-delay: 0.3s;
+    background: #34d399;
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.9);
+}
+
+/*
+ * Classic comic thought bubble above the robot
+ * (cloud + trail puffs), only while waiting for audio.
+ */
+.game15-figure__think {
+    display: none;
+    position: absolute;
+    top: 0.1rem;
+    left: 18%;
+    width: 0;
+    height: 0;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.game15-figure--waiting .game15-figure__think {
+    display: block;
+}
+
+.game15-figure__think-cloud {
+    position: absolute;
+    left: 50%;
+    bottom: 1.5rem;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.32rem;
+    min-width: 3.2rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 1.5rem;
+    background: #ffffff;
+    border: 2.5px solid #7dd3fc;
+    box-shadow:
+        0 6px 14px rgba(14, 165, 233, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    animation: game15-think-float 1.4s ease-in-out infinite;
+}
+
+.game15-figure__think-puff {
+    position: absolute;
+    left: 48%;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid #7dd3fc;
+    box-shadow: 0 2px 6px rgba(14, 165, 233, 0.15);
+}
+
+.game15-figure__think-puff--mid {
+    bottom: 0.9rem;
+    width: 0.6rem;
+    height: 0.6rem;
+    animation: game15-think-puff 1.4s ease-in-out infinite;
+}
+
+.game15-figure__think-puff--small {
+    bottom: 0.35rem;
+    left: 52%;
+    width: 0.38rem;
+    height: 0.38rem;
+    animation: game15-think-puff 1.4s ease-in-out 0.15s infinite;
+}
+
+.game15-figure__think-dot {
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: #0369a1;
+    animation: game15-think-dot 1s ease-in-out infinite;
+}
+
+.game15-figure__think-dot:nth-child(2) {
+    animation-delay: 0.18s;
+}
+
+.game15-figure__think-dot:nth-child(3) {
+    animation-delay: 0.36s;
+}
+
+/* Alphabet strip */
+.game15-alphabet {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(0.25rem, 1vmin, 0.45rem);
+    flex-shrink: 0;
+    z-index: 5;
+    max-height: 38%;
+    overflow-y: auto;
+    padding-bottom: 0.15rem;
+}
+
+.game15-letter {
+    width: clamp(2rem, 7vmin, 2.75rem);
+    height: clamp(2rem, 7vmin, 2.75rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fb923c;
+    border-radius: 0.65rem;
+    background: #ffffff;
+    color: #9a3412;
+    font-size: clamp(1rem, 3.5vmin, 1.45rem);
+    font-weight: 800;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    box-shadow: rgba(0, 0, 0, 0.1) 0 3px 8px;
+}
+
+.game15-letter:active {
+    cursor: grabbing;
+}
+
+.game15-letter--dragging {
+    opacity: 0.45;
+}
+
+/* Wider on-screen space key (␣) */
+.game15-letter--space {
+    width: clamp(3.2rem, 12vmin, 4.5rem);
+}
+
+/* Completion dialog (shared celebratory look from styles.css) */
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 252, 220, 0.98) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(255, 170, 150, 0.55) 0%, transparent 38%),
+        radial-gradient(circle at 70% 95%, rgba(120, 220, 190, 0.4) 0%, transparent 48%),
+        linear-gradient(165deg, #fff9ef 0%, #ffe6c8 45%, #ffd5df 100%);
+    border: 3px solid rgba(251, 191, 36, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+        0 22px 50px rgba(234, 88, 12, 0.22),
+        0 0 48px rgba(250, 204, 21, 0.22);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    margin: 0;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    margin: 0;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}
+
+@keyframes game15-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+}
+
+@keyframes game15-idle-breathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+@keyframes game15-play-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes game15-speak-bounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-5px) scale(1.02); }
+}
+
+@keyframes game15-think-bounce {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-6px) rotate(1.5deg); }
+}
+
+@keyframes game15-light-blink {
+    0%, 100% { opacity: 0.35; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes game15-think-dot {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
+    40% { transform: translateY(-3px); opacity: 1; }
+}
+
+@keyframes game15-think-float {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+@keyframes game15-think-puff {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.85; }
+}
+
+@media (orientation: landscape) and (max-height: 560px) {
+    .game15-wrapper {
+        padding: 0.25rem 0.5rem 0.35rem;
+        gap: 0.15rem;
+    }
+
+    .game15-figure {
+        width: min(28vh, 160px);
+        padding: 0.25rem;
+    }
+
+    .game15-figure__avatar {
+        width: clamp(4.5rem, 22vh, 7rem);
+        height: clamp(4.5rem, 22vh, 7rem);
+    }
+
+    .game15-letter {
+        width: clamp(1.6rem, 8vh, 2.2rem);
+        height: clamp(1.6rem, 8vh, 2.2rem);
+        font-size: clamp(0.85rem, 5vh, 1.15rem);
+    }
+
+    .game15-text-field {
+        min-height: clamp(2rem, 12vh, 2.8rem);
+        font-size: clamp(1.1rem, 6vh, 1.5rem);
+        padding: 0.35rem 0.6rem;
+    }
+}

@@ -21,6 +21,60 @@ window.GAME2_STRINGS = Object.freeze({
     // Game will randomly select 6 from this list each round
     animals: [
         {
+            id: 'donkey',
+            name: 'Åsna',
+            image: 'images/asna.png',
+            sound: 'sounds/asna.mp3'
+        },
+        {
+            id: 'piano',
+            name: 'Piano',
+            image: 'images/piano.png',
+            sound: 'sounds/piano.mp3'
+        },
+        {
+            id: 'bee',
+            name: 'Bi',
+            image: 'images/bi.png',
+            sound: 'sounds/bi.mp3'
+        },
+        {
+            id: 'crow',
+            name: 'Kråka',
+            image: 'images/kraka.png',
+            sound: 'sounds/kraka.mp3'
+        },
+        {
+            id: 'telephone',
+            name: 'Telefon',
+            image: 'images/telefon.png',
+            sound: 'sounds/telefon.mp3'
+        },
+        {
+            id: 'mouse',
+            name: 'Mus',
+            image: 'images/mus.png',
+            sound: 'sounds/mus.mp3'
+        },
+        {
+            id: 'drum',
+            name: 'Trumma',
+            image: 'images/trumma.png',
+            sound: 'sounds/trumma.mp3'
+        },
+        {
+            id: 'wave',
+            name: 'Våg',
+            image: 'images/vag.png',
+            sound: 'sounds/vag.mp3'
+        },
+        {
+            id: 'doorbell',
+            name: 'Dörrklocka',
+            image: 'images/dorrklocka.png',
+            sound: 'sounds/dorrklocka.mp3'
+        },
+        {
             id: 'horse',
             name: 'Häst',
             image: 'images/hast.png',
@@ -151,6 +205,24 @@ window.GAME2_STRINGS = Object.freeze({
             name: 'Tupp',
             image: 'images/tupp.png',
             sound: 'sounds/tupp.mp3'
+        },
+        {
+            id: 'hemglass',
+            name: 'Hemglass',
+            image: 'images/hemglass.png',
+            sound: 'sounds/hemglass.mp3'
+        },
+        {
+            id: 'helicopter',
+            name: 'Helikopter',
+            image: 'images/helikopter.png',
+            sound: 'sounds/helikopter.mp3'
+        },
+        {
+            id: 'lion',
+            name: 'Lejon',
+            image: 'images/lejon.png',
+            sound: 'sounds/lejon.mp3'
         }
     ]
 });

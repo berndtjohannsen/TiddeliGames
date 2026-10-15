@@ -7,6 +7,39 @@
  */
 const COMPLETE_SOUND_COUNT = 71;
 
+/** Active completion BufferSource / GainNode, so Continue can cut them short */
+let activeCompletionSource = null;
+let activeCompletionGain = null;
+
+/**
+ * Stops any in-progress shared completion sound.
+ * Call when leaving the completion dialog so it does not overlap the next round.
+ */
+function stopSharedCompletionSound() {
+    if (activeCompletionSource) {
+        try {
+            activeCompletionSource.onended = null;
+            activeCompletionSource.stop();
+        } catch (_) {
+            // already stopped
+        }
+        try {
+            activeCompletionSource.disconnect();
+        } catch (_) {
+            // already disconnected
+        }
+        activeCompletionSource = null;
+    }
+    if (activeCompletionGain) {
+        try {
+            activeCompletionGain.disconnect();
+        } catch (_) {
+            // already disconnected
+        }
+        activeCompletionGain = null;
+    }
+}
+
 /**
  * Shared completion sound utility for all games.
  * Randomly selects and plays one of the shared completion sounds from assets.
@@ -49,6 +82,9 @@ async function playSharedCompletionSound(gameAudioContext = null, volumeMultipli
     }
     
     try {
+        // Stop any previous completion sound before starting a new one
+        stopSharedCompletionSound();
+
         // Randomly select one completion sound (complete_1.mp3 … complete_71.mp3)
         const randomIndex = Math.floor(Math.random() * COMPLETE_SOUND_COUNT) + 1;
         const relativeSharedPath = `shared/sounds/complete_${randomIndex}.mp3`;
@@ -77,6 +113,9 @@ async function playSharedCompletionSound(gameAudioContext = null, volumeMultipli
         gainNode.gain.setValueAtTime(actualVolume, audioContext.currentTime);
         source.connect(gainNode);
         gainNode.connect(audioContext.destination);
+
+        activeCompletionSource = source;
+        activeCompletionGain = gainNode;
         
         // Play the sound
         source.start();
@@ -84,8 +123,16 @@ async function playSharedCompletionSound(gameAudioContext = null, volumeMultipli
         // Return promise that resolves when sound finishes
         return new Promise((resolve) => {
             source.addEventListener('ended', () => {
-                source.disconnect();
-                gainNode.disconnect();
+                if (activeCompletionSource === source) {
+                    activeCompletionSource = null;
+                    activeCompletionGain = null;
+                }
+                try {
+                    source.disconnect();
+                    gainNode.disconnect();
+                } catch (_) {
+                    // already disconnected
+                }
                 resolve();
             }, { once: true });
         });
@@ -96,5 +143,20 @@ async function playSharedCompletionSound(gameAudioContext = null, volumeMultipli
     }
 }
 
-// Make function available globally for all games to use
+/**
+ * When the user leaves the completion dialog (Continue or Back), cut the success sound
+ * so it does not bleed into the next round or the menu.
+ */
+function handleCompletionDialogLeave(event) {
+    const target = event.target;
+    if (!target || typeof target.closest !== 'function') return;
+    if (target.closest('#continue-button') || target.closest('#dialog-back-button')) {
+        stopSharedCompletionSound();
+    }
+}
+
+document.addEventListener('click', handleCompletionDialogLeave, true);
+
+// Make functions available globally for all games to use
 window.playSharedCompletionSound = playSharedCompletionSound;
+window.stopSharedCompletionSound = stopSharedCompletionSound;

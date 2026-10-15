@@ -1,0 +1,477 @@
+/* Simple Number Math (Game 13) – layout for expressions and draggable answers */
+
+.game13-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game13-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game13-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game13-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.game13-header__center {
+    text-align: center;
+}
+
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+.game13-title {
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.game13-instructions {
+    font-size: clamp(1rem, 2.2vw, 1.4rem);
+    font-weight: 600;
+    color: #312e81;
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.game13-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    padding: clamp(0.4rem, 1.2vmin, 1rem);
+    border-radius: 2rem;
+    background-size: cover;
+    background-position: center;
+    box-shadow: inset 0 0 25px rgba(30, 64, 175, 0.12);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.4rem, 1.5vmin, 1rem);
+}
+
+/*
+ * 2x2 drop targets fill the play area.
+ * Fallback uses vmin (phone/tablet/desktop). Container queries refine
+ * size from the actual targets region when supported.
+ */
+.game13-targets {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.4rem, 1.8vmin, 1rem);
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    justify-items: center;
+    /* Shared size for square frames (fallback without container queries) */
+    --target-size: clamp(5.25rem, 28vmin, 12.5rem);
+}
+
+@supports (width: 1cqmin) {
+    .game13-targets {
+        container-type: size;
+        /* ~half of the smaller targets-area axis, capped like game 2 cards (~200px) */
+        --target-size: min(46cqmin, 12.5rem);
+    }
+}
+
+.game13-target {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    /* Soft pastel frame (variants below via nth-child) */
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 70%),
+        linear-gradient(165deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%);
+    border: 3px dashed #7c3aed;
+    border-radius: 1.1rem;
+    width: var(--target-size);
+    height: var(--target-size);
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1;
+    padding: clamp(0.2rem, 0.8vmin, 0.45rem);
+    box-sizing: border-box;
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 6px 16px rgba(91, 33, 182, 0.18);
+    transition: border-color 150ms ease, filter 150ms ease, box-shadow 150ms ease;
+    /* Gentle wiggle like game 2 animal cards; phase set per target in JS */
+    animation: game13-floaty 7s ease-in-out infinite;
+    animation-delay: calc(var(--float-phase, 0) * 1s);
+    overflow: hidden;
+}
+
+/* Four pastel question frames (same family as answer tiles) */
+.game13-target:nth-child(1) {
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 70%),
+        linear-gradient(165deg, #ede9fe 0%, #ddd6fe 50%, #c4b5fd 100%);
+    border-color: #7c3aed;
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 6px 16px rgba(91, 33, 182, 0.18);
+}
+
+.game13-target:nth-child(1) .game13-target-expression {
+    color: #4c1d95;
+}
+
+.game13-target:nth-child(2) {
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 70%),
+        linear-gradient(165deg, #e0f2fe 0%, #bae6fd 50%, #7dd3fc 100%);
+    border-color: #0284c7;
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 6px 16px rgba(2, 132, 199, 0.18);
+}
+
+.game13-target:nth-child(2) .game13-target-expression {
+    color: #0c4a6e;
+}
+
+.game13-target:nth-child(3) {
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 70%),
+        linear-gradient(165deg, #fce7f3 0%, #fbcfe8 50%, #f9a8d4 100%);
+    border-color: #db2777;
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 6px 16px rgba(219, 39, 119, 0.18);
+}
+
+.game13-target:nth-child(3) .game13-target-expression {
+    color: #9d174d;
+}
+
+.game13-target:nth-child(4) {
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.12) 45%, transparent 70%),
+        linear-gradient(165deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
+    border-color: #059669;
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 6px 16px rgba(5, 150, 105, 0.18);
+}
+
+.game13-target:nth-child(4) .game13-target-expression {
+    color: #065f46;
+}
+
+/* Soft floating motion for expression targets (mirrors game 2 floaty) */
+@keyframes game13-floaty {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    20% { transform: translate(3px, -6px) scale(1.02) rotate(-0.8deg); }
+    40% { transform: translate(-4px, 2px) scale(0.99) rotate(0.9deg); }
+    60% { transform: translate(5px, -3px) scale(1.01) rotate(-0.5deg); }
+    80% { transform: translate(-3px, 4px) scale(1.02) rotate(0.6deg); }
+    100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+}
+
+.game13-target--matched {
+    border-style: solid;
+    border-color: #16a34a !important;
+    background:
+        radial-gradient(circle at 28% 22%, rgba(255, 255, 255, 0.75) 0%, transparent 55%),
+        linear-gradient(165deg, #dcfce7 0%, #bbf7d0 55%, #86efac 100%) !important;
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.55) inset,
+        0 8px 18px rgba(22, 163, 74, 0.28) !important;
+    /* Keep square size when the full equation is shown */
+    width: var(--target-size);
+    height: var(--target-size);
+    min-height: 0;
+}
+
+.game13-target--matched .game13-target-expression {
+    color: #14532d !important;
+}
+
+/* Full equation (e.g. 8−5=3) needs a bit less size than the short expression */
+.game13-target--matched .game13-target-expression {
+    font-size: clamp(1.25rem, 7vmin, 2.6rem);
+}
+
+@supports (font-size: 1cqmin) {
+    .game13-target--matched .game13-target-expression {
+        font-size: min(14cqmin, 2.6rem);
+    }
+}
+
+.game13-target--hover {
+    filter: brightness(1.06);
+    box-shadow:
+        0 2px 0 rgba(255, 255, 255, 0.65) inset,
+        0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+/* Math expression text inside each drop target (e.g. 2+3) */
+.game13-target-expression {
+    font-size: clamp(1.6rem, 9vmin, 3.4rem);
+    font-weight: 800;
+    color: #312e81;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    user-select: none;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    text-align: center;
+}
+
+@supports (font-size: 1cqmin) {
+    .game13-target-expression {
+        font-size: min(18cqmin, 3.4rem);
+    }
+}
+
+.game13-target-word {
+    font-size: clamp(0.75rem, 2.4vmin, 1.15rem);
+    font-weight: 800;
+    color: #166534;
+    letter-spacing: 0.04em;
+    min-height: 0;
+    line-height: 1.1;
+    flex-shrink: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0 0.15rem;
+}
+
+@supports (font-size: 1cqmin) {
+    .game13-target-word {
+        font-size: min(5.5cqmin, 1.15rem);
+    }
+}
+
+.game13-target-word:empty {
+    display: none;
+}
+
+/* Draggable answer tiles row – compact pills, large digits */
+.game13-words {
+    position: relative;
+    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(0.35rem, 1.5vmin, 0.75rem);
+    min-height: clamp(2.6rem, 7.5vmin, 3.6rem);
+    z-index: 5;
+    align-items: center;
+    justify-items: center;
+}
+
+.game13-word {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Compact box around a single digit; keep a decent touch target */
+    width: clamp(2.6rem, 9vmin, 3.6rem);
+    height: clamp(2.6rem, 9vmin, 3.6rem);
+    padding: 0;
+    /* White only – avoids looking like a colour-match with the question frames */
+    background: #ffffff;
+    border: 3px solid #8b5cf6;
+    border-radius: 9999px;
+    font-size: clamp(1.35rem, 5.5vmin, 2.1rem);
+    font-weight: 800;
+    color: #4c1d95;
+    letter-spacing: 0;
+    line-height: 1;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 8px 16px;
+    z-index: 6;
+}
+
+.game13-word--dragging {
+    cursor: grabbing;
+    z-index: 50;
+    /* No transform here – JS already drives translate() while dragging */
+    box-shadow: rgba(0, 0, 0, 0.35) 0 12px 24px;
+}
+
+.game13-word--matched {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Completion dialog */
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 252, 220, 0.98) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(255, 170, 150, 0.55) 0%, transparent 38%),
+        radial-gradient(circle at 70% 95%, rgba(120, 220, 190, 0.4) 0%, transparent 48%),
+        linear-gradient(165deg, #fff9ef 0%, #ffe6c8 45%, #ffd5df 100%);
+    border: 3px solid rgba(251, 191, 36, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+        0 22px 50px rgba(234, 88, 12, 0.22),
+        0 0 48px rgba(250, 204, 21, 0.22);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    color: #1e1b4b;
+    margin: 0;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    color: #312e81;
+    margin: 0;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}
+
+@media (max-width: 480px) {
+    .game13-words {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Short landscape (phones/tablets sideways): keep frames usable, trim chrome */
+@media (orientation: landscape) and (max-height: 560px) {
+    .game13-wrapper {
+        padding: 0.25rem 0.5rem 0.35rem;
+        gap: 0.15rem;
+    }
+
+    .game13-header {
+        gap: 0.15rem;
+    }
+
+    .game13-title {
+        font-size: clamp(1.1rem, 4.5vh, 1.8rem);
+    }
+
+    .game13-instructions {
+        font-size: clamp(0.85rem, 3.5vh, 1.1rem);
+        min-height: 0;
+    }
+
+    .game13-field {
+        padding: 0.3rem;
+        gap: 0.35rem;
+    }
+
+    .game13-targets {
+        --target-size: clamp(4.25rem, 38vh, 9rem);
+        gap: 0.35rem;
+    }
+
+    @supports (width: 1cqmin) {
+        .game13-targets {
+            --target-size: min(44cqmin, 9rem);
+        }
+    }
+
+    .game13-words {
+        min-height: clamp(2.2rem, 11vh, 3rem);
+    }
+
+    .game13-word {
+        width: clamp(2.2rem, 11vh, 3rem);
+        height: clamp(2.2rem, 11vh, 3rem);
+        font-size: clamp(1.2rem, 6vh, 1.7rem);
+        padding: 0;
+    }
+}
