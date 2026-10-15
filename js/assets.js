@@ -47,5 +47,59 @@
         resolveGameAsset,
         resolveSharedAsset
     });
+
+    /**
+     * Prefer portrait on phones/tablets.
+     * - PWA manifest uses orientation: portrait when installed
+     * - Screen Orientation API lock when the browser allows it (often fullscreen/PWA)
+     * - CSS overlay asks the child to rotate when locked landscape is not possible
+     */
+    function preferPortraitOrientation() {
+        const orientation = window.screen && window.screen.orientation;
+        if (!orientation || typeof orientation.lock !== 'function') return;
+        orientation.lock('portrait').catch(() => {
+            // Not allowed in many browser tabs; overlay CSS covers that case
+        });
+    }
+
+    function ensurePortraitLockOverlay() {
+        if (document.getElementById('portrait-lock-overlay')) return;
+
+        const message =
+            (window.APP_STRINGS &&
+                window.APP_STRINGS.orientation &&
+                window.APP_STRINGS.orientation.rotate) ||
+            'Vänd telefonen';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'portrait-lock-overlay';
+        overlay.className = 'portrait-lock-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-label', message);
+        overlay.innerHTML =
+            '<div class="portrait-lock-overlay__icon" aria-hidden="true">📱</div>' +
+            '<p class="portrait-lock-overlay__text"></p>';
+        overlay.querySelector('.portrait-lock-overlay__text').textContent = message;
+        document.body.appendChild(overlay);
+        document.body.classList.add('portrait-lock-active');
+    }
+
+    function initPortraitPreference() {
+        ensurePortraitLockOverlay();
+        preferPortraitOrientation();
+
+        // Lock often requires a user gesture outside installed/fullscreen mode
+        const onGesture = () => preferPortraitOrientation();
+        ['pointerdown', 'touchstart', 'keydown'].forEach((eventName) => {
+            window.addEventListener(eventName, onGesture, { capture: true, once: true });
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPortraitPreference);
+    } else {
+        initPortraitPreference();
+    }
 })();
 

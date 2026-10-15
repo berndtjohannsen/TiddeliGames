@@ -809,32 +809,92 @@ function stopTtsPlayback() {
     }
 }
 
+/** Rough check for iPhone/iPad Safari (speechSynthesis quirks differ from Android) */
+function isAppleTouchBrowser() {
+    const ua = navigator.userAgent || '';
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * Shows a short hint in the instructions line, then restores previous text.
+ * @param {string} message
+ * @param {number} [ms]
+ */
+function showTemporaryHint(message, ms = 4500) {
+    if (!instructionsEl || !message) return;
+    const prev = instructionsEl.textContent;
+    instructionsEl.textContent = message;
+    setTimeout(() => {
+        if (instructionsEl) instructionsEl.textContent = prev;
+    }, ms);
+}
+
 /**
  * Device/browser speechSynthesis (primary when USE_CLOUD_TTS is false).
+ * Tries a Swedish voice first; if none is available, uses the device default and hints.
  * @param {string} text
  * @param {{ id: string }} figure
  * @param {HTMLElement} button
  * @returns {Promise<void>}
  */
-function speakWithBrowserVoice(text, figure, button) {
+async function speakWithBrowserVoice(text, figure, button) {
+    if (!window.speechSynthesis) {
+        const err = new Error('No browser speechSynthesis');
+        err.code = 'NO_SPEECH';
+        throw err;
+    }
+
+    // iOS/Android often populate voices asynchronously (and iOS can be slow)
+    const allVoices = await waitForBrowserVoices(isAppleTouchBrowser() ? 4000 : 2000);
+    let voice = pickSwedishVoice(allVoices, figure && figure.id);
+    let usingSwedish = false;
+
+    // iOS: re-resolve from a fresh getVoices() list (stale Voice objects are ignored)
+    if (voice) {
+        voice = resolveFreshVoice(voice) || voice;
+    }
+
+    if (voice && isSwedishVoice(voice)) {
+        usingSwedish = true;
+    } else {
+        voice = null;
+        usingSwedish = false;
+        console.warn(
+            '[Game15] No Swedish voice — using device default. Voices:',
+            allVoices.map((v) => `${v.name} (${v.lang})`)
+        );
+        showTemporaryHint(
+            STRINGS.noSwedishVoiceHint ||
+                'Ingen svensk röst – använder telefonens vanliga röst.'
+        );
+    }
+
+    const spokenText = toBrowserSpeechText(text);
+
     return new Promise((resolve, reject) => {
-        if (!window.speechSynthesis) {
-            reject(new Error('No browser speechSynthesis'));
-            return;
-        }
         stopBrowserSpeech();
 
-        const utterance = new SpeechSynthesisUtterance(toBrowserSpeechText(text));
-        utterance.lang = 'sv-SE';
-        const voice = pickBrowserVoiceForFigure(figure.id);
-        if (voice) utterance.voice = voice;
+        const utterance = new SpeechSynthesisUtterance(spokenText);
+        if (usingSwedish && voice) {
+            // Explicit Swedish voice + lang (needed on Android and iPhone)
+            utterance.lang = 'sv-SE';
+            utterance.voice = voice;
+        } else {
+            // Device default voice (may be English) — still request sv-SE when possible
+            utterance.lang = 'sv-SE';
+        }
         utterance.pitch = 1;
-        utterance.rate = 0.95;
+        // Slightly slower helps clarity on mobile TTS
+        utterance.rate = isAppleTouchBrowser() ? 0.9 : 0.95;
 
         const volume = window.TiddeliGamesVolume?.get() ?? 0.35;
         utterance.volume = Math.min(1, Math.max(0.2, volume * 1.6));
 
         activeUtterance = utterance;
+        console.log(
+            '[Game15] voice:',
+            usingSwedish ? `Swedish ${voice.name} (${voice.lang})` : 'device default'
+        );
 
         utterance.onstart = () => {
             if (button) {
@@ -858,7 +918,30 @@ function speakWithBrowserVoice(text, figure, button) {
             reject(new Error((event && event.error) || 'speech error'));
         };
 
-        window.speechSynthesis.speak(utterance);
+        // iOS WebKit often drops the first speak() after cancel() unless we resume + delay
+        const startSpeak = () => {
+            try {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                }
+            } catch (_) {
+                // ignore
+            }
+            window.speechSynthesis.speak(utterance);
+            if (isAppleTouchBrowser()) {
+                try {
+                    window.speechSynthesis.resume();
+                } catch (_) {
+                    // ignore
+                }
+            }
+        };
+
+        if (isAppleTouchBrowser()) {
+            setTimeout(startSpeak, 60);
+        } else {
+            startSpeak();
+        }
     });
 }
 
@@ -869,23 +952,130 @@ function toBrowserSpeechText(text) {
         .replace(/\s+/g, ' ');
 }
 
+/**
+ * Waits until speechSynthesis voices are available (or timeout).
+ * Polls as well — iOS Safari sometimes never fires voiceschanged promptly.
+ * @param {number} [timeoutMs]
+ * @returns {Promise<SpeechSynthesisVoice[]>}
+ */
+function waitForBrowserVoices(timeoutMs = 2000) {
+    return new Promise((resolve) => {
+        if (!window.speechSynthesis) {
+            resolve([]);
+            return;
+        }
+
+        const read = () => window.speechSynthesis.getVoices() || [];
+        const existing = read();
+        // Prefer waiting a bit longer if we already have voices but none Swedish yet on iOS
+        if (existing.length && existing.some(isSwedishVoice)) {
+            resolve(existing);
+            return;
+        }
+
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            window.clearInterval(pollId);
+            window.clearTimeout(timeoutId);
+            window.speechSynthesis.removeEventListener('voiceschanged', onChange);
+            resolve(read());
+        };
+        const onChange = () => {
+            const list = read();
+            if (list.some(isSwedishVoice) || list.length > 0) {
+                // If Swedish appeared, stop early; else keep polling until timeout
+                if (list.some(isSwedishVoice)) finish();
+            }
+        };
+        window.speechSynthesis.addEventListener('voiceschanged', onChange);
+        // Nudge engines to load the list
+        read();
+        const pollId = window.setInterval(() => {
+            const list = read();
+            if (list.some(isSwedishVoice)) finish();
+        }, 200);
+        const timeoutId = window.setTimeout(finish, timeoutMs);
+    });
+}
+
 function warmBrowserVoices() {
     if (!window.speechSynthesis) return;
-    window.speechSynthesis.getVoices();
+    waitForBrowserVoices(isAppleTouchBrowser() ? 4000 : 2000).catch(() => {});
     window.speechSynthesis.addEventListener('voiceschanged', () => {
         window.speechSynthesis.getVoices();
     });
 }
 
-function pickBrowserVoiceForFigure(figureId) {
-    if (!window.speechSynthesis) return null;
-    const voices = (window.speechSynthesis.getVoices() || []).filter(
-        (v) => /^sv(-|_)/i.test(v.lang) || /swedish|svenska/i.test(v.name)
+/**
+ * True if a voice looks Swedish (lang, name, or known Apple Swedish voice names).
+ * @param {SpeechSynthesisVoice} voice
+ */
+function isSwedishVoice(voice) {
+    if (!voice) return false;
+    const lang = String(voice.lang || '').replace(/_/g, '-').toLowerCase();
+    const name = String(voice.name || '').toLowerCase();
+    if (/^sv(-|$)/.test(lang)) return true;
+    if (/swedish|svenska|\bsv-?se\b/.test(name)) return true;
+    // Apple ships Swedish voices under first names (lang should be sv-SE; name-only as safety net)
+    if (
+        /^(alva|oskar|nora|ebba|majken|hugo)\b/.test(name) &&
+        (/^sv/.test(lang) || /sweden|sverige|svenska|swedish/.test(name))
+    ) {
+        return true;
+    }
+    if (/^(alva|oskar)\b/.test(name) && (!lang || /^sv/.test(lang))) {
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Re-fetch the same voice from a fresh getVoices() list (needed on iOS).
+ * @param {SpeechSynthesisVoice} voice
+ * @returns {SpeechSynthesisVoice|null}
+ */
+function resolveFreshVoice(voice) {
+    if (!voice || !window.speechSynthesis) return null;
+    const list = window.speechSynthesis.getVoices() || [];
+    return (
+        list.find((v) => v.voiceURI && voice.voiceURI && v.voiceURI === voice.voiceURI) ||
+        list.find((v) => v.name === voice.name && v.lang === voice.lang) ||
+        list.find((v) => v.name === voice.name) ||
+        null
     );
-    if (!voices.length) return null;
-    const sorted = voices.slice().sort((a, b) => a.name.localeCompare(b.name, 'sv'));
+}
+
+/**
+ * Picks a Swedish device voice. Returns null if none (do not fall back to English).
+ * @param {SpeechSynthesisVoice[]} allVoices
+ * @param {string} [figureId]
+ * @returns {SpeechSynthesisVoice|null}
+ */
+function pickSwedishVoice(allVoices, figureId) {
+    const swedish = (allVoices || []).filter(isSwedishVoice);
+    if (!swedish.length) return null;
+
+    // Prefer quality/local Swedish voices (Apple Alva, Google Svenska, etc.)
+    const ranked = swedish.slice().sort((a, b) => {
+        const score = (v) => {
+            let s = 0;
+            if (v.localService) s += 2;
+            if (/alva/i.test(v.name)) s += 3; // common good Swedish voice on iPhone
+            if (/oskar/i.test(v.name)) s += 2;
+            if (/svenska|swedish/i.test(v.name)) s += 2;
+            if (/sv-?SE/i.test(v.lang)) s += 1;
+            if (/premium|enhanced|compact/i.test(v.name)) s += 1;
+            return s;
+        };
+        const diff = score(b) - score(a);
+        if (diff !== 0) return diff;
+        return a.name.localeCompare(b.name, 'sv');
+    });
+
     const index = Math.max(0, FIGURES.findIndex((f) => f.id === figureId));
-    return sorted[index % sorted.length];
+    return ranked[index % ranked.length];
 }
 
 function stopBrowserSpeech() {

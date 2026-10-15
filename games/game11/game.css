@@ -142,7 +142,8 @@
     border: 4px solid rgba(255, 255, 255, 0.9);
     cursor: grab;
     touch-action: none; /* Needed for smooth pointer events on touch devices */
-    transition: box-shadow 150ms ease, transform 150ms ease;
+    /* Do not transition transform – JS drives translate() every pointermove (same as game12) */
+    transition: box-shadow 150ms ease;
     position: relative;
     z-index: 2; /* Ensure dot is rendered above target images */
 }
@@ -182,7 +183,8 @@
 
 .game11-dot--dragging {
     box-shadow: 0 14px 24px rgba(0, 0, 0, 0.3);
-    transform: scale(1.05);
+    /* No transform here – JS already drives translate() while dragging (same as game12/13) */
+    z-index: 50;
 }
 
 .game11-dot--matched {

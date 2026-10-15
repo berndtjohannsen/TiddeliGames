@@ -84,6 +84,12 @@
     display: flex;
     flex-direction: column;
     gap: clamp(0.4rem, 1.5vmin, 1rem);
+    /*
+     * One shared digit size for expressions AND answer pills.
+     * Answer circles scale from this so glyphs stay the same size.
+     */
+    --game13-digit-size: clamp(2.6rem, 9vmin, 3.4rem);
+    --game13-answer-size: calc(var(--game13-digit-size) * 1.55);
 }
 
 /*
@@ -103,14 +109,14 @@
     align-items: center;
     justify-items: center;
     /* Shared size for square frames (fallback without container queries) */
-    --target-size: clamp(5.25rem, 28vmin, 12.5rem);
+    --target-size: clamp(5rem, 26vmin, 11rem);
 }
 
 @supports (width: 1cqmin) {
     .game13-targets {
         container-type: size;
-        /* ~half of the smaller targets-area axis, capped like game 2 cards (~200px) */
-        --target-size: min(46cqmin, 12.5rem);
+        /* Leave room below for answer pills with matching digit size */
+        --target-size: min(42cqmin, 11rem);
     }
 }
 
@@ -231,13 +237,7 @@
 
 /* Full equation (e.g. 8−5=3) needs a bit less size than the short expression */
 .game13-target--matched .game13-target-expression {
-    font-size: clamp(1.25rem, 7vmin, 2.6rem);
-}
-
-@supports (font-size: 1cqmin) {
-    .game13-target--matched .game13-target-expression {
-        font-size: min(14cqmin, 2.6rem);
-    }
+    font-size: calc(var(--game13-digit-size) * 0.78);
 }
 
 .game13-target--hover {
@@ -247,9 +247,9 @@
         0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
-/* Math expression text inside each drop target (e.g. 2+3) */
+/* Math expression text – same digit size as answer pills (--game13-digit-size) */
 .game13-target-expression {
-    font-size: clamp(1.6rem, 9vmin, 3.4rem);
+    font-size: var(--game13-digit-size);
     font-weight: 800;
     color: #312e81;
     letter-spacing: 0.02em;
@@ -261,12 +261,6 @@
     justify-content: center;
     min-height: 0;
     text-align: center;
-}
-
-@supports (font-size: 1cqmin) {
-    .game13-target-expression {
-        font-size: min(18cqmin, 3.4rem);
-    }
 }
 
 .game13-target-word {
@@ -294,14 +288,17 @@
     display: none;
 }
 
-/* Draggable answer tiles row – compact pills, large digits */
+/* Draggable answer tiles – always one row of four; digits match expressions */
 .game13-words {
     position: relative;
     flex-shrink: 0;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(0.35rem, 1.5vmin, 0.75rem);
-    min-height: clamp(2.6rem, 7.5vmin, 3.6rem);
+    gap: clamp(0.35rem, 1.5vw, 0.85rem);
+    min-height: var(--game13-answer-size);
+    width: 100%;
+    max-width: calc(var(--game13-answer-size) * 4 + 3rem);
+    margin-inline: auto;
     z-index: 5;
     align-items: center;
     justify-items: center;
@@ -311,15 +308,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Compact box around a single digit; keep a decent touch target */
-    width: clamp(2.6rem, 9vmin, 3.6rem);
-    height: clamp(2.6rem, 9vmin, 3.6rem);
+    width: var(--game13-answer-size);
+    height: var(--game13-answer-size);
+    max-width: 100%;
     padding: 0;
     /* White only – avoids looking like a colour-match with the question frames */
     background: #ffffff;
     border: 3px solid #8b5cf6;
     border-radius: 9999px;
-    font-size: clamp(1.35rem, 5.5vmin, 2.1rem);
+    font-size: var(--game13-digit-size);
     font-weight: 800;
     color: #4c1d95;
     letter-spacing: 0;
@@ -422,9 +419,21 @@
     color: #1e3a8a;
 }
 
+/* Portrait phones: keep shared digit size, shrink cards to free bottom space */
 @media (max-width: 480px) {
-    .game13-words {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .game13-field {
+        --game13-digit-size: clamp(2.5rem, 11vw, 3.2rem);
+        --game13-answer-size: calc(var(--game13-digit-size) * 1.55);
+    }
+
+    .game13-targets {
+        --target-size: clamp(4.25rem, 30vw, 8rem);
+    }
+
+    @supports (width: 1cqmin) {
+        .game13-targets {
+            --target-size: min(36cqmin, 8rem);
+        }
     }
 }
 
@@ -464,14 +473,8 @@
         }
     }
 
-    .game13-words {
-        min-height: clamp(2.2rem, 11vh, 3rem);
-    }
-
-    .game13-word {
-        width: clamp(2.2rem, 11vh, 3rem);
-        height: clamp(2.2rem, 11vh, 3rem);
-        font-size: clamp(1.2rem, 6vh, 1.7rem);
-        padding: 0;
+    .game13-field {
+        --game13-digit-size: clamp(2.1rem, 10vh, 2.9rem);
+        --game13-answer-size: calc(var(--game13-digit-size) * 1.5);
     }
 }

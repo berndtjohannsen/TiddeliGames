@@ -372,3 +372,53 @@ body:has(.game15-wrapper) {
     50% { opacity: 1; transform: scale(1.03); }
 }
 
+/*
+ * Portrait preference for phones/tablets.
+ * Browsers cannot always lock orientation; this overlay asks the child to rotate.
+ * Desktop (hover-capable) is left alone so wide monitors still work.
+ */
+.portrait-lock-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.92);
+    color: #f8fafc;
+    text-align: center;
+    font-family: system-ui, sans-serif;
+}
+
+.portrait-lock-overlay__icon {
+    font-size: clamp(3rem, 12vmin, 5rem);
+    line-height: 1;
+    animation: portrait-lock-tilt 1.4s ease-in-out infinite;
+}
+
+.portrait-lock-overlay__text {
+    font-size: clamp(1.35rem, 4.5vmin, 2rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+@keyframes portrait-lock-tilt {
+    0%, 100% { transform: rotate(-90deg); }
+    40%, 60% { transform: rotate(0deg); }
+}
+
+@media (orientation: landscape) and (hover: none) {
+    .portrait-lock-overlay {
+        display: flex;
+    }
+
+    /* Hide game UI while sideways so it is not playable in a broken layout */
+    body.portrait-lock-active > :not(.portrait-lock-overlay) {
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+}
+

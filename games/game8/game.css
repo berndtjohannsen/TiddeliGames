@@ -106,12 +106,12 @@
     gap: clamp(0.35rem, 1vw, 0.75rem);
 }
 
-/* Target letter prompt - compact bar at the top */
+/* Target letter prompt – sized to match the grid letter glyphs */
 .game8-lowercase-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: clamp(0.35rem, 1.2vw, 0.75rem) clamp(0.75rem, 2vw, 1.25rem);
+    padding: clamp(0.45rem, 1.5vmin, 0.9rem) clamp(1rem, 3vmin, 1.75rem);
     background: rgba(255, 255, 255, 0.92);
     border-radius: 9999px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -121,14 +121,14 @@
     max-width: min(600px, 95%);
     align-self: center;
     flex-shrink: 0;
-    gap: clamp(0.5rem, 1.5vw, 1rem);
+    gap: clamp(0.55rem, 2vmin, 1.1rem);
     z-index: 2;
 }
 
-/* Lowercase letter and emoji */
+/* Same visual weight as letters in the tiles (~3.5–3.75rem on phones) */
 .game8-lowercase-letter {
     font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-    font-size: clamp(2.4rem, 8vw, 4.5rem);
+    font-size: clamp(2.75rem, 12vmin, 3.75rem);
     font-weight: 800;
     color: #4c1d95;
     text-align: center;
@@ -139,7 +139,7 @@
 }
 
 .game8-lowercase-emoji {
-    font-size: clamp(2.4rem, 8vw, 4.5rem);
+    font-size: clamp(2.75rem, 12vmin, 3.75rem);
     display: inline-block;
     line-height: 1;
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
@@ -194,19 +194,20 @@
     box-sizing: border-box;
 }
 
-/* Uppercase letter button - shrinks with grid rows so nothing overflows */
+/* Uppercase letter button – font scales with the tile itself (fills the cell) */
 .game8-letter-button {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 0;
     height: 100%;
-    padding: clamp(0.25rem, 0.8vw, 0.65rem);
+    padding: clamp(0.15rem, 0.5vmin, 0.4rem);
     background: rgba(255, 255, 255, 0.95);
     border: 3px solid #8b5cf6;
     border-radius: 1.25rem;
     font-family: 'Merriweather', Georgia, 'Times New Roman', serif;
-    font-size: clamp(1.1rem, 2.8vw, 1.85rem);
+    /* Fallback when container queries are unavailable */
+    font-size: clamp(2rem, 9vmin, 3.5rem);
     font-weight: 700;
     color: #4c1d95;
     cursor: pointer;
@@ -216,9 +217,17 @@
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     line-height: 1.05;
-    gap: 0.05em;
+    gap: 0;
     flex-direction: column;
     overflow: hidden;
+    container-type: size;
+}
+
+@supports (font-size: 1cqmin) {
+    .game8-letter-button {
+        /* ~half the smaller tile axis so a single letter fills the cell */
+        font-size: min(52cqmin, 3.75rem);
+    }
 }
 
 .game8-letter-button:hover:not(.game8-letter-button--correct):not(:disabled) {
@@ -236,6 +245,15 @@
     border-color: #16a34a;
     color: #ffffff;
     box-shadow: rgba(34, 197, 94, 0.5) 0 8px 20px, rgba(0, 0, 0, 0.2) 0 4px 8px;
+    /* Two stacked letters (A / a) – still large, but both must fit */
+    font-size: clamp(1.35rem, 6vmin, 2.4rem);
+    line-height: 1.05;
+}
+
+@supports (font-size: 1cqmin) {
+    .game8-letter-button--correct {
+        font-size: min(36cqmin, 2.5rem);
+    }
 }
 
 /* Wrong match state - styled like game 4 */
@@ -373,11 +391,6 @@
         gap: 0.45rem;
         padding: 0.5rem;
     }
-
-    .game8-letter-button {
-        font-size: clamp(1.15rem, 5vw, 1.7rem);
-        min-height: 0;
-    }
 }
 
 /* Landscape orientation adjustments */
@@ -405,7 +418,7 @@
 
     .game8-lowercase-letter,
     .game8-lowercase-emoji {
-        font-size: clamp(1.8rem, 7vh, 3rem);
+        font-size: clamp(2.2rem, 10vh, 3.4rem);
     }
 
     .game8-instruction-text {
