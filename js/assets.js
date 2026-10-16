@@ -52,65 +52,48 @@
      * Prefer portrait on phones/tablets.
      * - PWA manifest uses orientation: portrait when installed
      * - Screen Orientation API lock when the browser allows it (often fullscreen/PWA)
-     * - Otherwise CSS-rotate the page so gameplay stays portrait (no “turn phone” message)
+     * - If still landscape on a touch device, CSS shows a “turn your phone” overlay
      */
     function tryLockPortrait() {
         const orientation = window.screen && window.screen.orientation;
         if (!orientation || typeof orientation.lock !== 'function') return;
         orientation.lock('portrait').catch(() => {
-            // Not allowed in many browser tabs — CSS force-portrait handles that
+            // Not allowed in many browser tabs; overlay CSS covers that case
         });
     }
 
-    function isTouchLikeDevice() {
-        try {
-            return window.matchMedia('(hover: none)').matches;
-        } catch (_) {
-            return 'ontouchstart' in window;
-        }
-    }
-
-    function isLandscapeViewport() {
-        try {
-            return window.matchMedia('(orientation: landscape)').matches;
-        } catch (_) {
-            return window.innerWidth > window.innerHeight;
-        }
-    }
-
-    /**
-     * When the device is sideways, keep a portrait-sized layout via CSS rotation.
-     * Sets pixel sizes so 100vh-based game layouts still fill the “tall” axis.
-     */
-    function syncForcedPortraitLayout() {
-        const force = isTouchLikeDevice() && isLandscapeViewport();
+    function ensurePortraitLockOverlay() {
+        // Clear any leftover force-portrait rotation from the previous approach
         const root = document.documentElement;
-        root.classList.toggle('tiddeli-force-portrait', force);
+        root.classList.remove('tiddeli-force-portrait');
+        root.style.removeProperty('--tiddeli-portrait-width');
+        root.style.removeProperty('--tiddeli-portrait-height');
 
-        if (force) {
-            // After 90° rotation: layout width = device height, layout height = device width
-            const portraitWidth = window.innerHeight;
-            const portraitHeight = window.innerWidth;
-            root.style.setProperty('--tiddeli-portrait-width', `${portraitWidth}px`);
-            root.style.setProperty('--tiddeli-portrait-height', `${portraitHeight}px`);
-            // Many games use --actual-vh for full-height wrappers in standalone mode
-            root.style.setProperty('--actual-vh', `${portraitHeight}px`);
-        } else {
-            root.style.removeProperty('--tiddeli-portrait-width');
-            root.style.removeProperty('--tiddeli-portrait-height');
-        }
+        if (document.getElementById('portrait-lock-overlay')) return;
 
-        tryLockPortrait();
+        const message =
+            (window.APP_STRINGS &&
+                window.APP_STRINGS.orientation &&
+                window.APP_STRINGS.orientation.rotate) ||
+            'Vänd telefonen';
+
+        const overlay = document.createElement('div');
+        overlay.id = 'portrait-lock-overlay';
+        overlay.className = 'portrait-lock-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-label', message);
+        overlay.innerHTML =
+            '<div class="portrait-lock-overlay__icon" aria-hidden="true">📱</div>' +
+            '<p class="portrait-lock-overlay__text"></p>';
+        overlay.querySelector('.portrait-lock-overlay__text').textContent = message;
+        document.body.appendChild(overlay);
+        document.body.classList.add('portrait-lock-active');
     }
 
     function initPortraitPreference() {
-        syncForcedPortraitLayout();
-        window.addEventListener('resize', syncForcedPortraitLayout);
-        window.addEventListener('orientationchange', () => {
-            // Wait a tick for iOS to settle the new viewport size
-            window.setTimeout(syncForcedPortraitLayout, 50);
-            window.setTimeout(syncForcedPortraitLayout, 300);
-        });
+        ensurePortraitLockOverlay();
+        tryLockPortrait();
 
         // Lock often requires a user gesture outside installed/fullscreen mode
         const onGesture = () => tryLockPortrait();

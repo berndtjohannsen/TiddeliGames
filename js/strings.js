@@ -10,6 +10,10 @@ window.APP_STRINGS = Object.freeze({
     fullscreen: {
         prompt: 'Tryck för helskärm'
     },
+    // Shown on phones/tablets when the device is held sideways
+    orientation: {
+        rotate: 'Vänd telefonen'
+    },
     header: {
         title: 'TiddeliGames',
         subtitle: 'Välj ett spel!'

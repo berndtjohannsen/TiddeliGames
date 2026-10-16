@@ -373,30 +373,53 @@ body:has(.game15-wrapper) {
 }
 
 /*
- * Keep a portrait layout on phones/tablets even if the device is sideways.
- * True lock (Screen Orientation API / PWA manifest) is preferred when available;
- * this CSS rotation is the fallback for normal mobile browser tabs.
+ * Portrait preference for phones/tablets.
+ * Try Screen Orientation lock / PWA manifest when possible.
+ * If the device is still landscape, show a “turn your phone” overlay.
  * Desktop (hover-capable) is left alone.
  */
-html.tiddeli-force-portrait,
-html.tiddeli-force-portrait body {
-    width: var(--tiddeli-portrait-width, 100vh);
-    height: var(--tiddeli-portrait-height, 100vw);
-    margin: 0;
-    overflow: hidden;
-    overscroll-behavior: none;
+.portrait-lock-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(15, 23, 42, 0.92);
+    color: #f8fafc;
+    text-align: center;
+    font-family: system-ui, sans-serif;
 }
 
-html.tiddeli-force-portrait body {
-    position: fixed;
-    top: 0;
-    left: 0;
-    /* Rotate so the UI still reads as portrait while the phone is landscape */
-    transform: rotate(90deg);
-    transform-origin: top left;
-    /* After 90° rotation around top-left, shift into view */
-    width: var(--tiddeli-portrait-width, 100vh);
-    height: var(--tiddeli-portrait-height, 100vw);
-    margin-left: var(--tiddeli-portrait-height, 100vw);
+.portrait-lock-overlay__icon {
+    font-size: clamp(3rem, 12vmin, 5rem);
+    line-height: 1;
+    animation: portrait-lock-tilt 1.4s ease-in-out infinite;
+}
+
+.portrait-lock-overlay__text {
+    font-size: clamp(1.35rem, 4.5vmin, 2rem);
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+@keyframes portrait-lock-tilt {
+    0%, 100% { transform: rotate(-90deg); }
+    40%, 60% { transform: rotate(0deg); }
+}
+
+@media (orientation: landscape) and (hover: none) {
+    .portrait-lock-overlay {
+        display: flex;
+    }
+
+    /* Hide game UI while sideways so it is not playable in a broken layout */
+    body.portrait-lock-active > :not(.portrait-lock-overlay) {
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
 }
 
