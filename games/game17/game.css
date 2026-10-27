@@ -1,0 +1,255 @@
+/* Kör mot ordet (Game 17) – top-down car steering */
+
+.game17-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game17-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game17-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game17-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+.game17-header__center {
+    text-align: center;
+}
+
+.game17-title {
+    font-size: clamp(1.5rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #1e3a8a;
+    margin: 0;
+}
+
+.game17-instructions {
+    font-size: clamp(0.95rem, 2.2vw, 1.3rem);
+    font-weight: 600;
+    color: #1d4ed8;
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.game17-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    border-radius: 2rem;
+    /* Shown behind canvas until background.webp loads */
+    background: linear-gradient(180deg, #ecfdf5 0%, #86efac 28%, #22c55e 62%, #14532d 100%);
+    background-size: cover;
+    background-position: center;
+    box-shadow:
+        inset 0 0 40px rgba(21, 128, 61, 0.2),
+        0 8px 24px rgba(30, 64, 175, 0.12);
+    overflow: hidden;
+    touch-action: none;
+}
+
+.game17-listen {
+    position: absolute;
+    top: clamp(0.4rem, 1.5vmin, 0.85rem);
+    left: clamp(0.4rem, 1.5vmin, 0.85rem);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(2.6rem, 9vmin, 3.2rem);
+    height: clamp(2.6rem, 9vmin, 3.2rem);
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #1e40af;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.15) 0 4px 12px;
+}
+
+.game17-listen__icon {
+    width: 58%;
+    height: 58%;
+}
+
+.game17-listen:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.game17-listen--playing {
+    animation: game17-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes game17-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+
+.game17-targets {
+    position: absolute;
+    top: clamp(0.35rem, 2vmin, 0.75rem);
+    left: 0;
+    right: 0;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(0.25rem, 1.2vmin, 0.5rem);
+    padding: 0 clamp(0.35rem, 2vw, 0.75rem);
+    pointer-events: none;
+}
+
+.game17-target {
+    padding: clamp(0.3rem, 1.1vmin, 0.5rem) clamp(0.5rem, 2.2vmin, 0.85rem);
+    border-radius: 0.85rem;
+    background: linear-gradient(180deg, #ffffff, #f0f9ff);
+    border: 3px solid #60a5fa;
+    color: #1e3a8a;
+    font-weight: 800;
+    font-size: clamp(0.85rem, 3.2vmin, 1.25rem);
+    letter-spacing: 0.05em;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 4px 0 #93c5fd,
+        0 6px 14px rgba(30, 64, 175, 0.2);
+    transition: transform 0.2s ease, opacity 0.25s ease;
+}
+
+.game17-target--hit {
+    border-color: #22c55e;
+    background: #dcfce7;
+}
+
+.game17-target--wrong-flash {
+    animation: game17-shake 0.35s ease;
+    border-color: #ef4444;
+}
+
+.game17-target--removed {
+    opacity: 0;
+    transform: scale(0.6);
+    pointer-events: none;
+}
+
+@keyframes game17-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.game17-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    touch-action: none;
+}
+
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    background: linear-gradient(165deg, #eff6ff, #dbeafe 45%, #fef3c7);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.completion-dialog__content::before {
+    content: '✨';
+    display: block;
+    font-size: 2.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    margin: 0 0 1.25rem;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}

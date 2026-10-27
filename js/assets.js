@@ -7,19 +7,34 @@
  * - In local development we prefer the workspace folder /TiddeliGames-assets so we don't need
  *   to duplicate assets inside each game's directory.
  */
+/**
+ * True when the page is served from this machine or LAN (Live Server on PC, phone on Wi‑Fi).
+ * Mobile Chrome uses 192.168.x.x — not “localhost” — so we must treat private IPs as local dev.
+ */
+function isLocalDevelopmentHost(hostname) {
+    if (!hostname) return false;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+    if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+    if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true;
+    return false;
+}
+
 (function () {
     const isBrowser = typeof window !== 'undefined';
     if (!isBrowser) return;
 
     const locationHost = (window.location && window.location.hostname) || '';
-    const isLocalHost = locationHost === 'localhost' || locationHost === '127.0.0.1';
+    const forceLocalAssets =
+        typeof APP_CONFIG !== 'undefined' && APP_CONFIG && APP_CONFIG.forceLocalAssets === true;
+    const isLocalDevHost = isLocalDevelopmentHost(locationHost);
 
     const configBase = (typeof APP_CONFIG !== 'undefined' && APP_CONFIG && APP_CONFIG.assetBaseUrl) || '';
 
-    // Local dev: use the workspace assets folder directly
-    // Production: use APP_CONFIG.assetBaseUrl (typically the Netlify assets domain)
+    // Local dev (localhost or phone on same Wi‑Fi hitting the PC’s LAN IP): workspace assets folder.
+    // Otherwise use APP_CONFIG.assetBaseUrl (Netlify) — often older until you deploy assets.
     let baseUrl = configBase;
-    if (isLocalHost) {
+    if (forceLocalAssets || isLocalDevHost) {
         baseUrl = '/TiddeliGames-assets';
     }
 

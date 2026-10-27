@@ -1,7 +1,7 @@
 // Local strings and resources for "Prata med oss" (Game 15)
 window.GAME15_STRINGS = Object.freeze({
     title: '',
-    instructions: 'Skriv något – tryck på spela!',
+    instructions: '',
     // Brief hint when the phone has no Swedish TTS voice and we use the default
     noSwedishVoiceHint: 'Ingen svensk röst – använder telefonens vanliga röst.',
     labels: {
@@ -17,12 +17,16 @@ window.GAME15_STRINGS = Object.freeze({
     aria: {
         field: 'Textfält',
         alphabet: 'Alfabet',
+        quickWords: 'Vanliga ord',
         figures: 'Robot som pratar',
         figure: (name) => `${name} pratar`,
         play: 'Låt roboten prata',
         letter: (ch) => `Bokstav ${ch}`,
+        word: (w) => `Ord ${w}`,
         space: 'Mellanslag'
     },
+    // One-tap starter words (inserted at the caret, with spaces around them)
+    quickWords: ['JAG', 'HETER', 'ÄR', 'DU', 'VAD', 'EN', 'HAR'],
     ambience: {
         track: 'sounds/background.mp3'
     },

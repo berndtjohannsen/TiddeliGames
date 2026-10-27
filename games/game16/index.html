@@ -1,0 +1,72 @@
+<!-- Träffa ordet (Game 16) – slingshot with gravity at spoken word targets -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Träffa ordet</title>
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-sky-200 via-white to-lime-100">
+    <div class="game16-wrapper">
+        <header class="game16-header">
+            <div class="game16-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+            </div>
+            <div class="game16-header__center">
+                <h1 class="game16-title" id="game16-title"></h1>
+                <p class="game16-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <main id="game16-field" class="game16-field" aria-live="polite">
+            <!-- Replay spoken prompt -->
+            <!-- Icon-only replay; accessible name comes from aria-label -->
+            <button id="listen-button" class="game16-listen" type="button" aria-label="Spela om frågan">
+                <svg class="game16-listen__icon" viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+            </button>
+
+            <!-- Four word targets along the top -->
+            <div id="targets" class="game16-targets" role="group" aria-label="Ord"></div>
+
+            <!-- Canvas: rubber band + projectile + gravity -->
+            <canvas id="sling-canvas" class="game16-canvas" aria-hidden="true"></canvas>
+        </main>
+    </div>
+
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>

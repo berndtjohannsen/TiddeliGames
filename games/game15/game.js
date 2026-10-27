@@ -5,6 +5,7 @@ const STRINGS = window.GAME15_STRINGS || {};
 const GAME15_ASSETS = window.TiddeliAssets;
 const MAX_CHARS = typeof STRINGS.maxChars === 'number' ? STRINGS.maxChars : 40;
 const ALPHABET = Array.isArray(STRINGS.alphabet) ? STRINGS.alphabet : [];
+const QUICK_WORDS = Array.isArray(STRINGS.quickWords) ? STRINGS.quickWords : [];
 const FIGURES = Array.isArray(STRINGS.figures) ? STRINGS.figures : [];
 /** Speaks needed to finish a round (single robot) */
 const SPEAKS_TO_COMPLETE =
@@ -44,6 +45,7 @@ let instructionsEl = null;
 let gameFieldEl = null;
 let textFieldEl = null;
 let alphabetEl = null;
+let quickWordsEl = null;
 let figuresEl = null;
 let progressEl = null;
 let backspaceButton = null;
@@ -92,6 +94,7 @@ const state = {
 window.addEventListener('DOMContentLoaded', () => {
     cacheDomElements();
     populateStaticTexts();
+    buildQuickWords();
     buildAlphabet();
     buildFigures();
     attachEventListeners();
@@ -109,6 +112,7 @@ function cacheDomElements() {
     gameFieldEl = document.getElementById('game15-field');
     textFieldEl = document.getElementById('text-field');
     alphabetEl = document.getElementById('alphabet');
+    quickWordsEl = document.getElementById('quick-words');
     figuresEl = document.getElementById('figures');
     progressEl = document.getElementById('progress-text');
     backspaceButton = document.getElementById('backspace-button');
@@ -141,6 +145,9 @@ function populateStaticTexts() {
     }
     if (textFieldEl && STRINGS.aria && STRINGS.aria.field) {
         textFieldEl.setAttribute('aria-label', STRINGS.aria.field);
+    }
+    if (quickWordsEl && STRINGS.aria && STRINGS.aria.quickWords) {
+        quickWordsEl.setAttribute('aria-label', STRINGS.aria.quickWords);
     }
 }
 
@@ -208,6 +215,27 @@ function setDropHighlight(on) {
     if (textFieldEl) {
         textFieldEl.classList.toggle('game15-text-field--drop', on);
     }
+}
+
+/**
+ * Builds one-tap starter words (JAG, HETER, …) above the robot.
+ */
+function buildQuickWords() {
+    if (!quickWordsEl) return;
+    quickWordsEl.innerHTML = '';
+    QUICK_WORDS.forEach((word) => {
+        const label = String(word).toUpperCase();
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'game15-word-btn';
+        btn.textContent = label;
+        btn.setAttribute(
+            'aria-label',
+            STRINGS.aria && STRINGS.aria.word ? STRINGS.aria.word(label) : label
+        );
+        btn.addEventListener('click', () => insertWord(label));
+        quickWordsEl.appendChild(btn);
+    });
 }
 
 /**
@@ -342,7 +370,16 @@ function buildFigures() {
         '<path d="M9.2 6.8v10.4L18 12z" fill="currentColor"/>' +
         '</svg>';
 
+    // iOS: warm voices on touch before click so the first speak() is more reliable
+    const warmSpeechOnTouch = () => {
+        if (window.speechSynthesis) {
+            window.speechSynthesis.getVoices();
+        }
+        void ensureAudioContext();
+    };
     const speak = () => handleFigureClick(figure, robot);
+    robot.addEventListener('touchstart', warmSpeechOnTouch, { passive: true });
+    playBtn.addEventListener('touchstart', warmSpeechOnTouch, { passive: true });
     robot.addEventListener('click', speak);
     playBtn.addEventListener('click', speak);
 
@@ -374,6 +411,36 @@ function insertChar(ch) {
     requestBackgroundAudioStart();
     // Short tap blip for each letter/space entered
     playLetterTapSound(letter === ' ');
+}
+
+/**
+ * Inserts a whole quick-word at the caret, with spaces so phrases read naturally.
+ * Example: empty → "JAG ", then "HETER " → "JAG HETER ".
+ * @param {string} word
+ */
+function insertWord(word) {
+    if (state.completed || state.speaking) return;
+    const room = MAX_CHARS - state.text.length;
+    if (room <= 0) return;
+
+    const i = clampCaret(state.caretIndex);
+    let chunk = String(word).toUpperCase();
+    // Add a leading space when inserting after another letter/word
+    if (i > 0 && state.text[i - 1] !== ' ') {
+        chunk = ' ' + chunk;
+    }
+    // Trailing space so the next word/letter starts cleanly
+    if (i >= state.text.length || state.text[i] !== ' ') {
+        chunk += ' ';
+    }
+    chunk = chunk.slice(0, room);
+    if (!chunk) return;
+
+    state.text = state.text.slice(0, i) + chunk + state.text.slice(i);
+    state.caretIndex = i + chunk.length;
+    updateTextField();
+    requestBackgroundAudioStart();
+    playLetterTapSound(false);
 }
 
 /**
@@ -615,11 +682,15 @@ async function handleFigureClick(figure, button) {
     const trimmed = state.text.trim();
     if (!trimmed) {
         shakeTextField();
+        showTemporaryHint('Skriv något först – tryck på bokstäverna.');
         return;
     }
 
     state.speaking = true;
     setFiguresBusy(figure.id, true, { waiting: true });
+    if (window.speechSynthesis) {
+        window.speechSynthesis.getVoices();
+    }
 
     // When Cloud TTS is enabled, start the fetch while the thinking clip plays
     const fetchPromise = USE_CLOUD_TTS
@@ -627,32 +698,33 @@ async function handleFigureClick(figure, button) {
         : null;
 
     try {
+        // Unlock Web Audio on this tap (needed for thinking.mp3 and ambience ducking).
         await ensureAudioContext();
-        await playThinkingOnce();
         setAmbienceDucked(true);
 
-        if (USE_CLOUD_TTS) {
-            try {
-                const audioBase64 = await fetchPromise;
-                console.log('[Game15] voice: Cloud TTS', figure.id, figure.voice || '');
-                await playTtsBase64(audioBase64, button);
-            } catch (cloudError) {
-                // Network / API / billing issues — fall back to device voice
-                console.warn('[Game15] Cloud TTS failed:', cloudError);
-                console.log('[Game15] voice: browser speechSynthesis', figure.id);
-                if (instructionsEl) {
-                    const prev = instructionsEl.textContent;
-                    instructionsEl.textContent = 'Använder webbläsarens röst just nu.';
-                    setTimeout(() => {
-                        if (instructionsEl) instructionsEl.textContent = prev;
-                    }, 2500);
+        const speakNow = async () => {
+            // Hum must finish before speech; cut the clip if anything is still playing.
+            stopThinkingLoop();
+            if (USE_CLOUD_TTS) {
+                try {
+                    const audioBase64 = await fetchPromise;
+                    console.log('[Game15] voice: Cloud TTS', figure.id, figure.voice || '');
+                    await playTtsBase64(audioBase64, button);
+                } catch (cloudError) {
+                    console.warn('[Game15] Cloud TTS failed:', cloudError);
+                    console.log('[Game15] voice: browser speechSynthesis', figure.id);
+                    showTemporaryHint('Använder webbläsarens röst just nu.', 2500);
+                    await speakWithBrowserVoice(trimmed, figure, button);
                 }
+            } else {
+                console.log('[Game15] voice: browser speechSynthesis', figure.id);
                 await speakWithBrowserVoice(trimmed, figure, button);
             }
-        } else {
-            console.log('[Game15] voice: browser speechSynthesis', figure.id);
-            await speakWithBrowserVoice(trimmed, figure, button);
-        }
+        };
+
+        // Always: thinking clip fully, then TTS (never overlap).
+        await playThinkingOnce();
+        await speakNow();
 
         state.spokenCount += 1;
         if (state.spokenCount > 0) {
@@ -844,47 +916,74 @@ async function speakWithBrowserVoice(text, figure, button) {
         throw err;
     }
 
-    // iOS/Android often populate voices asynchronously (and iOS can be slow)
-    const allVoices = await waitForBrowserVoices(isAppleTouchBrowser() ? 4000 : 2000);
-    let voice = pickSwedishVoice(allVoices, figure && figure.id);
+    const spokenText = toBrowserSpeechText(text);
+    let voice = null;
     let usingSwedish = false;
 
-    // iOS: re-resolve from a fresh getVoices() list (stale Voice objects are ignored)
-    if (voice) {
-        voice = resolveFreshVoice(voice) || voice;
-    }
-
-    if (voice && isSwedishVoice(voice)) {
-        usingSwedish = true;
+    if (isAppleTouchBrowser()) {
+        // Do not await before speak() — Safari needs speak() soon after the tap
+        const syncVoices = window.speechSynthesis.getVoices() || [];
+        voice = pickSwedishVoice(syncVoices, figure && figure.id);
+        if (voice) {
+            voice = resolveFreshVoice(voice) || voice;
+        }
+        if (voice && isSwedishVoice(voice)) {
+            usingSwedish = true;
+        } else {
+            voice = null;
+            console.warn(
+                '[Game15] No Swedish voice on first iOS speak. Voices:',
+                syncVoices.map((v) => `${v.name} (${v.lang})`)
+            );
+            showTemporaryHint(
+                STRINGS.noSwedishVoiceHint ||
+                    'Ingen svensk röst – använder telefonens vanliga röst.'
+            );
+        }
+        void waitForBrowserVoices(4000);
     } else {
-        voice = null;
-        usingSwedish = false;
-        console.warn(
-            '[Game15] No Swedish voice — using device default. Voices:',
-            allVoices.map((v) => `${v.name} (${v.lang})`)
-        );
-        showTemporaryHint(
-            STRINGS.noSwedishVoiceHint ||
-                'Ingen svensk röst – använder telefonens vanliga röst.'
-        );
+        const allVoices = await waitForBrowserVoices(2000);
+        voice = pickSwedishVoice(allVoices, figure && figure.id);
+        if (voice) {
+            voice = resolveFreshVoice(voice) || voice;
+        }
+        if (voice && isSwedishVoice(voice)) {
+            usingSwedish = true;
+        } else {
+            voice = null;
+            console.warn(
+                '[Game15] No Swedish voice — using device default. Voices:',
+                allVoices.map((v) => `${v.name} (${v.lang})`)
+            );
+            showTemporaryHint(
+                STRINGS.noSwedishVoiceHint ||
+                    'Ingen svensk röst – använder telefonens vanliga röst.'
+            );
+        }
     }
 
-    const spokenText = toBrowserSpeechText(text);
+    return runSpeechUtterance(spokenText, voice, usingSwedish, button);
+}
 
+/**
+ * Speaks one utterance; rejects on error, timeout, or silent end (no onstart).
+ * @param {string} spokenText
+ * @param {SpeechSynthesisVoice|null} voice
+ * @param {boolean} usingSwedish
+ * @param {HTMLElement} button
+ */
+function runSpeechUtterance(spokenText, voice, usingSwedish, button) {
     return new Promise((resolve, reject) => {
         stopBrowserSpeech();
 
         const utterance = new SpeechSynthesisUtterance(spokenText);
         if (usingSwedish && voice) {
-            // Explicit Swedish voice + lang (needed on Android and iPhone)
             utterance.lang = 'sv-SE';
             utterance.voice = voice;
         } else {
-            // Device default voice (may be English) — still request sv-SE when possible
             utterance.lang = 'sv-SE';
         }
         utterance.pitch = 1;
-        // Slightly slower helps clarity on mobile TTS
         utterance.rate = isAppleTouchBrowser() ? 0.9 : 0.95;
 
         const volume = window.TiddeliGamesVolume?.get() ?? 0.35;
@@ -893,10 +992,20 @@ async function speakWithBrowserVoice(text, figure, button) {
         activeUtterance = utterance;
         console.log(
             '[Game15] voice:',
-            usingSwedish ? `Swedish ${voice.name} (${voice.lang})` : 'device default'
+            usingSwedish && voice ? `Swedish ${voice.name} (${voice.lang})` : 'device default'
         );
 
+        let started = false;
+        const watchdog = window.setTimeout(() => {
+            if (!started) {
+                stopBrowserSpeech();
+                reject(new Error('speech timeout'));
+            }
+        }, isAppleTouchBrowser() ? 12000 : 20000);
+
         utterance.onstart = () => {
+            started = true;
+            window.clearTimeout(watchdog);
             if (button) {
                 button.classList.remove('game15-figure--waiting');
                 button.classList.add('game15-figure--speaking');
@@ -904,11 +1013,17 @@ async function speakWithBrowserVoice(text, figure, button) {
             }
         };
         utterance.onend = () => {
+            window.clearTimeout(watchdog);
             if (activeUtterance === utterance) activeUtterance = null;
             stopLipSync(button);
+            if (!started) {
+                reject(new Error('speech silent'));
+                return;
+            }
             resolve();
         };
         utterance.onerror = (event) => {
+            window.clearTimeout(watchdog);
             if (activeUtterance === utterance) activeUtterance = null;
             stopLipSync(button);
             if (event && event.error === 'interrupted') {
@@ -918,7 +1033,6 @@ async function speakWithBrowserVoice(text, figure, button) {
             reject(new Error((event && event.error) || 'speech error'));
         };
 
-        // iOS WebKit often drops the first speak() after cancel() unless we resume + delay
         const startSpeak = () => {
             try {
                 if (window.speechSynthesis.paused) {
@@ -938,7 +1052,7 @@ async function speakWithBrowserVoice(text, figure, button) {
         };
 
         if (isAppleTouchBrowser()) {
-            setTimeout(startSpeak, 60);
+            window.setTimeout(startSpeak, 0);
         } else {
             startSpeak();
         }
@@ -1306,6 +1420,16 @@ function requestBackgroundAudioStart() {
 
 function handleFirstInteraction() {
     requestBackgroundAudioStart();
+    void ensureAudioContext();
+    warmBrowserVoices();
+    preloadThinkingClip();
+}
+
+/** Decode thinking.mp3 early so the pre-speech hum is ready on first speak. */
+function preloadThinkingClip() {
+    const rawPath = STRINGS.thinking && STRINGS.thinking.track;
+    if (!rawPath) return;
+    void loadAudioBuffer(resolveGame15Asset(rawPath));
 }
 
 async function loadAudioBuffer(url) {
@@ -1418,7 +1542,10 @@ function setAmbienceDucked(ducked) {
 async function playThinkingOnce() {
     setAmbienceDucked(true);
     await ensureAudioContext();
-    if (!audioContext || audioContext.state !== 'running') return;
+    if (!audioContext || audioContext.state !== 'running') {
+        console.warn('[Game15] thinking clip skipped: AudioContext not running');
+        return;
+    }
     if (!state.speaking) return;
 
     const rawPath = STRINGS.thinking && STRINGS.thinking.track;
@@ -1426,7 +1553,10 @@ async function playThinkingOnce() {
 
     const path = resolveGame15Asset(rawPath);
     const buffer = await loadAudioBuffer(path);
-    if (!buffer || !state.speaking) return;
+    if (!buffer || !state.speaking) {
+        if (!buffer) console.warn('[Game15] thinking clip missing or failed to load:', path);
+        return;
+    }
 
     stopThinkingLoop();
 

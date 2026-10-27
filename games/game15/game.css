@@ -477,6 +477,35 @@
     animation-delay: 0.36s;
 }
 
+/* One-tap starter words (JAG, HETER, ÄR, DU) */
+.game15-quick-words {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(0.35rem, 1.2vmin, 0.6rem);
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.game15-word-btn {
+    padding: clamp(0.45rem, 1.4vmin, 0.65rem) clamp(0.75rem, 2.5vmin, 1.15rem);
+    border: 2.5px solid #fb923c;
+    border-radius: 9999px;
+    background: linear-gradient(165deg, #fff7ed, #fdba74);
+    color: #9a3412;
+    font-size: clamp(1rem, 3.2vmin, 1.35rem);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    box-shadow: rgba(234, 88, 12, 0.2) 0 5px 12px;
+}
+
+.game15-word-btn:active {
+    transform: translateY(1px);
+}
+
 /* Alphabet strip */
 .game15-alphabet {
     display: flex;
@@ -664,6 +693,11 @@
         width: clamp(1.6rem, 8vh, 2.2rem);
         height: clamp(1.6rem, 8vh, 2.2rem);
         font-size: clamp(0.85rem, 5vh, 1.15rem);
+    }
+
+    .game15-word-btn {
+        padding: 0.3rem 0.65rem;
+        font-size: clamp(0.85rem, 4.5vh, 1.1rem);
     }
 
     .game15-text-field {

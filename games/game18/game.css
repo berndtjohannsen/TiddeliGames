@@ -1,0 +1,427 @@
+/* Hitta kaninen? (Game 18) – tap the coloured furniture */
+
+.game18-wrapper {
+    width: 100%;
+    max-width: min(1080px, 100%);
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game18-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game18-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game18-header__buttons {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.game18-header__center {
+    text-align: center;
+}
+
+.back-button {
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+.game18-title {
+    font-size: clamp(1.5rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #14532d;
+    margin: 0;
+}
+
+.game18-instructions {
+    font-size: clamp(0.95rem, 2.2vw, 1.3rem);
+    font-weight: 600;
+    color: #166534;
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.game18-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(0.15rem, 0.5vw, 0.35rem);
+    box-sizing: border-box;
+    overflow: hidden;
+    touch-action: manipulation;
+    /* Lets the stage size with cqw/cqh from this flex area */
+    container-type: size;
+    container-name: game18-field;
+}
+
+/* Portrait room (720×1280) — scales to fit width or height without cropping */
+.game18-stage {
+    position: relative;
+    container-type: size;
+    container-name: game18-stage;
+    aspect-ratio: 9 / 16;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    height: auto;
+    border-radius: clamp(1rem, 3vw, 2rem);
+    /* Fallback if background.jpg fails to load */
+    background-color: #e8f5e9;
+    background-image: linear-gradient(180deg, #fff8e7 0%, #e8f5e9 55%, #d4e8d0 100%);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    box-shadow:
+        inset 0 0 40px rgba(21, 128, 61, 0.15),
+        0 8px 24px rgba(30, 64, 175, 0.12);
+    overflow: hidden;
+}
+
+@supports (width: 1cqw) {
+    .game18-stage {
+        width: min(100cqw, calc(100cqh * 9 / 16));
+        height: min(100cqh, calc(100cqw * 16 / 9));
+    }
+}
+
+.game18-listen {
+    position: absolute;
+    top: clamp(0.4rem, 1.5vmin, 0.85rem);
+    left: clamp(0.4rem, 1.5vmin, 0.85rem);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(2.6rem, 9vmin, 3.2rem);
+    height: clamp(2.6rem, 9vmin, 3.2rem);
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #15803d;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.15) 0 4px 12px;
+}
+
+.game18-listen__icon {
+    width: 58%;
+    height: 58%;
+}
+
+.game18-listen:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.game18-listen--playing {
+    animation: game18-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes game18-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.06);
+    }
+}
+
+.game18-miss-taps {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Ripple where the child tapped the floor instead of a prop */
+.game18-miss-tap {
+    position: absolute;
+    width: 3.5rem;
+    height: 3.5rem;
+    margin-left: -1.75rem;
+    margin-top: -1.75rem;
+    border-radius: 50%;
+    border: 3px solid rgba(234, 179, 8, 0.85);
+    background: radial-gradient(circle, rgba(250, 204, 21, 0.45) 0%, rgba(250, 204, 21, 0) 70%);
+    animation: game18-miss-tap-ripple 0.55s ease-out forwards;
+}
+
+@keyframes game18-miss-tap-ripple {
+    0% {
+        transform: scale(0.35);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.35);
+        opacity: 0;
+    }
+}
+
+.game18-stage--miss-tap {
+    animation: game18-stage-miss-nudge 0.38s ease;
+}
+
+@keyframes game18-stage-miss-nudge {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(0.992);
+    }
+}
+
+.game18-instructions--miss {
+    color: #b45309;
+    animation: game18-instructions-miss 0.35s ease;
+}
+
+@keyframes game18-instructions-miss {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.04);
+    }
+}
+
+.game18-items {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+}
+
+/* Waiting for voice / rabbit — keep buttons clickable (pointer-events:none caused false "floor" taps) */
+.game18-items--locked .game18-item {
+    cursor: wait;
+    opacity: 0.94;
+}
+
+/* No press shrink while voice/rabbit runs — avoids "it moved but nothing happened" */
+.game18-items--locked .game18-item:active {
+    transform: translate(-50%, -50%);
+}
+
+/* Tappable furniture on the floor plane (top-down sprites + top-down room art) */
+.game18-item {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.25rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.game18-item:active {
+    transform: translate(-50%, -50%) scale(0.94);
+}
+
+/* Illustrated sprite from assets (preferred) */
+.game18-item__img {
+    /* Size relative to the room stage, not the whole viewport */
+    width: clamp(3.5rem, 26cqw, 7.25rem);
+    height: auto;
+    max-height: 22cqh;
+    object-fit: contain;
+    object-position: center center;
+    pointer-events: none;
+    user-select: none;
+    filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.18));
+}
+
+/* Built-in vector fallback when images/items/{type}_{color}.png is missing */
+.game18-item__svg {
+    width: clamp(3rem, 22cqw, 6rem);
+    height: clamp(3rem, 22cqw, 6rem);
+    filter: drop-shadow(0 5px 10px rgba(15, 23, 42, 0.22));
+}
+
+.game18-item--wrong {
+    animation: game18-shake 0.4s ease;
+}
+
+.game18-item--found {
+    animation: game18-pop-out 0.45s ease forwards;
+    pointer-events: none;
+}
+
+/* After a correct tap, keep the sprite up during confetti (then --found pop-out) */
+.game18-item--hold,
+.game18-item--scoring {
+    transform: translate(-50%, -50%);
+    opacity: 1;
+    transition: none;
+}
+
+.game18-item--hold:active,
+.game18-item--scoring:active {
+    transform: translate(-50%, -50%);
+}
+
+@keyframes game18-shake {
+    0%,
+    100% {
+        transform: translate(-50%, -50%) rotate(0);
+    }
+    25% {
+        transform: translate(calc(-50% - 4px), -50%) rotate(-3deg);
+    }
+    75% {
+        transform: translate(calc(-50% + 4px), -50%) rotate(3deg);
+    }
+}
+
+@keyframes game18-pop-out {
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+    }
+}
+
+.game18-confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+/* Rabbit celebration at the object the child tapped correctly */
+.game18-rabbit-burst {
+    position: absolute;
+    z-index: 6;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.2);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.game18-rabbit-burst--show {
+    animation: game18-rabbit-burst 0.85s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
+}
+
+.game18-rabbit-burst__img {
+    width: clamp(3.5rem, 22cqw, 5.5rem);
+    height: auto;
+    filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.22));
+}
+
+@keyframes game18-rabbit-burst {
+    0% {
+        transform: translate(-50%, -30%) scale(0.15);
+        opacity: 0;
+    }
+    40% {
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -120%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Completion dialog (matches other games) */
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    max-width: 22rem;
+    width: 100%;
+    padding: 1.75rem 1.5rem;
+    border-radius: 1.5rem;
+    background: #fff;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.completion-dialog__title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #14532d;
+    margin: 0 0 0.5rem;
+}
+
+.completion-dialog__message {
+    font-size: 1.1rem;
+    color: #334155;
+    margin: 0 0 1.25rem;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.25rem;
+    border-radius: 9999px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+.completion-dialog__btn--primary {
+    background: #22c55e;
+    color: #052e16;
+}
+
+.completion-dialog__btn--secondary {
+    background: #e2e8f0;
+    color: #1e293b;
+}

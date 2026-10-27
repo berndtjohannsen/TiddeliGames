@@ -124,6 +124,27 @@ window.APP_STRINGS = Object.freeze({
                 description: 'Skriv och hör roboten. (4+ år)',
                 icon: '🤖',
                 path: 'games/game15/index.html'
+            },
+            {
+                id: 'game16',
+                name: 'Träffa ordet',
+                description: 'Skjut med gummiband. (4+ år)',
+                icon: '🎯',
+                path: 'games/game16/index.html'
+            },
+            {
+                id: 'game17',
+                name: 'Kör mot ordet',
+                description: 'Akta träd och kanin. (4+ år)',
+                icon: '🚗',
+                path: 'games/game17/index.html'
+            },
+            {
+                id: 'game18',
+                name: 'Hitta kaninen?',
+                description: 'Peka på rätt färg och möbel. (3+ år)',
+                icon: '🐰',
+                path: 'games/game18/index.html'
             }
         ]
     },

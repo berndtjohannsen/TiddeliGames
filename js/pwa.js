@@ -135,8 +135,14 @@ async function registerServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
     // Disable Service Worker in local development to avoid stale caches and confusing upgrades
     const host = (location && location.hostname) || '';
-    if (host === 'localhost' || host === '127.0.0.1') {
-        console.log('[PWA] SW disabled on localhost');
+    const isLocalDev =
+        host === 'localhost' ||
+        host === '127.0.0.1' ||
+        /^192\.168\.\d{1,3}\.\d{1,3}$/.test(host) ||
+        /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host) ||
+        /^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host);
+    if (isLocalDev) {
+        console.log('[PWA] SW disabled on local / LAN dev host');
         return;
     }
     try {

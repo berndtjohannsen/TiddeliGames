@@ -13,6 +13,14 @@ test.describe('Game Navigation', () => {
     { id: 'game8', path: '/games/game8/index.html' },
     { id: 'game9', path: '/games/game9/index.html' },
     { id: 'game10', path: '/games/game10/index.html' },
+    { id: 'game11', path: '/games/game11/index.html' },
+    { id: 'game12', path: '/games/game12/index.html' },
+    { id: 'game13', path: '/games/game13/index.html' },
+    { id: 'game14', path: '/games/game14/index.html' },
+    { id: 'game15', path: '/games/game15/index.html' },
+    { id: 'game16', path: '/games/game16/index.html' },
+    { id: 'game17', path: '/games/game17/index.html' },
+    { id: 'game18', path: '/games/game18/index.html' },
   ];
 
   test('can navigate to all games from main page', async ({ page }) => {
