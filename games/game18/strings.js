@@ -23,9 +23,9 @@ window.GAME18_STRINGS = Object.freeze({
     },
     // Placeholder: intro clip before the colour + object phrase (replace when final audio exists)
     promptIntroSound: 'sounds/PekaPaDen.mp3',
-    successSound: 'sounds/success.mp3',
     errorSound: 'sounds/oups.mp3',
-    rabbitSound: 'sounds/rabbit-happy.mp3',
+    /** Correct tap: rabbit pop-up + this clip (replaces separate success + rabbit sounds) */
+    rabbitSound: 'sounds/happy_rabbit.mp3',
     images: {
         background: 'images/background.jpg',
         rabbit: 'images/rabbit.png',
@@ -69,11 +69,16 @@ window.GAME18_STRINGS = Object.freeze({
         { id: 'lada', label: 'låda', definite: 'lådan' },
         { id: 'skap', label: 'skåp', definite: 'skåpet' }
     ],
-    // Spoken prompt pattern: "Peka på den blå stolen."
+    /** Neuter nouns use "det" (bord, skåp); others use "den". */
+    promptArticleForItemType(itemTypeId) {
+        return itemTypeId === 'bord' || itemTypeId === 'skap' ? 'det' : 'den';
+    },
+    // Spoken prompt pattern: "Peka på den blå stolen." / "Peka på det blå bordet."
     buildPromptText(color, itemType) {
         const c = color.definite || color.label;
         const thing = itemType.definite || itemType.label;
-        return `Peka på den ${c} ${thing}.`;
+        const article = this.promptArticleForItemType(itemType.id);
+        return `Peka på ${article} ${c} ${thing}.`;
     },
     // Optional per-prompt MP3 when you add them: sounds/prompts/bla_stol.mp3
     promptSoundFor(colorId, itemTypeId) {

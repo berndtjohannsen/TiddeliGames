@@ -1,9 +1,12 @@
 // App configuration and version (single source of truth)
-// This is the ONLY place where APP version should be defined
 // When updating version: Change only here
+// Deploy: bump version when code/SW changes; bump assetVersion when Netlify assets change (or both).
 
 const APP_CONFIG = {
-    version: "1.4.16",
+    version: "1.4.17",
+
+    /** Bumped when media on the assets Netlify site changes; appended to game asset URLs. */
+    assetVersion: "1.4.17",
     
     // Base URL for externally hosted game assets (images, sounds, etc.).
     // Example (Netlify): "https://tiddeligames-assets.netlify.app"    

@@ -142,7 +142,7 @@ window.APP_STRINGS = Object.freeze({
             {
                 id: 'game18',
                 name: 'Hitta kaninen?',
-                description: 'Peka på rätt färg och möbel. (3+ år)',
+                description: 'Peka på rätt färg. (3+ år)',
                 icon: '🐰',
                 path: 'games/game18/index.html'
             }

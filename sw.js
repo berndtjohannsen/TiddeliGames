@@ -13,6 +13,7 @@ const APP_SHELL = [
   './css/styles.css',
   './css/animations.css',
   './js/config.js',
+  './js/version-check.js',
   './js/app.js',
   './js/strings.js',
   './js/game-selector.js',

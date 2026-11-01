@@ -11,6 +11,8 @@ const MAX_ITEMS = 5;
 const CELEBRATION_HOLD_MS = 520;
 const FOUND_POP_OUT_MS = 450;
 const CONFETTI_COLORS = ['#fde047', '#f472b6', '#60a5fa', '#4ade80', '#fb923c', '#c084fc', '#f87171'];
+/** Room loop level (× global volume) — aligned with other games */
+const AMBIENCE_GAIN = 0.4;
 
 /**
  * Colour helpers for shaded kid-friendly furniture SVGs.
@@ -184,8 +186,12 @@ let backgroundBuffer = null;
 let backgroundSource = null;
 let backgroundGain = null;
 const audioBufferCache = new Map();
+/** In-flight decode for the same URL (avoids duplicate network + decode work) */
+const audioLoadInFlight = new Map();
 /** URLs that returned 404 or failed decode — avoids refetching missing assets every round */
 const failedAudioUrls = new Set();
+/** Image URLs already warmed this session */
+const preloadedImageUrls = new Set();
 let promptSource = null;
 let promptPlaybackResolve = null;
 /** Resolves the active speakText() promise when speech is cancelled or finishes */
@@ -221,7 +227,6 @@ window.addEventListener('DOMContentLoaded', () => {
     resizeConfettiCanvas();
     prefetchRoundSfx();
     startNewRound();
-    requestBackgroundAudioStart();
 });
 
 function cacheDomElements() {
@@ -504,6 +509,9 @@ function startNewRound() {
     const pairs = pickUniquePairs(itemCount);
     const positions = layoutPositions(pairs.length);
 
+    // Load sprites + prompt clips before <img src> so play does not trigger new fetches (tab spinner)
+    prefetchRoundMedia(pairs, null);
+
     pairs.forEach((pair, index) => {
         const entry = createSceneItem(pair.color, pair.itemType, positions[index]);
         state.sceneItems.push(entry);
@@ -512,6 +520,7 @@ function startNewRound() {
 
     state.target = state.sceneItems[Math.floor(Math.random() * state.sceneItems.length)];
     updateItemsBlocked();
+    prefetchPromptForEntry(state.target);
 
     afterRoundLayoutReady(() => {
         resizeConfettiCanvas();
@@ -623,6 +632,7 @@ function createSceneItem(color, itemType, position) {
         },
         { once: true }
     );
+    if (spriteUrl) preloadedImageUrls.add(spriteUrl);
     img.src = spriteUrl;
     button.appendChild(img);
 
@@ -675,9 +685,29 @@ async function handleItemClick(entry) {
         return;
     }
 
-    entry.el.classList.add('game18-item--wrong');
-    playSfxUrl(resolveGame18Asset(STRINGS.errorSound)).catch(() => playErrorTone());
-    setTimeout(() => entry.el.classList.remove('game18-item--wrong'), 420);
+    playWrongItemFeedback(entry);
+}
+
+/** Bouncy wobble on the tapped prop for the length of the error sound */
+function playWrongItemFeedback(entry) {
+    const el = entry && entry.el;
+    if (!el) return;
+
+    const errorUrl = resolveGame18Asset(STRINGS.errorSound);
+    const cached = errorUrl ? audioBufferCache.get(errorUrl) : null;
+    const animSeconds = cached && cached.duration ? cached.duration : 1.65;
+
+    el.classList.remove('game18-item--wrong');
+    void el.offsetWidth;
+    el.style.animationDuration = `${animSeconds}s`;
+    el.classList.add('game18-item--wrong');
+
+    const animMs = Math.round(animSeconds * 1000);
+    playSfxUrl(errorUrl).catch(() => playErrorTone());
+    window.setTimeout(() => {
+        el.classList.remove('game18-item--wrong');
+        el.style.animationDuration = '';
+    }, animMs);
 }
 
 function getItemStagePoint(entry) {
@@ -784,13 +814,13 @@ async function handleCorrectClick(entry) {
     }
     spawnConfetti(cx, cy, 48);
     beginRabbitBurstAt(cx, cy);
-    triggerSuccessFeedback();
 
     state.sceneItems = state.sceneItems.filter((item) => item !== entry);
     if (state.sceneItems.length === 0) {
         state.target = null;
     } else if (state.target === entry) {
         state.target = state.sceneItems[Math.floor(Math.random() * state.sceneItems.length)];
+        prefetchPromptForEntry(state.target);
     }
     const hasMore = state.sceneItems.length > 0;
 
@@ -856,6 +886,7 @@ async function playQuestionForTarget() {
         if (!audioContext || audioContext.state !== 'running') {
             return false;
         }
+        requestBackgroundAudioStart();
 
         const { color, itemType } = state.target;
         const fullText =
@@ -875,7 +906,7 @@ async function playQuestionForTarget() {
         const playedSpecific = await playBufferUrlIfExists(specificPath);
         if (!playedSpecific) {
             if (playedIntro) {
-                const tail = fullText.replace(/^Peka på den\s+/i, '');
+                const tail = fullText.replace(/^Peka på (den|det)\s+/i, '');
                 await speakText(tail);
             } else {
                 await speakText(fullText);
@@ -1020,9 +1051,14 @@ function drawConfetti() {
 
 async function playBufferUrlIfExists(url) {
     if (!url) return false;
+    const cached = audioBufferCache.get(url);
+    if (cached) {
+        await playBufferFromCache(cached);
+        return true;
+    }
     const buffer = await loadAudioBuffer(url);
     if (!buffer) return false;
-    await playBufferUrl(url);
+    await playBufferFromCache(buffer);
     return true;
 }
 
@@ -1074,7 +1110,13 @@ async function playSfxUrl(url) {
 /** Spoken prompt clips — only one at a time */
 async function playBufferUrl(url) {
     const buffer = await loadAudioBuffer(url);
-    if (!buffer || !audioContext) return;
+    if (!buffer) return;
+    return playBufferFromCache(buffer);
+}
+
+/** Play a decoded buffer as the current prompt (no fetch) */
+function playBufferFromCache(buffer) {
+    if (!buffer || !audioContext) return Promise.resolve();
 
     return new Promise((resolve) => {
         stopPromptPlayback();
@@ -1123,35 +1165,92 @@ function stopPromptPlayback() {
     finishSpeakText();
 }
 
-/** Warm success / rabbit / error clips so the first correct tap does not wait on fetch */
+/** Warm rabbit / error clips so the first correct tap does not wait on fetch */
 function prefetchRoundSfx() {
-    const paths = [STRINGS.successSound, STRINGS.rabbitSound, STRINGS.errorSound];
+    const paths = [STRINGS.rabbitSound, STRINGS.errorSound, STRINGS.promptIntroSound];
     paths.forEach((path) => {
+        if (!path) return;
         const url = resolveGame18Asset(path);
         if (url) void loadAudioBuffer(url);
     });
+}
+
+/**
+ * Preload this round's furniture images and every on-scene prompt MP3 so questions
+ * and target changes do not start new fetches (Chrome tab "loading" spinner).
+ */
+function prefetchRoundMedia(pairs, _targetEntryIgnored) {
+    const imageUrls = new Set();
+    pairs.forEach(({ color, itemType }) => {
+        const closed =
+            typeof STRINGS.itemSpritePath === 'function'
+                ? STRINGS.itemSpritePath(color.id, itemType.id)
+                : `images/items/${itemType.id}_${color.id}.png`;
+        if (closed) imageUrls.add(resolveGame18Asset(closed));
+        if (isContainerTypeId(itemType.id) && typeof STRINGS.containerOpenSpritePath === 'function') {
+            imageUrls.add(resolveGame18Asset(STRINGS.containerOpenSpritePath(color.id, itemType.id)));
+        }
+        prefetchPromptForPair(color, itemType);
+    });
+    imageUrls.forEach((url) => preloadImageUrl(url));
+}
+
+/** Queue decode of one furniture prompt clip (deduped by loadAudioBuffer). */
+function prefetchPromptForPair(color, itemType) {
+    if (typeof STRINGS.promptSoundFor !== 'function') return;
+    const promptPath = STRINGS.promptSoundFor(color.id, itemType.id);
+    if (!promptPath) return;
+    void loadAudioBuffer(resolveGame18Asset(promptPath));
+}
+
+function prefetchPromptForEntry(entry) {
+    if (!entry) return;
+    prefetchPromptForPair(entry.color, entry.itemType);
+}
+
+function isContainerTypeId(itemTypeId) {
+    const ids = STRINGS.containerItemIds || [];
+    return ids.includes(itemTypeId);
+}
+
+function preloadImageUrl(url) {
+    if (!url || preloadedImageUrls.has(url)) return;
+    preloadedImageUrls.add(url);
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = url;
 }
 
 async function loadAudioBuffer(url) {
     if (!url) return null;
     if (failedAudioUrls.has(url)) return null;
     if (audioBufferCache.has(url)) return audioBufferCache.get(url);
-    await ensureAudioContext();
-    if (!audioContext) return null;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
+    if (audioLoadInFlight.has(url)) return audioLoadInFlight.get(url);
+
+    const loadPromise = (async () => {
+        await ensureAudioContext();
+        if (!audioContext) return null;
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                failedAudioUrls.add(url);
+                return null;
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const buffer = await audioContext.decodeAudioData(arrayBuffer);
+            audioBufferCache.set(url, buffer);
+            return buffer;
+        } catch (error) {
+            console.warn('Could not load audio:', url, error);
             failedAudioUrls.add(url);
             return null;
+        } finally {
+            audioLoadInFlight.delete(url);
         }
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = await audioContext.decodeAudioData(arrayBuffer);
-        audioBufferCache.set(url, buffer);
-        return buffer;
-    } catch (error) {
-        console.warn('Could not load audio:', url, error);
-        return null;
-    }
+    })();
+
+    audioLoadInFlight.set(url, loadPromise);
+    return loadPromise;
 }
 
 /** Success ding on the same frame as confetti when AudioContext is already running */
@@ -1286,8 +1385,8 @@ function requestBackgroundAudioStart() {
     if (state.audioStarted || state.audioStarting) return;
     state.audioStarting = true;
     startBackgroundAmbience()
-        .then(() => {
-            state.audioStarted = true;
+        .then((started) => {
+            if (started) state.audioStarted = true;
         })
         .catch((error) => {
             console.warn('Could not start background audio:', error);
@@ -1297,23 +1396,47 @@ function requestBackgroundAudioStart() {
         });
 }
 
+/**
+ * @returns {Promise<boolean>} true when the loop is playing
+ */
 async function startBackgroundAmbience() {
     await ensureAudioContext();
-    if (!audioContext || backgroundSource) return;
+    if (!audioContext || audioContext.state !== 'running') return false;
+    if (backgroundSource) return true;
+
     const track = STRINGS.ambience && STRINGS.ambience.track;
-    if (!track) return;
-    const buffer = await loadAudioBuffer(resolveGame18Asset(track));
-    if (!buffer) return;
+    if (!track) return false;
+
+    const url = resolveGame18Asset(track);
+    // Allow retry if an earlier load failed before the file existed on the assets host
+    if (failedAudioUrls.has(url)) {
+        failedAudioUrls.delete(url);
+    }
+
+    const buffer = await loadAudioBuffer(url);
+    if (!buffer) {
+        console.warn('[Game18] background track missing or failed to decode:', url);
+        return false;
+    }
+
     backgroundBuffer = buffer;
     backgroundSource = audioContext.createBufferSource();
     backgroundSource.buffer = backgroundBuffer;
     backgroundSource.loop = true;
     backgroundGain = audioContext.createGain();
     const volume = window.TiddeliGamesVolume?.get() ?? 0.35;
-    backgroundGain.gain.setValueAtTime(volume * 0.28, audioContext.currentTime);
+    backgroundGain.gain.setValueAtTime(volume * AMBIENCE_GAIN, audioContext.currentTime);
     backgroundSource.connect(backgroundGain);
     backgroundGain.connect(audioContext.destination);
-    backgroundSource.start();
+    try {
+        backgroundSource.start(0);
+    } catch (error) {
+        console.warn('Could not start background source:', error);
+        backgroundSource = null;
+        backgroundGain = null;
+        return false;
+    }
+    return true;
 }
 
 function stopBackgroundAmbience() {
@@ -1339,6 +1462,10 @@ function stopBackgroundAmbience() {
 
 function handleFirstInteraction() {
     requestBackgroundAudioStart();
+    const track = STRINGS.ambience && STRINGS.ambience.track;
+    if (track) {
+        void loadAudioBuffer(resolveGame18Asset(track));
+    }
 }
 
 function handleVolumeChange(event) {
@@ -1348,7 +1475,7 @@ function handleVolumeChange(event) {
             ? event.detail.volume
             : window.TiddeliGamesVolume?.get() ?? 0.35;
     if (backgroundGain) {
-        backgroundGain.gain.setValueAtTime(newVolume * 0.28, audioContext.currentTime);
+        backgroundGain.gain.setValueAtTime(newVolume * AMBIENCE_GAIN, audioContext.currentTime);
     }
 }
 

@@ -45,16 +45,28 @@ function isLocalDevelopmentHost(hostname) {
         return `${cleanBase}/${cleanPath}`;
     }
 
+    /** Append ?v=assetVersion so CDN/browser fetches new media after deploy. */
+    function appendAssetCacheBust(url) {
+        if (!url) return url;
+        const v =
+            (typeof APP_CONFIG !== 'undefined' && APP_CONFIG && APP_CONFIG.assetVersion) ||
+            (typeof APP_CONFIG !== 'undefined' && APP_CONFIG && APP_CONFIG.version) ||
+            '';
+        if (!v || url.includes('v=')) return url;
+        const sep = url.includes('?') ? '&' : '?';
+        return `${url}${sep}v=${encodeURIComponent(v)}`;
+    }
+
     function resolveGameAsset(gameId, relativePath) {
         const cleanPath = String(relativePath || '').replace(/^\.?\//, '');
         if (!baseUrl) return cleanPath;
-        return joinUrl(baseUrl, `games/${gameId}/${cleanPath}`);
+        return appendAssetCacheBust(joinUrl(baseUrl, `games/${gameId}/${cleanPath}`));
     }
 
     function resolveSharedAsset(relativePath) {
         const cleanPath = String(relativePath || '').replace(/^\.?\//, '');
         if (!baseUrl) return cleanPath;
-        return joinUrl(baseUrl, `assets/${cleanPath}`);
+        return appendAssetCacheBust(joinUrl(baseUrl, `assets/${cleanPath}`));
     }
 
     window.TiddeliAssets = Object.freeze({
