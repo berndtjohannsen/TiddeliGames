@@ -106,6 +106,7 @@ window.addEventListener('DOMContentLoaded', () => {
     populateStaticTexts();
     attachEventListeners();
     resizeCanvas();
+    prefetchAllSpeechAudio();
     startNewRound();
     requestBackgroundAudioStart();
     loop(performance.now());
@@ -142,7 +143,7 @@ function cacheDomElements() {
 function populateStaticTexts() {
     if (titleEl) titleEl.textContent = STRINGS.title || '';
     if (instructionsEl) instructionsEl.textContent = STRINGS.instructions || '';
-    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Fortsätt';
+    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Igen';
     if (dialogBackButton) dialogBackButton.textContent = (STRINGS.labels && STRINGS.labels.back) || 'Tillbaka';
     if (completionTitle) completionTitle.textContent = (STRINGS.dialog && STRINGS.dialog.title) || '';
     if (completionMessage) completionMessage.textContent = (STRINGS.dialog && STRINGS.dialog.message) || '';
@@ -293,6 +294,7 @@ function startNewRound() {
         resetBallToRest();
     });
 
+    prefetchRoundSpeech(state.options);
     playSpokenPrompt().catch((error) => {
         console.warn('Could not auto-play spoken prompt:', error);
         state.canShoot = true;
@@ -643,11 +645,6 @@ async function playSpokenPrompt() {
     state.promptPlaying = true;
     // Band stays pullable for the whole prompt (not locked until audio ends)
 
-    if (listenButton) {
-        listenButton.disabled = true;
-        listenButton.classList.add('game16-listen--playing');
-    }
-
     try {
         await ensureAudioContext();
         if (!audioContext || audioContext.state !== 'running') {
@@ -658,20 +655,20 @@ async function playSpokenPrompt() {
 
         state.promptNeedsRetry = false;
         const promptPath = resolveGame16Asset(STRINGS.promptSound || 'sounds/ForsokTraffa.mp3');
+        const wordPath = resolveWordSound(state.targetWord.sound);
+        await Promise.all([
+            loadAudioBuffer(promptPath, true),
+            loadAudioBuffer(wordPath, false)
+        ]);
         const playedFile = await playBufferUrlIfExists(promptPath);
         if (!playedFile) {
             await speakPromptPhrase(STRINGS.promptSpeech || 'Försök träffa');
         }
         if (state.roundComplete || !state.targetWord) return;
 
-        const wordPath = resolveWordSound(state.targetWord.sound);
         await playBufferUrl(wordPath);
     } finally {
         state.promptPlaying = false;
-        if (listenButton) {
-            listenButton.disabled = false;
-            listenButton.classList.remove('game16-listen--playing');
-        }
     }
 }
 
@@ -811,6 +808,21 @@ async function loadAudioBuffer(url, quietMissing) {
         if (!quietMissing) console.warn('Could not load audio:', url, error);
         return null;
     }
+}
+
+/** Queue intro + on-screen word clips for this round */
+function prefetchRoundSpeech(optionWords) {
+    const intro = resolveGame16Asset(STRINGS.promptSound || 'sounds/ForsokTraffa.mp3');
+    if (intro) void loadAudioBuffer(intro, true);
+    (optionWords || []).forEach((word) => {
+        if (!word || !word.sound) return;
+        void loadAudioBuffer(resolveWordSound(word.sound), true);
+    });
+}
+
+/** Warm all configured word audio (game 14 assets) at load */
+function prefetchAllSpeechAudio() {
+    prefetchRoundSpeech(WORDS);
 }
 
 /**
@@ -1234,6 +1246,7 @@ function stopBackgroundAmbience() {
 
 function handleFirstInteraction() {
     requestBackgroundAudioStart();
+    prefetchAllSpeechAudio();
     if (window.speechSynthesis) {
         window.speechSynthesis.getVoices();
     }

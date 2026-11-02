@@ -119,11 +119,6 @@
     transform: scale(0.97);
 }
 
-.game14-listen:disabled {
-    opacity: 0.65;
-    cursor: wait;
-}
-
 /* Kid face icon inside the listen button */
 .game14-listen__face {
     display: block;
@@ -137,49 +132,15 @@
     overflow: visible;
 }
 
-/* Idle: closed smile; speaking: open mouth */
+/* Idle: closed smile (open mouth layer hidden) */
 .game14-face__mouth-open {
     opacity: 0;
-}
-
-.game14-listen--playing .game14-face__smile {
-    opacity: 0;
-}
-
-.game14-listen--playing .game14-face__mouth-open {
-    opacity: 1;
-    transform-origin: 40px 56px;
-    animation: game14-talk 0.35s ease-in-out infinite;
-}
-
-.game14-listen--playing .game14-face__eye {
-    animation: game14-blink 2.4s ease-in-out infinite;
 }
 
 .game14-listen__label {
     font-size: clamp(0.85rem, 2.5vmin, 1.15rem);
     font-weight: 800;
     color: #4c1d95;
-}
-
-/* Soft pulse while the spoken prompt is playing */
-.game14-listen--playing {
-    animation: game14-listen-pulse 1s ease-in-out infinite;
-}
-
-@keyframes game14-listen-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-}
-
-@keyframes game14-talk {
-    0%, 100% { transform: scaleY(0.55); }
-    50% { transform: scaleY(1); }
-}
-
-@keyframes game14-blink {
-    0%, 42%, 48%, 100% { transform: scaleY(1); }
-    45% { transform: scaleY(0.15); }
 }
 
 /* 2x2 word choices */

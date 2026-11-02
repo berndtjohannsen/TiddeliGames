@@ -3,7 +3,7 @@ window.GAME14_STRINGS = Object.freeze({
     title: '',
     instructions: '',
     labels: {
-        continue: 'Fortsätt',
+        continue: 'Igen',
         back: 'Tillbaka',
         listen: 'Lyssna igen'
     },

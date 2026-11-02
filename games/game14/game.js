@@ -49,6 +49,7 @@ window.addEventListener('DOMContentLoaded', () => {
     cacheDomElements();
     populateStaticTexts();
     attachEventListeners();
+    prefetchAllSpeechAudio();
     startNewRound();
     requestBackgroundAudioStart();
 });
@@ -79,7 +80,7 @@ function cacheDomElements() {
 function populateStaticTexts() {
     if (titleEl) titleEl.textContent = STRINGS.title || '';
     if (instructionsEl) instructionsEl.textContent = STRINGS.instructions || '';
-    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Fortsätt';
+    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Igen';
     if (dialogBackButton) dialogBackButton.textContent = (STRINGS.labels && STRINGS.labels.back) || 'Tillbaka';
     if (completionTitle) completionTitle.textContent = (STRINGS.dialog && STRINGS.dialog.title) || '';
     if (completionMessage) completionMessage.textContent = (STRINGS.dialog && STRINGS.dialog.message) || '';
@@ -139,6 +140,7 @@ function startNewRound() {
     }
 
     setAnswersEnabled(false);
+    prefetchRoundSpeech(state.options);
     // Auto-play prompt once audio is allowed (first gesture or later rounds)
     playSpokenPrompt().catch((error) => {
         console.warn('Could not auto-play spoken prompt:', error);
@@ -222,10 +224,6 @@ async function playSpokenPrompt() {
     state.promptPlaying = true;
 
     setAnswersEnabled(false);
-    if (listenButton) {
-        listenButton.disabled = true;
-        listenButton.classList.add('game14-listen--playing');
-    }
 
     try {
         await ensureAudioContext();
@@ -236,6 +234,8 @@ async function playSpokenPrompt() {
 
         const promptPath = resolveGame14Asset(STRINGS.promptSound || 'sounds/VarStarDet.mp3');
         const wordPath = resolveGame14Asset(state.targetWord.sound);
+        // Decode before playback (avoids browser tab “loading” spinner mid-prompt)
+        await Promise.all([loadAudioBuffer(promptPath), loadAudioBuffer(wordPath)]);
         await playBufferUrl(promptPath);
         // Round finished (or word removed) while we were waiting — stop here
         if (state.roundComplete || !state.targetWord) return;
@@ -244,10 +244,6 @@ async function playSpokenPrompt() {
         await playBufferUrl(wordPath);
     } finally {
         state.promptPlaying = false;
-        if (listenButton) {
-            listenButton.disabled = false;
-            listenButton.classList.remove('game14-listen--playing');
-        }
         // Re-enable answers after a successful speech run; if audio is still locked
         // by the browser, keep them disabled until a gesture retries the prompt.
         if (!state.roundComplete && state.targetWord && audioContext && audioContext.state === 'running') {
@@ -316,6 +312,21 @@ function setAnswersEnabled(enabled) {
     state.answerButtons.forEach((btn) => {
         btn.disabled = !enabled;
     });
+}
+
+/** Queue decode for intro + words on screen this round */
+function prefetchRoundSpeech(optionWords) {
+    const intro = resolveGame14Asset(STRINGS.promptSound || 'sounds/VarStarDet.mp3');
+    if (intro) void loadAudioBuffer(intro);
+    (optionWords || []).forEach((word) => {
+        if (!word || !word.sound) return;
+        void loadAudioBuffer(resolveGame14Asset(word.sound));
+    });
+}
+
+/** Warm all word clips once so later rounds do not surprise-fetch */
+function prefetchAllSpeechAudio() {
+    prefetchRoundSpeech(WORDS);
 }
 
 function shuffleArray(array) {
@@ -464,6 +475,7 @@ function requestBackgroundAudioStart() {
  */
 function handleFirstInteraction(event) {
     requestBackgroundAudioStart();
+    prefetchAllSpeechAudio();
 
     const target = event && event.target;
     const tappedAnswer = target && typeof target.closest === 'function'

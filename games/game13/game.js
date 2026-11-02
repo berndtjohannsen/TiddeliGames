@@ -84,7 +84,7 @@ function cacheDomElements() {
 function populateStaticTexts() {
     if (titleEl) titleEl.textContent = STRINGS.title || '';
     if (instructionsEl) instructionsEl.textContent = STRINGS.instructions || '';
-    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Fortsätt';
+    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Igen';
     if (dialogBackButton) dialogBackButton.textContent = (STRINGS.labels && STRINGS.labels.back) || 'Tillbaka';
     if (completionTitle) completionTitle.textContent = (STRINGS.dialog && STRINGS.dialog.title) || '';
     if (completionMessage) completionMessage.textContent = (STRINGS.dialog && STRINGS.dialog.message) || '';

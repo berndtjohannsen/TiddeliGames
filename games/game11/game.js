@@ -37,57 +37,107 @@ const COLORS = Object.freeze([
         id: 'purple',
         name: 'lila',
         dotColor: '#a855f7'
+    },
+    {
+        id: 'black',
+        name: 'svart',
+        dotColor: '#1e293b'
+    },
+    {
+        id: 'brown',
+        name: 'brun',
+        dotColor: '#92400e'
+    },
+    {
+        id: 'orange',
+        name: 'orange',
+        dotColor: '#ea580c'
+    },
+    {
+        id: 'white',
+        name: 'vit',
+        /* Slightly darker than the ball art so the crayon dot stays visible on grass */
+        dotColor: '#cbd5e1'
     }
 ]);
 
 // Available object images for each color (randomly chosen per round)
 const OBJECT_IMAGES = Object.freeze({
     red: [
-        'images/ballRed.jpg',
-        'images/carRed.jpg',
-        'images/bootsRed.jpg',
-        'images/bucketRed.jpg',
-        'images/elephantRed.jpg',
-               'images/jacketRed.jpg'
+        'images/ballRed.png',
+        'images/carRed.png',
+        'images/bootsRed.png',
+        'images/bucketRed.png',
+        'images/elephantRed.png',
+               'images/jacketRed.png'
     ],
     blue: [
-        'images/ballBlue.jpg',
-        'images/carBlue.jpg',
-        'images/bootsBlue.jpg',
-        'images/bucketBlue.jpg',
-        'images/elephantBlue.jpg',
-        'images/JacketBlue.jpg',
+        'images/ballBlue.png',
+        'images/carBlue.png',
+        'images/bootsBlue.png',
+        'images/bucketBlue.png',
+        'images/elephantBlue.png',
+        'images/JacketBlue.png',
         'images/blueBoots.png'
     ],
     green: [
-        'images/ballGreen.jpg',
-        'images/carGreen.jpg',
-        'images/bootsGreen.jpg',
-        'images/bucketGreen.jpg',
-        'images/elephantGreen.jpg',
-        'images/JacketGreen.jpg'
+        'images/ballGreen.png',
+        'images/carGreen.png',
+        'images/bootsGreen.png',
+        'images/bucketGreen.png',
+        'images/elephantGreen.png',
+        'images/JacketGreen.png'
     ],
     yellow: [
-        'images/ballYellow.jpg',
-        'images/carYellow.jpg',
-        'images/bootsYellow.jpg',
-        'images/bucketYellow.jpg',
-        'images/elephantYellow.jpg',
-        'images/jacketYellow.jpg'
+        'images/ballYellow.png',
+        'images/carYellow.png',
+        'images/bootsYellow.png',
+        'images/bucketYellow.png',
+        'images/elephantYellow.png',
+        'images/jacketYellow.png'
     ],
     pink: [
-        'images/ballPink.jpg',
-        'images/carPing.jpg', // pink car (file name typo)
-        'images/bootsPink.jpg',
-        'images/bucketPink.jpg',
-        'images/elephantPink.jpg',
-        'images/jacketPink.jpg'
+        'images/ballPink.png',
+        'images/carPing.png', // pink car (file name typo)
+        'images/bootsPink.png',
+        'images/bucketPink.png',
+        'images/elephantPink.png',
+        'images/jacketPink.png'
     ],
     purple: [
-        'images/ballPurple.jpg',
-        'images/carPurple.jpg',
-        'images/bucketPurple.jpg',
-        'images/elephantPurple.jpg'
+        'images/ballPurple.png',
+        'images/carPurple.png',
+        'images/bucketPurple.png',
+        'images/elephantPurple.png'
+    ],
+    black: [
+        'images/ballBlack.png',
+        'images/carBlack.png',
+        'images/bootsBlack.png',
+        'images/bucketBlack.png',
+        'images/elephantBlack.png',
+        'images/jacketBlack.png'
+    ],
+    brown: [
+        'images/ballBrown.png',
+        'images/carBrown.png',
+        'images/bootsBrown.png',
+        'images/elephantBrown.png',
+        'images/jacketBrown.png'
+    ],
+    orange: [
+        'images/ballOrange.png',
+        'images/bootsOrange.png',
+        'images/bucketOrange.png',
+        'images/jacketOrange.png'
+    ],
+    white: [
+        'images/ballWhite.png',
+        'images/carWhite.png',
+        'images/bootsWhite.png',
+        'images/bucketWhite.png',
+        'images/elephantWhite.png',
+        'images/jacketWhite.png'
     ]
 });
 
@@ -96,7 +146,7 @@ const GAME11_ASSETS = window.TiddeliAssets;
 /**
  * Resolves a game11-local asset path via TiddeliAssets (same as other games).
  * Falls back to APP_CONFIG.assetBaseUrl when TiddeliAssets is not yet available (e.g. script order on deploy).
- * @param {string} path Relative path like "images/ballRed.jpg" or "sounds/background.mp3"
+ * @param {string} path Relative path like "images/ballRed.png" or "sounds/background.mp3"
  * @returns {string} Resolved URL
  */
 function resolveGame11Asset(path) {
@@ -130,13 +180,17 @@ function getRandomImageForColor(colorId) {
     }
     // Fallbacks
     switch (colorId) {
-        case 'red': return resolveGame11Asset('images/ballRed.jpg');
-        case 'blue': return resolveGame11Asset('images/ballBlue.jpg');
-        case 'green': return resolveGame11Asset('images/ballGreen.jpg');
-        case 'yellow': return resolveGame11Asset('images/ballYellow.jpg');
-        case 'pink': return resolveGame11Asset('images/ballPink.jpg');
-        case 'purple': return resolveGame11Asset('images/ballPurple.jpg');
-        default: return resolveGame11Asset('images/ballRed.jpg');
+        case 'red': return resolveGame11Asset('images/ballRed.png');
+        case 'blue': return resolveGame11Asset('images/ballBlue.png');
+        case 'green': return resolveGame11Asset('images/ballGreen.png');
+        case 'yellow': return resolveGame11Asset('images/ballYellow.png');
+        case 'pink': return resolveGame11Asset('images/ballPink.png');
+        case 'purple': return resolveGame11Asset('images/ballPurple.png');
+        case 'black': return resolveGame11Asset('images/ballBlack.png');
+        case 'brown': return resolveGame11Asset('images/ballBrown.png');
+        case 'orange': return resolveGame11Asset('images/ballOrange.png');
+        case 'white': return resolveGame11Asset('images/ballWhite.png');
+        default: return resolveGame11Asset('images/ballRed.png');
     }
 }
 

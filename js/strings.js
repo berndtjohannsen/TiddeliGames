@@ -145,6 +145,13 @@ window.APP_STRINGS = Object.freeze({
                 description: 'Peka på rätt färg. (3+ år)',
                 icon: '🐰',
                 path: 'games/game18/index.html'
+            },
+            {
+                id: 'game19',
+                name: 'Räkna hoppen',
+                description: 'Räkna hopp. (4+ år)',
+                icon: '🐇',
+                path: 'games/game19/index.html'
             }
         ]
     },

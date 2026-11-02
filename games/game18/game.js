@@ -179,8 +179,6 @@ let completionMessage = null;
 let continueButton = null;
 let dialogBackButton = null;
 let missTapLayer = null;
-let missHintTimer = null;
-let defaultInstructionsText = '';
 let audioContext = null;
 let backgroundBuffer = null;
 let backgroundSource = null;
@@ -225,7 +223,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setupRabbitBurst();
     attachEventListeners();
     resizeConfettiCanvas();
-    prefetchRoundSfx();
+    prefetchAllGame18SpeechAudio();
     startNewRound();
 });
 
@@ -269,10 +267,9 @@ function cacheDomElements() {
 }
 
 function populateStaticTexts() {
-    if (titleEl) titleEl.textContent = STRINGS.title || '';
-    defaultInstructionsText = STRINGS.instructions || '';
-    if (instructionsEl) instructionsEl.textContent = defaultInstructionsText;
-    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Fortsätt';
+    if (titleEl) titleEl.textContent = '';
+    if (instructionsEl) instructionsEl.textContent = '';
+    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Igen';
     if (dialogBackButton) dialogBackButton.textContent = (STRINGS.labels && STRINGS.labels.back) || 'Tillbaka';
     if (completionTitle) completionTitle.textContent = (STRINGS.dialog && STRINGS.dialog.title) || '';
     if (completionMessage) completionMessage.textContent = (STRINGS.dialog && STRINGS.dialog.message) || '';
@@ -365,10 +362,6 @@ function beginCorrectAnswer(entry) {
         promptGeneration += 1;
         stopPromptPlayback();
         state.promptBusy = false;
-        if (listenButton) {
-            listenButton.disabled = false;
-            listenButton.classList.remove('game18-listen--playing');
-        }
     }
 
     state.celebrating = true;
@@ -421,7 +414,6 @@ function handlePlayAreaClick(event) {
     }
 
     playMissTapTone();
-    flashMissTapHint();
 
     if (!state.canAnswer && !state.promptBusy && !state.celebrating && state.target) {
         void ensureAudioContext().then(() => playQuestionForTarget());
@@ -440,19 +432,6 @@ function showMissTapRipple(x, y) {
     ripple.style.top = `${y}px`;
     missTapLayer.appendChild(ripple);
     ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
-}
-
-function flashMissTapHint() {
-    if (!instructionsEl) return;
-    const hint = STRINGS.missTapHint || 'Peka på en möbel!';
-    instructionsEl.textContent = hint;
-    instructionsEl.classList.add('game18-instructions--miss');
-    if (missHintTimer) clearTimeout(missHintTimer);
-    missHintTimer = setTimeout(() => {
-        instructionsEl.textContent = defaultInstructionsText;
-        instructionsEl.classList.remove('game18-instructions--miss');
-        missHintTimer = null;
-    }, 1600);
 }
 
 async function playMissTapTone() {
@@ -535,11 +514,10 @@ function startNewRound() {
     });
 }
 
-/** Visual “wait” on furniture while the question plays or we celebrate (still clickable) */
+/** Subtle “busy” hint only during rabbit/confetti (furniture stays tappable) */
 function updateItemsBlocked() {
-    const block = state.promptBusy || state.celebrating;
     if (itemsLayer) {
-        itemsLayer.classList.toggle('game18-items--locked', block);
+        itemsLayer.classList.toggle('game18-items--locked', state.celebrating);
     }
 }
 
@@ -874,11 +852,6 @@ async function playQuestionForTarget() {
     state.canAnswer = false;
     updateItemsBlocked();
 
-    if (listenButton) {
-        listenButton.disabled = true;
-        listenButton.classList.add('game18-listen--playing');
-    }
-
     let heardPrompt = false;
 
     try {
@@ -901,6 +874,12 @@ async function playQuestionForTarget() {
                 : ''
         );
 
+        // Decode before playback so we do not fetch mid-prompt (browser tab spinner)
+        await Promise.all([
+            introPath ? loadAudioBuffer(introPath) : null,
+            specificPath ? loadAudioBuffer(specificPath) : null
+        ]);
+
         // Intro ("Peka på den") then tail clip (e.g. chair colour) or TTS for the rest
         const playedIntro = await playBufferUrlIfExists(introPath);
         const playedSpecific = await playBufferUrlIfExists(specificPath);
@@ -919,10 +898,6 @@ async function playQuestionForTarget() {
     } finally {
         if (promptGen === promptGeneration) {
             state.promptBusy = false;
-            if (listenButton) {
-                listenButton.disabled = false;
-                listenButton.classList.remove('game18-listen--playing');
-            }
             clearStaleItemFocus();
             if (heardPrompt && !state.celebrating && !state.roundComplete && state.target) {
                 state.canAnswer = true;
@@ -1172,6 +1147,26 @@ function prefetchRoundSfx() {
         if (!path) return;
         const url = resolveGame18Asset(path);
         if (url) void loadAudioBuffer(url);
+    });
+}
+
+/**
+ * Queue every furniture prompt MP3 once at load so questions never start a surprise fetch.
+ */
+function prefetchAllGame18SpeechAudio() {
+    prefetchRoundSfx();
+    if (typeof STRINGS.promptSoundFor !== 'function') return;
+    ITEM_TYPES.forEach((itemType) => {
+        const palette =
+            typeof STRINGS.colorsForItemType === 'function'
+                ? STRINGS.colorsForItemType(itemType.id)
+                : COLORS;
+        palette.forEach((color) => {
+            const path = STRINGS.promptSoundFor(color.id, itemType.id);
+            if (!path) return;
+            const url = resolveGame18Asset(path);
+            if (url) void loadAudioBuffer(url);
+        });
     });
 }
 
@@ -1462,6 +1457,7 @@ function stopBackgroundAmbience() {
 
 function handleFirstInteraction() {
     requestBackgroundAudioStart();
+    prefetchAllGame18SpeechAudio();
     const track = STRINGS.ambience && STRINGS.ambience.track;
     if (track) {
         void loadAudioBuffer(resolveGame18Asset(track));

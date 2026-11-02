@@ -488,6 +488,10 @@ async function startBackgroundAmbience() {
     backgroundSource.connect(backgroundGain);
     backgroundGain.connect(audioContext.destination);
     backgroundSource.start();
+
+    if (window.playGameIntroFromStrings) {
+        playGameIntroFromStrings('game3', STRINGS, audioContext, resolveGame3Asset);
+    }
 }
 
 /**

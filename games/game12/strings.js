@@ -3,8 +3,10 @@
 window.GAME12_STRINGS = Object.freeze({
     title: '',
     instructions: '',
+    /** One-shot “how to play” when the game opens — see design.md (spoken prompts) */
+    gameIntroSound: 'sounds/drag_ordet_till.mp3',
     labels: {
-        continue: 'Fortsätt',
+        continue: 'Igen',
         back: 'Tillbaka'
     },
     dialog: {

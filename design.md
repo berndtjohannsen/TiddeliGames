@@ -184,9 +184,63 @@ The Service Worker (`sw.js`) is responsible for caching the shell and may also c
 - **pwa.js**: Service Worker registration, install prompt handling, PWA lifecycle management
 - **volume-control.js**: Global volume control system for all games (slider, mute button, localStorage persistence)
 - **strings.js**: Localization strings for main page (games, help text, update messages, etc.)
-- **audio.js**: Shared completion sound helper (plays one of 36 completion sounds from shared assets using the HTML5 Audio API)
+- **audio.js**: Shared completion sound helper, one-shot game intro (`playGameIntroOnce`), and related audio utilities (HTML5 Audio API)
 
-# Version management and updates
+## Spoken prompts (MP3)
+
+Use this checklist whenever adding or replacing voice clips (including files from `promptgenerator/` or Downloads).
+
+### MP3 technical format (required)
+
+All spoken clips in the assets repo must use the **same** encoding so Web Audio decode and volume levels stay consistent:
+
+| Property | Value |
+|----------|--------|
+| Container | `.mp3` (MPEG-1 Audio Layer III) |
+| Sample rate | **24 000 Hz** |
+| Channels | **1 (mono)** |
+| Bitrate | **128–192 kbps** CBR (promptgenerator default **192 kbps** via lamejs) |
+
+**Do not** commit stereo, 44.1/48 kHz, or WAV prompts as game assets. If a clip comes from another tool, re-export through **`promptgenerator/index.html`** (Gemini TTS → PCM → MP3) or normalize with:
+
+```bash
+ffmpeg -i input.mp3 -ar 24000 -ac 1 -b:a 160k -codec:a libmp3lame output.mp3
+```
+
+(Gemini TTS returns 24 kHz mono PCM; the generator passes that straight into lamejs — do not resample in the browser.)
+
+### File naming and placement
+
+- **Path:** `TiddeliGames-assets/games/{gameId}/sounds/` only (not in the main app repo).
+- **Filename:** lowercase **snake_case**, Swedish words abbreviated naturally, e.g. `klicka_pa_bildens.mp3`, `rakna_frukterna.mp3`, `drag_ordet_till.mp3`. No spaces, no `PascalCase`.
+- **strings.js value:** always `'sounds/{filename}.mp3'` (relative to that game’s assets folder).
+- **After adding/changing media:** bump `assetVersion` in `js/config.js` and deploy the assets host.
+
+### Which `strings.js` field to use
+
+| Purpose | Field | When it plays | Games |
+|--------|--------|----------------|-------|
+| **Game open / how to play (once per visit)** | `gameIntroSound` | Once after ambience starts (`playGameIntroOnce`) | 1, 3, 10, 12 |
+| **Lead-in before each task** | `promptSound` | Before target word/clue each round | 14, 16, 17 |
+| **Lead-in + per-item phrase** | `promptIntroSound` + `promptSoundFor()` | Intro clip, then colour+object MP3 | 18 |
+| **Per-round + answer question** | `roundIntroSounds`, `answerPromptSound` | Each round / after jumps | 19 |
+
+Do **not** duplicate spoken copy in the on-screen instructions header; prompts are audio-only (empty instruction line for layout is OK).
+
+### Wiring in game code
+
+- **One-shot intro:** after background ambience is running, call  
+  `playGameIntroFromStrings('gameN', STRINGS, audioContext, resolveGameNAsset)`  
+  (from `js/audio.js`; already loaded on game pages).
+- **Repeating prompt:** load via `resolveGameAsset`, play with existing game buffer helpers; keep TTS fallback only where the game already supports it.
+- **Prefetch:** add new prompt paths to the game’s existing prefetch list if it has one.
+
+### Creating clips
+
+- Use `promptgenerator/index.html` — text field first, download name from first ~3 words (snake_case + `.mp3`). Output is always **24 kHz mono MP3** from Gemini PCM + lamejs.
+- Style line in generator: `Read aloud, in swedish, in a warm and friendly tone:` (or game-specific style for colour emphasis in game 18 item lines).
+- After download, copy into `TiddeliGames-assets/games/{gameId}/sounds/` — do not re-encode unless the file came from outside the generator.
+
 
 ## Versioning Strategy
 - Semantic versioning (MAJOR.MINOR.PATCH)

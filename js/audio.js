@@ -160,3 +160,74 @@ document.addEventListener('click', handleCompletionDialogLeave, true);
 // Make functions available globally for all games to use
 window.playSharedCompletionSound = playSharedCompletionSound;
 window.stopSharedCompletionSound = stopSharedCompletionSound;
+
+/** Games that already played their one-shot intro clip this page load */
+const gameIntroPlayedIds = new Set();
+
+/**
+ * Plays a short game introduction MP3 once per visit (when audio context is running).
+ * @param {string} gameId - e.g. 'game3'
+ * @param {string} assetPath - path relative to game assets, or already resolved URL
+ * @param {AudioContext} audioContext
+ * @param {(path: string) => string} [resolveAsset] - optional resolver (game + path → URL)
+ */
+async function playGameIntroOnce(gameId, assetPath, audioContext, resolveAsset) {
+    if (!gameId || !assetPath || !audioContext) return;
+    if (gameIntroPlayedIds.has(gameId)) return;
+    gameIntroPlayedIds.add(gameId);
+
+    const url = typeof resolveAsset === 'function' ? resolveAsset(assetPath) : assetPath;
+    if (!url) {
+        gameIntroPlayedIds.delete(gameId);
+        return;
+    }
+
+    if (audioContext.state !== 'running') {
+        try {
+            await audioContext.resume();
+            await new Promise((resolve) => setTimeout(resolve, 10));
+        } catch (error) {
+            console.warn('Could not resume audio for game intro:', error);
+            gameIntroPlayedIds.delete(gameId);
+            return;
+        }
+    }
+    if (audioContext.state !== 'running') {
+        gameIntroPlayedIds.delete(gameId);
+        return;
+    }
+
+    try {
+        const response = await fetch(url, { cache: 'force-cache' });
+        if (!response.ok) {
+            gameIntroPlayedIds.delete(gameId);
+            return;
+        }
+        const buffer = await audioContext.decodeAudioData(await response.arrayBuffer());
+        const source = audioContext.createBufferSource();
+        const gain = audioContext.createGain();
+        const globalVolume = window.TiddeliGamesVolume?.get() ?? 0.35;
+        gain.gain.setValueAtTime(Math.min(1, globalVolume * 1.25), audioContext.currentTime);
+        source.buffer = buffer;
+        source.connect(gain);
+        gain.connect(audioContext.destination);
+        source.start(0);
+    } catch (error) {
+        console.warn('Game intro sound failed:', gameId, error);
+        gameIntroPlayedIds.delete(gameId);
+    }
+}
+
+window.playGameIntroOnce = playGameIntroOnce;
+
+/**
+ * Standard entry point for games with `gameIntroSound` in strings.js (see design.md).
+ * Call once background ambience is running and audioContext.state === 'running'.
+ */
+function playGameIntroFromStrings(gameId, strings, audioContext, resolveAsset) {
+    const path = strings && strings.gameIntroSound;
+    if (!path) return;
+    void playGameIntroOnce(gameId, path, audioContext, resolveAsset);
+}
+
+window.playGameIntroFromStrings = playGameIntroFromStrings;

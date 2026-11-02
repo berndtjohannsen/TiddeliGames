@@ -1,11 +1,12 @@
 // Local strings and resources for "Hitta kaninen?" (Game 18)
 window.GAME18_STRINGS = Object.freeze({
     title: 'Hitta kaninen?',
+    /** Not shown on screen (game 19 pattern); prompts are spoken only */
     instructions: 'Lyssna och peka på rätt sak.',
-    /** Shown briefly when the child taps the room floor instead of a prop */
+    /** Floor-tap feedback is ripple + sound only (no header text) */
     missTapHint: 'Peka på en möbel!',
     labels: {
-        continue: 'Fortsätt',
+        continue: 'Igen',
         back: 'Tillbaka',
         listen: 'Lyssna igen'
     },

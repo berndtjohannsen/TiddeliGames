@@ -5,7 +5,7 @@ window.GAME15_STRINGS = Object.freeze({
     // Brief hint when the phone has no Swedish TTS voice and we use the default
     noSwedishVoiceHint: 'Ingen svensk röst – använder telefonens vanliga röst.',
     labels: {
-        continue: 'Fortsätt',
+        continue: 'Igen',
         back: 'Tillbaka',
         clear: 'Rensa',
         backspace: '←'

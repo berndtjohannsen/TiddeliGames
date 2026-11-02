@@ -1,0 +1,552 @@
+/* Räkna hoppen (Game 19) – count jumps, tap 1–9 */
+
+.game19-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game19-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game19-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game19-header__center {
+    text-align: center;
+}
+
+/* Empty title row (same as game 16 — no visible title, keeps vertical rhythm) */
+.game19-title {
+    font-size: clamp(1.5rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #14532d;
+    margin: 0;
+}
+
+/* Spoken prompts only; empty line reserves space like game16-instructions */
+.game19-instructions {
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    font-weight: 600;
+    color: #166534;
+    margin: 0;
+    min-height: 1.2em;
+}
+
+.game19-instructions:not(:empty) {
+    display: none;
+}
+.game19-header__buttons {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 0;
+}
+
+.back-button {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+/* Same top row pattern as game 16: back control + centred progress */
+.game19-carrots {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.35rem, 1.8vw, 0.65rem);
+    pointer-events: none;
+}
+
+.game19-carrot {
+    display: inline-block;
+    font-size: clamp(1.65rem, 5.6vw, 2.35rem);
+    line-height: 1;
+    opacity: 0.4;
+    filter: grayscale(1);
+    transform: scale(0.92);
+    transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+    user-select: none;
+}
+
+/* Won rounds: full carrot colour (same look every time) */
+.game19-carrot--done {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+}
+
+.game19-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 2rem;
+    overflow: hidden;
+    box-shadow: inset 0 0 25px rgba(22, 101, 52, 0.12);
+}
+
+/* Canvas confetti on correct answers (above pad, below completion dialog) */
+.game19-confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.game19-stage {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    border-radius: 0;
+    overflow: hidden;
+    background: linear-gradient(180deg, #7dd3fc 0%, #bbf7d0 45%, #86efac 100%);
+    background-size: cover;
+    /* Portrait: show a bit more sky so trampoline sits lower in the frame */
+    background-position: center 54%;
+}
+
+@media (min-aspect-ratio: 4/5) {
+    .game19-stage {
+        background-position: center center;
+    }
+}
+
+/* Rabbit + spring sit on the painted trampoline (tuned on real phone viewport) */
+.game19-jump-anchor {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(20%, 22vw, 28%);
+    transform: translateX(calc(-50% + var(--game19-align-x, 0px)));
+    width: clamp(6rem, 30vw, 8.5rem);
+    height: clamp(9rem, 42vw, 12.5rem);
+    pointer-events: none;
+    z-index: 2;
+    overflow: visible;
+}
+
+/* Bounce pad under the rabbit’s feet (inside jump-anchor) */
+.game19-trampoline-visual {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 105%;
+    height: clamp(1.85rem, 28%, 2.55rem);
+    transform: translateX(-50%);
+    transform-origin: 50% 55%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.game19-trampoline-rim {
+    display: none;
+}
+
+.game19-trampoline-mat {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    /* Light tint so landing squash animation is visible on the painted mat */
+    background:
+        radial-gradient(
+            ellipse 100% 100% at 50% 48%,
+            rgba(186, 230, 253, 0.38) 0%,
+            rgba(96, 165, 250, 0.28) 55%,
+            rgba(37, 99, 235, 0.12) 100%
+        );
+    box-shadow:
+        inset 0 -5px 10px rgba(30, 64, 175, 0.22),
+        inset 0 2px 6px rgba(255, 255, 255, 0.2);
+}
+
+.game19-trampoline-visual.game19-trampoline--bounce {
+    animation: game19-tramp-bend var(--hop-duration, 650ms) cubic-bezier(0.42, 0, 0.58, 1) forwards;
+}
+
+/* Mat follows rabbit with a soft landing (no hard gravity snap) */
+@keyframes game19-tramp-bend {
+    0%,
+    100% {
+        transform: translateX(-50%) scale(1, 1) translateY(0);
+    }
+    44% {
+        transform: translateX(-50%) scale(0.99, 1.03) translateY(-1px);
+    }
+    78% {
+        transform: translateX(-50%) scale(1.12, 0.62) translateY(3px);
+    }
+    88% {
+        transform: translateX(-50%) scale(0.94, 1.08) translateY(-2px);
+    }
+    96% {
+        transform: translateX(-50%) scale(1.01, 0.99) translateY(0);
+    }
+}
+
+.game19-rabbit-root {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    /* Taller box for 140×256 jump frames (feet on baseline at ~98% height) */
+    width: 92%;
+    height: 118%;
+    overflow: visible;
+    z-index: 1;
+}
+
+.game19-rabbit-shadow {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 50%;
+    height: 10%;
+    transform: translateX(-50%);
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: contain;
+    opacity: 0.45;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.game19-rabbit {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-size: calc(var(--sheet-steps, 6) * 100%) 100%;
+    background-position: 0 0;
+    /* Feet baseline anchor from sprite pack README */
+    transform-origin: 50% 98%;
+    z-index: 1;
+}
+
+.game19-rabbit-root--sheet .game19-rabbit {
+    display: block;
+}
+
+.game19-rabbit-root.game19-rabbit-root--hop {
+    will-change: transform;
+}
+
+.game19-rabbit-root.game19-rabbit-root--hop .game19-rabbit {
+    will-change: background-position, transform;
+}
+
+/* Number pad: hidden until answer phase, then overlaid on the rabbit */
+.game19-pad {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: clamp(4rem, 19%, 5.25rem);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-content: flex-end;
+    align-items: center;
+    gap: clamp(0.2rem, 1vw, 0.4rem);
+    max-width: calc(5 * 2.35rem + 4 * 0.35rem);
+    margin: 0 auto;
+    padding: 0.1rem 0.3rem 0.35rem;
+    pointer-events: none;
+    z-index: 3;
+    box-sizing: content-box;
+    visibility: hidden;
+    opacity: 0;
+}
+
+/* Answer overlay: larger bubbles centred over the trampoline */
+.game19-pad.game19-pad--answer {
+    left: 50%;
+    right: auto;
+    top: 38%;
+    bottom: auto;
+    height: auto;
+    max-width: min(94%, 24rem);
+    padding: clamp(0.45rem, 2vw, 0.75rem) clamp(0.35rem, 2vw, 0.65rem);
+    border-radius: 1.15rem;
+    background: rgba(255, 255, 255, 0.32);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+    z-index: 6;
+    align-content: center;
+    gap: clamp(0.35rem, 1.2vw, 0.55rem);
+    transform: translate(-50%, -46%) scale(0.94);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+        opacity 0.34s ease,
+        transform 0.34s ease,
+        visibility 0.34s ease;
+}
+
+.game19-pad.game19-pad--answer.game19-pad--visible:not(.game19-pad--hiding) {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+}
+
+.game19-pad.game19-pad--answer.game19-pad--hiding {
+    visibility: hidden;
+    opacity: 0;
+    transform: translate(-50%, -58%) scale(0.92);
+    pointer-events: none;
+}
+
+.game19-pad.game19-pad--answer .game19-pad__btn {
+    flex: 0 0 clamp(2.65rem, 11vw, 3.15rem);
+    width: clamp(2.65rem, 11vw, 3.15rem);
+    height: clamp(2.65rem, 11vw, 3.15rem);
+    max-width: none;
+    max-height: none;
+    font-size: clamp(1.15rem, 4.5vw, 1.55rem);
+}
+
+.game19-pad:not(.game19-pad--locked).game19-pad--answer.game19-pad--visible:not(.game19-pad--hiding) {
+    pointer-events: auto;
+}
+
+.game19-pad--locked .game19-pad__btn {
+    animation: none;
+    filter: saturate(0.85);
+}
+
+.game19-pad__btn {
+    position: relative;
+    flex: 0 0 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+    max-width: 2.35rem;
+    max-height: 2.35rem;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(0.95rem, 3.4vw, 1.25rem);
+    font-weight: 800;
+    color: #0f172a;
+    cursor: pointer;
+    user-select: none;
+    border: 3px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
+    transition: transform 120ms ease, box-shadow 120ms ease;
+    animation: game19-num-float 7s ease-in-out infinite;
+    animation-delay: calc(var(--float-phase, 0) * 1s);
+    transform: rotate(var(--btn-tilt, 0deg));
+}
+
+.game19-pad__btn::after {
+    content: "";
+    position: absolute;
+    top: 12%;
+    left: 22%;
+    width: 38%;
+    height: 38%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.game19-pad__btn:nth-child(5n + 1) {
+    background: conic-gradient(from 180deg at 50% 50%, #fbbf24 0deg, #f97316 120deg, #fb7185 240deg, #fbbf24 360deg);
+    --float-phase: 0.15;
+    --btn-tilt: -3deg;
+}
+
+.game19-pad__btn:nth-child(5n + 2) {
+    background: conic-gradient(from 90deg at 50% 50%, #a855f7 0deg, #22d3ee 140deg, #60a5fa 260deg, #a855f7 360deg);
+    --float-phase: 0.55;
+    --btn-tilt: 2deg;
+}
+
+.game19-pad__btn:nth-child(5n + 3) {
+    background: conic-gradient(from 45deg at 50% 50%, #34d399 0deg, #bef264 150deg, #38bdf8 280deg, #34d399 360deg);
+    --float-phase: 1.05;
+    --btn-tilt: -2deg;
+}
+
+.game19-pad__btn:nth-child(5n + 4) {
+    background: conic-gradient(from 0deg at 50% 50%, #f472b6 0deg, #f9a8d4 160deg, #facc15 280deg, #f472b6 360deg);
+    --float-phase: 1.65;
+    --btn-tilt: 3deg;
+}
+
+.game19-pad__btn:nth-child(5n) {
+    background: conic-gradient(from 270deg at 50% 50%, #22c55e 0deg, #84cc16 130deg, #14b8a6 260deg, #22c55e 360deg);
+    --float-phase: 2.2;
+    --btn-tilt: -2deg;
+}
+
+.game19-pad__btn:active:not(:disabled) {
+    transform: rotate(var(--btn-tilt, 0deg)) scale(0.94);
+}
+
+.game19-pad__btn:disabled {
+    cursor: default;
+}
+
+.game19-pad__btn--wrong {
+    animation: game19-wrong-wobble 0.55s ease;
+}
+
+@keyframes game19-num-float {
+    0%,
+    100% {
+        transform: rotate(var(--btn-tilt, 0deg)) translate(0, 0);
+    }
+    50% {
+        transform: rotate(var(--btn-tilt, 0deg)) translate(1px, -2px);
+    }
+}
+
+@keyframes game19-wrong-wobble {
+    0%,
+    100% {
+        transform: rotate(var(--btn-tilt, 0deg));
+    }
+    20% {
+        transform: translateX(-5px) rotate(calc(var(--btn-tilt, 0deg) - 5deg));
+    }
+    40% {
+        transform: translateX(5px) rotate(calc(var(--btn-tilt, 0deg) + 5deg));
+    }
+    60% {
+        transform: translateX(-3px) rotate(var(--btn-tilt, 0deg));
+    }
+    80% {
+        transform: translateX(3px) rotate(var(--btn-tilt, 0deg));
+    }
+}
+
+.game19-pad__btn--right {
+    background: conic-gradient(from 0deg at 50% 50%, #34d399 0deg, #22d3ee 120deg, #60a5fa 240deg, #34d399 360deg) !important;
+    border-color: rgba(255, 255, 255, 0.75);
+    box-shadow: 0 10px 20px rgba(34, 197, 94, 0.45);
+}
+
+.game19-instructions--countdown {
+    font-weight: 700;
+    color: #b45309;
+}
+
+/* Completion dialog overlay (layout; shared polish in styles.css / tailwind) */
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 252, 220, 0.98) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(255, 170, 150, 0.55) 0%, transparent 38%),
+        radial-gradient(circle at 70% 95%, rgba(120, 220, 190, 0.4) 0%, transparent 48%),
+        linear-gradient(165deg, #fff9ef 0%, #ffe6c8 45%, #ffd5df 100%);
+    border: 3px solid rgba(251, 191, 36, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+        0 22px 50px rgba(234, 88, 12, 0.22),
+        0 0 48px rgba(250, 204, 21, 0.22);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    margin: 0;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    margin: 0;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}

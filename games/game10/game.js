@@ -534,6 +534,10 @@ async function startBackgroundAmbience() {
             backgroundGain.connect(audioContext.destination);
             
             backgroundSource.start(0);
+
+            if (window.playGameIntroFromStrings) {
+                playGameIntroFromStrings('game10', STRINGS, audioContext, resolveGame10Asset);
+            }
         }
     } catch (error) {
         console.warn('Could not start background ambience:', error);

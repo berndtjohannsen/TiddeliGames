@@ -2,8 +2,10 @@
 window.GAME10_STRINGS = Object.freeze({
     title: '',
     instructions: '',
+    /** One-shot “how to play” when the game opens — see design.md (spoken prompts) */
+    gameIntroSound: 'sounds/klicka_pa_bildens.mp3',
     labels: {
-        continue: 'Fortsätt',
+        continue: 'Igen',
         back: 'Tillbaka'
     },
     dialog: {

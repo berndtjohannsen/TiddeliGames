@@ -1,0 +1,79 @@
+<!-- Räkna hoppen (Game 19) – count rabbit jumps, pick 1–9 -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Räkna hoppen</title>
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-sky-200 via-emerald-50 to-lime-100">
+    <div class="game19-wrapper">
+        <header class="game19-header">
+            <div class="game19-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+                <div id="round-progress" class="game19-carrots" role="group" aria-live="polite"></div>
+            </div>
+            <!-- Empty slot matches game 16 header centre (breathing room above the play field) -->
+            <div class="game19-header__center">
+                <h1 class="game19-title" aria-hidden="true"></h1>
+                <p class="game19-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <main id="game19-field" class="game19-field" aria-live="polite">
+            <div id="game19-stage" class="game19-stage">
+                <!-- Rabbit anchored on the trampoline in the background art -->
+                <div id="jump-anchor" class="game19-jump-anchor">
+                    <div id="trampoline-bounce" class="game19-trampoline-visual" aria-hidden="true">
+                        <div class="game19-trampoline-rim"></div>
+                        <div class="game19-trampoline-mat"></div>
+                    </div>
+                    <!-- Shadow stays on the mat; rabbit sprite moves separately on hop -->
+                    <div id="rabbit-shadow" class="game19-rabbit-shadow" aria-hidden="true"></div>
+                    <div id="rabbit-root" class="game19-rabbit-root game19-rabbit-root--sheet">
+                        <div id="rabbit-sprite" class="game19-rabbit" role="img" aria-label="Kanin"></div>
+                    </div>
+                </div>
+                <div id="number-pad" class="game19-pad" role="group" aria-label="Välj antal hopp"></div>
+                <!-- Confetti burst when the child picks the right count -->
+                <canvas id="game19-confetti-canvas" class="game19-confetti" aria-hidden="true"></canvas>
+            </div>
+        </main>
+    </div>
+
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/version-check.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>

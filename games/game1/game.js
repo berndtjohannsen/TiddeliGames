@@ -434,6 +434,13 @@ async function requestAmbienceStart() {
         await startAmbience();
         if (audioContext && audioContext.state === 'running' && ambienceSource) {
             ambienceStarted = true;
+            if (window.playGameIntroFromStrings) {
+                playGameIntroFromStrings('game1', STRINGS, audioContext, (path) =>
+                    GAME1_ASSETS && typeof GAME1_ASSETS.resolveGameAsset === 'function'
+                        ? GAME1_ASSETS.resolveGameAsset('game1', path)
+                        : path
+                );
+            }
         }
     } catch (error) {
         console.warn('Unable to start ambience yet:', error);

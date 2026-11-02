@@ -148,6 +148,7 @@ window.addEventListener('DOMContentLoaded', () => {
     preloadEngineSample();
     preloadSuccessSample();
     preloadOupsSample();
+    prefetchAllSpeechAudio();
     startNewRound();
     requestBackgroundAudioStart();
     loop(performance.now());
@@ -172,7 +173,7 @@ function cacheDomElements() {
 function populateStaticTexts() {
     if (titleEl) titleEl.textContent = STRINGS.title || '';
     if (instructionsEl) instructionsEl.textContent = STRINGS.instructions || '';
-    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Fortsätt';
+    if (continueButton) continueButton.textContent = (STRINGS.labels && STRINGS.labels.continue) || 'Igen';
     if (dialogBackButton) dialogBackButton.textContent = (STRINGS.labels && STRINGS.labels.back) || 'Tillbaka';
     if (completionTitle) completionTitle.textContent = (STRINGS.dialog && STRINGS.dialog.title) || '';
     if (completionMessage) completionMessage.textContent = (STRINGS.dialog && STRINGS.dialog.message) || '';
@@ -373,6 +374,7 @@ function startNewRound() {
     }
 
     afterRoundLayoutReady(() => {
+        prefetchRoundSpeech(state.options);
         playSpokenPrompt().catch((error) => {
             console.warn('Could not play prompt:', error);
         });
@@ -2114,10 +2116,6 @@ async function playSpokenPrompt() {
     if (!state.targetWord) return;
     if (state.promptPlaying) return;
     state.promptPlaying = true;
-    if (listenButton) {
-        listenButton.disabled = true;
-        listenButton.classList.add('game17-listen--playing');
-    }
 
     try {
         await ensureAudioContext();
@@ -2127,19 +2125,19 @@ async function playSpokenPrompt() {
         }
         state.promptNeedsRetry = false;
         const promptPath = resolveGame17Asset(STRINGS.promptSound || 'sounds/KorMot.mp3');
+        const wordPath = resolveWordSound(state.targetWord.sound);
+        await Promise.all([
+            loadAudioBuffer(promptPath, true),
+            loadAudioBuffer(wordPath, true)
+        ]);
         const playedFile = await playBufferUrlIfExists(promptPath);
         if (!playedFile) {
             await speakPromptPhrase(STRINGS.promptSpeech || 'Kör mot');
         }
         if (state.roundComplete || !state.targetWord) return;
-        const wordPath = resolveWordSound(state.targetWord.sound);
         await playBufferUrl(wordPath);
     } finally {
         state.promptPlaying = false;
-        if (listenButton) {
-            listenButton.disabled = false;
-            listenButton.classList.remove('game17-listen--playing');
-        }
     }
 }
 
@@ -2251,6 +2249,21 @@ async function loadAudioBuffer(url, quietMissing) {
         if (!quietMissing) console.warn('Could not load audio:', url, error);
         return null;
     }
+}
+
+/** Queue intro + on-screen word clips for this round */
+function prefetchRoundSpeech(optionWords) {
+    const intro = resolveGame17Asset(STRINGS.promptSound || 'sounds/KorMot.mp3');
+    if (intro) void loadAudioBuffer(intro, true);
+    (optionWords || []).forEach((word) => {
+        if (!word || !word.sound) return;
+        void loadAudioBuffer(resolveWordSound(word.sound), true);
+    });
+}
+
+/** Warm all configured word audio (game 14 assets) at load */
+function prefetchAllSpeechAudio() {
+    prefetchRoundSpeech(WORDS);
 }
 
 /** Preload optional engine loop MP3 */
@@ -2688,6 +2701,7 @@ function stopBackgroundAmbience() {
 
 function handleFirstInteraction() {
     requestBackgroundAudioStart();
+    prefetchAllSpeechAudio();
     if (
         state.promptNeedsRetry &&
         !state.roundComplete &&
