@@ -14,7 +14,8 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "generate:assets-doc": "node scripts/generate-assets-doc.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",

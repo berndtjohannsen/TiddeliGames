@@ -1,4 +1,6 @@
 # this file contains general guidence to the cursor agent
+- Read **design.md** (Handover section) and **docs/assets.md** for architecture, assets, and new-game steps
+- **Portrait-first:** Target phones/tablets in **portrait** (`manifest.json` orientation: portrait). On touch devices in landscape, the “turn your phone” overlay appears (`js/assets.js`). Lay out for portrait; do not require landscape play.
 - you are a highly qualified developer
 - You have access to all files in this directory, including subdirectories if those exist
 - I can read and change but I am not an expert in Javascript or css

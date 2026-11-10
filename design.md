@@ -1,12 +1,160 @@
 # Description
-This file describes the implementation, architectural details and tech stack. Much intended to be created and used by AI.
+This file describes the implementation, architectural details and tech stack. It is written for **human developers and AI assistants** (including handover to another bot such as Grokbot). Pair it with **`.cursorrules`** (workspace rules) and **`docs/assets.md`** (media inventory + licences).
+
+# Handover for AI agents
+
+Read this section first when picking up the project cold.
+
+## Repositories and deployment
+
+| Location | Purpose |
+|----------|---------|
+| **This repo (`TiddeliGames`)** | PWA shell, hub, and all game HTML/CSS/JS. No large media files. |
+| **`TiddeliGames-assets`** (separate repo or sibling folder) | Images, sounds, video. Mirrors `games/{gameId}/...` and `assets/shared/...`. |
+| **Production app** | https://tiddelipom.com |
+| **Production assets** | `APP_CONFIG.assetBaseUrl` in `js/config.js` (e.g. `https://tiddeligames-assets.netlify.app`) |
+
+**Local dev:** `js/assets.js` uses base `/TiddeliGames-assets` on `localhost`, `127.0.0.1`, and common LAN IPs (phone testing against the PC). Mount the assets folder at that path (parent directory containing both repos works).
+
+**Deploy:** Push app and assets independently. After media changes on the assets host, users only see new files when **`assetVersion`** changes (appended as `?v=` on resolved URLs).
+
+## Versions (single source: `js/config.js`)
+
+| Field | When to bump |
+|-------|----------------|
+| `version` | Any app code, HTML, CSS, JS, or PWA behaviour change. Also drives SW registration: `sw.js?v=${version}` (`js/pwa.js`). |
+| `assetVersion` | When files on the assets Netlify site change. Can bump alone if only media changed. |
+
+Bump both together when releasing a coordinated app + media update. Do **not** maintain a separate version in `manifest.json` (not in spec). `sw.js` reads cache name from the `v` query param on the SW URL, not from a hard-coded string in the file.
+
+## User / owner conventions (from `.cursorrules`)
+
+- **Ask before:** new external libraries, new files or directories, deleting files (especially assets).
+- **Do not edit unless asked:** `README.md`, `tasks.md`, `.cursorrules`, `.gitignore`, `ignore.txt`.
+- **Git:** User normally commits and pushes; only commit when they explicitly ask.
+- **Code style:** Comment HTML, CSS, and JavaScript (English). Prefer small, low-regression diffs; reuse existing patterns.
+- **Live Server:** User runs it; you do not need to start it.
+- **License:** Non-commercial app (`README.md`); MIT third-party deps (Tailwind, Tone.js CDN) are fine for commercial *libraries* only — the app’s own license still applies.
+
+## Game catalog (19 games)
+
+The hub list is authoritative in `js/strings.js` → `APP_STRINGS.games.items` (ids `game1` … `game19`). Each game folder: `index.html`, `game.js`, `game.css`, `strings.js`.
+
+| Id | Hub title | Maintainer notes |
+|----|-----------|------------------|
+| game1–game13 | (see `strings.js`) | Numbers, animals, words, arithmetic, drag-match, etc. |
+| game11 | Färger | Drag-and-drop colour match; object PNGs on assets host; see [Game 11 assets](#game-11-colour-drag--drop-assets) |
+| game14 | Var står det? | **Canonical word bank** + word MP3s under `games/game14/sounds/` |
+| game15 | Prata med oss | On-device / robot speech (not the standard prompt MP3 pipeline) |
+| game16 | Träffa ordet | Slingshot; **word audio resolved via `game14`** in `game.js` |
+| game17 | Kör mot ordet | Driving game; **word audio from `game14`** |
+| game18 | Hitta kaninen? | Colour + item prompts (`promptIntroSound`, per-pair clips); heavy prefetch |
+| game19 | Räkna hoppen | Round intro sounds + answer prompt |
+
+**UI copy:** Completion dialog button is **`Igen`** (`labels.continue` in each game’s `strings.js`), not “Fortsätt”.
+
+## Cross-repo and cross-game dependencies
+
+- **game16 / game17:** Same word list as game14; `TiddeliAssets.resolveGameAsset('game14', path)` for word MP3s. New words → add to game14 assets + strings, then game16/17 strings if needed.
+- **Shared completion SFX:** `assets/shared/sounds/complete_1.mp3` … `complete_71.mp3` via `playSharedCompletionSound()` in `js/audio.js`.
+- **Prompt creation:** `promptgenerator/index.html` in this repo (Gemini TTS → 24 kHz mono MP3). Optional `npm run serve:promptgenerator`.
+
+## Speech/listen UX pattern (games 14, 16, 17, 18, 19)
+
+When touching listen buttons or prompt playback:
+
+1. **Prefetch** intro, prompt, and round word/clips on init and before each round (`loadAudioBuffer` + cache).
+2. **Decode to `AudioBuffer`** before playing Web Audio sequences (avoids glitches on slow networks).
+3. **Listen control:** Replay prompt; avoid pulsing, disabled state, or wait-cursor while audio is playing (current product choice).
+4. **game14:** May enable answering when the **target word** audio starts (keep this behaviour when changing timing).
+
+Reference implementations: `games/game14/game.js`, `games/game18/game.js` (also prefetch all colour/item pairs).
+
+## Agent workflow checklist
+
+1. Read **`docs/assets.md`** and **`docs/asset-licenses.json`** before adding or deleting media.
+2. Read affected `strings.js` for Swedish copy and sound filenames.
+3. Resolve URLs only through `window.TiddeliAssets` (`js/assets.js`).
+4. New game? Follow [New game checklist](#new-game-checklist-gamen) exactly.
+5. Bump `version` / `assetVersion` in `js/config.js` as appropriate; rerun `npm run generate:assets-doc` when media changes.
+6. Suggest Playwright or manual portrait test after mechanic changes.
+
+## Game 11 (colour drag & drop) assets
+
+- Ten colours in `COLORS` in `game11/game.js` (including svart, brun, orange, vit).
+- Images on assets host: transparent **PNG** (e.g. `ballRed.png`, `ballWhite.png`, `bucketPurple.png`). Prefer source art with alpha (e.g. user-supplied `toys.zip` 512×512 RGBA).
+- **CSS:** Use `filter: drop-shadow(...)` on `.game11-target__image`, not `box-shadow` (square halo on transparent PNGs). Extra subtle outline filter on `[data-color-id="white"]` for visibility.
+- Do not over-aggressively colour-key white balls — can erase the sprite.
+
+## Asset inventory and licences
+
+Full file list (names, sizes when `TiddeliGames-assets` is present, licence guesses): **`docs/assets.md`**.
+
+- Regenerate after code or media changes: `npm run generate:assets-doc` (optional `ASSETS_ROOT=...`).
+- **Authoritative licence record:** edit **`docs/asset-licenses.json`** with paths under the assets repo (`games/gameN/...`). Grokbot/Cursor use this when the desktop spreadsheet is unavailable.
+
+## Per-game summary (pedagogy, age, difficulty, strings)
+
+Hub age hints are in `js/strings.js` descriptions; below is what each game *does* and which `strings.js` fields matter. Use this to avoid cloning an existing mechanic.
+
+| Game | Teaches | Age | Difficulty / rounds | Key `strings.js` fields |
+|------|---------|-----|---------------------|-------------------------|
+| game1 Siffror | Tap numbers 1–10 in order | 3+ | Sequential unlock; all circles must be found | `gameIntroSound`, `labels`, `dialog`, `messages`, `aria` |
+| game2 Ljud | Cause/effect sounds | 1+ | Open play; random card grid | `items[]` (image+sound), `ambience.track`, `labels` |
+| game3 Räkna frukter | Counting objects | 3+ | Random counts; pick number | `gameIntroSound`, `ambience`, `labels`, `dialog` |
+| game4 Ord | Picture–word recognition | 4+ | Multiple choice images per word | `words[]`, `ambience`, optional local `complete` |
+| game5 Addera | Addition (emoji groups) | 4+ | Two groups; sum 2–10 typical | `ambience`, `labels`, `dialog` |
+| game6 Stava ord | Spelling | 5+ | Letter order; word list | `words[]`, `ambience`, `labels` |
+| game7 Subtrahera | Subtraction | 4+ | Two groups; difference | same pattern as game5 |
+| game8 Stora/små | Upper/lowercase match | 4+ | Pair letters | `pairs[]`, `ambience` |
+| game9 Addera siffror | Numeric addition | 5+ | Sum two numbers | `ambience`, `labels` |
+| game10 Första bokstaven | First letter of word | 4+ | Pick letter for picture | `gameIntroSound`, `words[]`, `ambience` |
+| game11 Färger | Colour names + drag-drop | 3+ | 4 random colours × 1 object type per round | `ambience`, `labels`; images in `game.js` `OBJECT_IMAGES` |
+| game12 Matcha ord | Drag word to emoji | 4+ | game4 word bank; D&D like game11 | `gameIntroSound`, `wordPairs[]`, `ambience`, `aria` |
+| game13 Räkna enkelt | Simple counting drag | 4+ | Drag answer to problem | rounds/items in `strings.js`, `ambience` |
+| game14 Var står det? | Hear word, find among 4 | 4+ | Random 4-of-word-bank; listen replay | `promptSound`, `words[]`, `ambience`, `labels.listen` |
+| game15 Prata med oss | Typed phrases + robot | 4+ | Free text; robot voice | `ambience`, `thinking`, `robot` image path |
+| game16 Träffa ordet | Aim word with slingshot | 4+ | 4 targets; physics rounds | `promptSound`, `words[]` (audio **game14**), `ambience` |
+| game17 Kör mot ordet | Steer car to correct word | 4+ | Obstacles; canvas scene | `promptSound`, `words[]` (audio **game14**), many SFX fields, `media` |
+| game18 Hitta kaninen? | Colour + object ID | 3+ | Pairs in room; many prompt MP3s | `promptIntroSound`, `promptSoundFor()`, `media`, `errorSound`, `rabbitSound` |
+| game19 Räkna hoppen | Count rabbit hops | 4+ | 3 rounds | `roundIntroSounds`, `answerPromptSound`, `jumpSound`, `successSound`, `errorSound` |
+
+## New game checklist (`gameN`)
+
+Follow in order when adding a game. Prompt: *“Add game20 — follow **design.md → New game checklist**.”*
+
+1. **Folder** — `games/gameN/`: `index.html`, `game.js`, `game.css`, `strings.js` (copy nearest similar game).
+2. **Scripts in `index.html`** — at minimum: `config.js`, `version-check.js`, `assets.js`, `volume-control.js`, `audio.js`, `strings.js`, `game.js`. Add `../../js/fx.js` if using `TiddeliFx`.
+3. **Strings** — `labels.continue: 'Igen'`; `ambience.track` if BGM; spoken fields per [Spoken prompts](#spoken-prompts-mp3).
+4. **Assets** — add media under `TiddeliGames-assets/games/gameN/`; document licences in `docs/asset-licenses.json`; run `npm run generate:assets-doc`.
+5. **Hub** — append entry in `js/strings.js` → `APP_STRINGS.games.items` (id, name, description, icon, path).
+6. **Version** — bump `version` in `js/config.js` (and `assetVersion` if media shipped).
+7. **Service worker** — usually **nothing**: `sw.js` `APP_SHELL` caches only root shell JS/CSS, **not** per-game pages. Only edit `sw.js` if you add a new global script that must be precached.
+8. **Tests** — add `{ id: 'gameN', path: '/games/gameN/index.html' }` to `tests/regression/all-games-navigation.spec.js`; add `tests/regression/gameN.spec.js` when mechanics need coverage.
+9. **Portrait** — layout for portrait phone; test with narrow viewport; avoid requiring landscape ([Orientation](#orientation-portrait-first)).
+10. **Completion** — use `playSharedCompletionSound()` from `js/audio.js` unless the game has a deliberate local complete clip.
+
+## Shared animation helpers (`js/fx.js`)
+
+Optional global effects so new games do not copy keyframes from game11/14/17/18.
+
+- **CSS** — classes `tiddeli-fx-wiggle`, `tiddeli-fx-bounce`, `tiddeli-fx-shake` in `css/animations.css`.
+- **JS** — `window.TiddeliFx`: `wiggleElement(el)`, `bounceElement(el)`, `shakeElement(el)`; `createConfettiBurst(ctx,x,y,opts)` + `tickConfetti(state)` for canvas games.
+- **Include** — `<script src="../../js/fx.js" defer></script>` after `animations.css` on the game page. Existing games are **not** required to migrate until touched.
+
+## Orientation (portrait-first)
+
+- **Product intent:** Play in **portrait** on phones and tablets. `manifest.json` sets `"orientation": "portrait"`.
+- **`js/assets.js`:** portrait lock where supported; on touch devices held in landscape, a **“Vänd telefonen”** overlay blocks play until rotated (`portrait-lock-overlay` in compiled Tailwind/CSS).
+- **Layout:** Design and test at mobile portrait widths first; desktop may letterbox. Minor `@media (orientation: landscape)` tweaks for very short viewports are OK but **must not** be the primary mode.
+- **Do not** document or build games that require landscape-only play.
 
 # Design goals
 This app (TiddeliGames) should be a PWA app that appears like a native app as far as possible. It should follow common design patterns in particular with respect to UI.
 
 Target are reasonable modern android phones and pads. It should run with various screen sizes. It should also run in a desktop browser.
 
-Games may have a preferred orientation (portrait or landscape), but all games must be responsive and functional in both orientations.
+Games are **portrait-first** (see [Orientation (portrait-first)](#orientation-portrait-first)); responsive across phone sizes, usable on desktop, but not landscape-dependent.
 
 # Tech stack
 
@@ -25,7 +173,7 @@ Games may have a preferred orientation (portrait or landscape), but all games mu
 - **HTML5 Audio API** - *Implemented*
   - Sound effects for game interactions (clicks, pops, success/error sounds)
   - Background ambient sounds per game (each game defines its own ambience track)
-  - Shared completion sounds (36 variants) played via a common helper in `js/audio.js`
+  - Shared completion sounds (71 variants: `complete_1` … `complete_71`) via `js/audio.js`
   - Global volume control accessible from main page (slider and mute button)
   - Volume persistence via localStorage across sessions
   - Volume events broadcast to all games via custom `volumechange` event
@@ -87,15 +235,14 @@ TiddeliGames/
 │   ├── pwa.js              # Service Worker registration and install prompt handling
 │   ├── volume-control.js   # Global volume control for all games (slider, mute, localStorage)
 │   ├── strings.js          # Localization strings for main page
-│   └── audio.js            # Audio management (Tone.js setup) - placeholder
+│   ├── audio.js            # Shared completion sounds, game intro helper (HTML5 Audio)
+│   └── assets.js           # TiddeliAssets URL resolver (local vs Netlify)
 ├── games/
 │   ├── game1/              # Numbers (Siffror) - Click numbered circles
 │   │   ├── index.html      # Game-specific HTML
 │   │   ├── game.js         # Game logic
 │   │   ├── game.css        # Game-specific styles
-│   │   ├── strings.js      # Game localization strings
-│   │   ├── images/         # Game images
-│   │   └── sounds/         # Game sounds
+│   │   └── strings.js      # Game localization strings (media paths point at external assets)
 │   ├── game2/              # Animal Sounds (Ljud) - Click animal cards to hear sounds
 │   │   ├── index.html
 │   │   ├── game.js
@@ -105,13 +252,16 @@ TiddeliGames/
 │   ├── game3/              # Count Fruits (Räkna frukter) - Count emoji fruits and select number
 │   ├── game4/              # Match Words (Ord) - Match images to words
 │   ├── game5/              # Addition (Addera) - Count two groups of emojis and add them
-│   └── game6/              # Spell Words (Stava ord) - Spell words by clicking letters in order
-└── assets/
-    ├── icons/              # PWA icons (various sizes)
-    └── shared/             # Shared assets across games
-        ├── images/         # Shared images (common backgrounds, UI elements)
-        ├── sounds/         # Shared sounds (common sound effects, UI sounds)
-        └── fonts/          # Shared fonts (if custom fonts are needed)
+│   ├── game6/              # Spell Words (Stava ord) - Spell words by clicking letters in order
+│   └── game7/ … game19/    # One folder per hub entry (see js/strings.js)
+├── assets/
+│   └── icons/              # PWA icons (small; stays in app repo)
+├── docs/                   # assets.md (generated), asset-licenses.json (manual)
+├── promptgenerator/        # Local tool: Gemini TTS → MP3 (not shipped to kids in production)
+├── js/fx.js                # Optional shared wiggle/bounce/shake/confetti helpers
+└── tests/                  # Playwright regression + PWA tests
+
+// Game media (images/sounds) lives in TiddeliGames-assets, not inside games/*/ in this repo.
 ```
 
 ## Module Organization
@@ -119,7 +269,7 @@ TiddeliGames/
 - Shared functionality (PWA, navigation, version management, orientation handling) in root `js/` directory
 - Common styles in root `css/` directory
 - Games can override shared styles as needed
-- Each game can specify preferred orientation in its configuration, but must implement responsive layouts for both orientations
+- Each game targets **portrait** phones/tablets; use responsive CSS within portrait aspect ratios
 
 ## Shared Assets Organization
 
@@ -184,7 +334,7 @@ The Service Worker (`sw.js`) is responsible for caching the shell and may also c
 - **pwa.js**: Service Worker registration, install prompt handling, PWA lifecycle management
 - **volume-control.js**: Global volume control system for all games (slider, mute button, localStorage persistence)
 - **strings.js**: Localization strings for main page (games, help text, update messages, etc.)
-- **audio.js**: Shared completion sound helper, one-shot game intro (`playGameIntroOnce`), and related audio utilities (HTML5 Audio API)
+- **audio.js**: Shared completion sound helper (`complete_1`–`71`), one-shot game intro (`playGameIntroOnce`), `playGameIntroFromStrings`, and related audio utilities (HTML5 Audio API)
 
 ## Spoken prompts (MP3)
 
@@ -233,7 +383,11 @@ Do **not** duplicate spoken copy in the on-screen instructions header; prompts a
   `playGameIntroFromStrings('gameN', STRINGS, audioContext, resolveGameNAsset)`  
   (from `js/audio.js`; already loaded on game pages).
 - **Repeating prompt:** load via `resolveGameAsset`, play with existing game buffer helpers; keep TTS fallback only where the game already supports it.
-- **Prefetch:** add new prompt paths to the game’s existing prefetch list if it has one.
+- **Prefetch:** add new prompt paths to the game’s prefetch list (games 14+); decode buffers before play where the game uses Web Audio.
+
+### Listen-button games
+
+Games **14, 16, 17, 18** expose a listen control for replaying the current prompt. Follow the [Speech/listen UX pattern](#speechlisten-ux-pattern-games-14-16-17-18-19) when changing behaviour.
 
 ### Creating clips
 
@@ -243,11 +397,11 @@ Do **not** duplicate spoken copy in the on-screen instructions header; prompts a
 
 
 ## Versioning Strategy
-- Semantic versioning (MAJOR.MINOR.PATCH)
-- **Single source of truth**: Version stored in `js/config.js` only
-- `sw.js` cache name includes version (e.g., `tiddeligames-shell-v1.0.0`) - must be manually updated when releasing
+- Semantic versioning (MAJOR.MINOR.PATCH), e.g. `1.4.34`
+- **Single source of truth**: `js/config.js` — fields `version` and `assetVersion`
 - `manifest.json` does NOT need a version field (not part of PWA manifest spec)
-- When updating version: Change only `js/config.js`, then update `CACHE_NAME` in `sw.js` to match
+- Service worker cache name is `tiddeligames-shell-v${version}` where `version` comes from the `?v=` query on `sw.js` at registration time (`js/pwa.js`); edit `APP_CONFIG.version` in `config.js`, not a duplicate constant in `sw.js`
+- Append `assetVersion` to game media URLs via `js/assets.js` (`?v=`) so CDN/browser picks up Netlify asset deploys
 
 ## Update Mechanism
 - **Automatic version detection**: App fetches `js/config.js` (bypassing all caches) to check for new versions
@@ -323,10 +477,10 @@ Do **not** duplicate spoken copy in the on-screen instructions header; prompts a
   - `npm run test:headed` - Run with visible browser
   - `npm run test:debug` - Debug mode
   - `npm run test:report` - Show test report
-- **Test coverage**: All 11 games, navigation, PWA features, volume control, help dialog
+- **Test coverage**: Hub navigation, PWA features, volume control, help dialog; individual game tests may not list all 19 games — extend tests when adding mechanics
 
 ## Test Areas
-- Game selection page functionality (all 11 games implemented)
+- Game selection page functionality (19 games in hub)
 - Individual game mechanics (all games fully functional)
 - Audio playback (HTML5 Audio API - implemented)
 - Responsive design across screen sizes (mobile-first, prevents unwanted scrolling)
@@ -361,8 +515,8 @@ Do **not** duplicate spoken copy in the on-screen instructions header; prompts a
 - Primary target: Android mobile devices (tested on Pixel 7, Motorola)
 - Touch-friendly interface with adequate tap targets (minimum 44x44px)
 - Responsive design for tablets and desktop
-- **Orientation Support**: Games can have a preferred orientation (portrait or landscape), but all games must be fully functional and responsive in both orientations
-- Layouts adapt dynamically using CSS media queries and JavaScript orientation detection
+- **Orientation:** Portrait-first PWA; landscape on phones shows turn-device overlay (`js/assets.js`), not a second layout mode
+- Layouts adapt with CSS media queries for viewport size; avoid designing for landscape-only play
 - **Overflow Prevention**: Games prevent unwanted vertical scrolling/bouncing on mobile devices using CSS `overflow-y: hidden` and `overscroll-behavior-y: none`
 - **Content Fit**: All game content fits within viewport without scrolling (background images sized appropriately)
 

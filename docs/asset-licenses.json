@@ -1,0 +1,5 @@
+{
+  "_comment": "Keys are paths relative to TiddeliGames-assets repo root. Values are short licence labels (see docs/assets.md legend). Add one entry per file when you have the desktop licence record.",
+  "games/game11/images/ballRed.png": "user_supplied_art (toys.zip 512 RGBA)",
+  "games/game11/images/ballWhite.png": "user_supplied_art (toys.zip 512 RGBA)"
+}
