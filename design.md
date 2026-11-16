@@ -74,7 +74,7 @@ Reference implementations: `games/game14/game.js`, `games/game18/game.js` (also 
 ## Agent workflow checklist
 
 1. Read **`docs/assets.md`** and **`docs/asset-licenses.json`** before adding or deleting media.
-2. Read affected `strings.js` for Swedish copy and sound filenames.
+2. Read  affected `strings.js` for Swedish copy and sound filenames.
 3. Resolve URLs only through `window.TiddeliAssets` (`js/assets.js`).
 4. New game? Follow [New game checklist](#new-game-checklist-gamen) exactly.
 5. Bump `version` / `assetVersion` in `js/config.js` as appropriate; rerun `npm run generate:assets-doc` when media changes.
