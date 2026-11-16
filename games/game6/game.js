@@ -1,4 +1,4 @@
-// Spelling Game (Game 6) – game logic for clicking characters in order
+// Spelling Game (Game 6) – tap or drag letters into the answer row, in order
 'use strict';
 
 // Loads local strings and resource definitions
@@ -45,6 +45,12 @@ const state = {
     audioStarted: false, // Track if ambience has successfully started
     audioStarting: false // Prevent concurrent start attempts
 };
+
+/** Minimum pointer movement (px) before a press counts as drag instead of tap */
+const DRAG_THRESHOLD = 10;
+
+/** Active letter drag { el, char, pointerId, startX, startY, moved, dragOffsetX, dragOffsetY, startRectLeft, startRectTop, startW, startH } */
+let pointerDrag = null;
 
 /**
  * Initializes the game when the DOM is ready.
@@ -202,18 +208,147 @@ function createCharButton(char, index) {
     button.setAttribute('data-index', index);
     button.setAttribute('aria-label', STRINGS.aria.character(char));
     button.setAttribute('type', 'button');
-    
-    button.addEventListener('click', () => handleCharClick(button, char));
-    
+
+    button.addEventListener('pointerdown', (event) => handleCharPointerDown(event, button, char));
+
     return button;
 }
 
 /**
- * Handles click on a character button.
- * @param {HTMLElement} charButton - The clicked character button
+ * Starts tracking a pointer on a letter (tap or drag).
+ */
+function handleCharPointerDown(event, charButton, char) {
+    if (pointerDrag || completionDialog && !completionDialog.hidden) {
+        return;
+    }
+    if (event.pointerType === 'mouse' && event.button !== 0) {
+        return;
+    }
+
+    const rect = charButton.getBoundingClientRect();
+    pointerDrag = {
+        el: charButton,
+        char,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        moved: false,
+        dragOffsetX: event.clientX - (rect.left + rect.width / 2),
+        dragOffsetY: event.clientY - (rect.top + rect.height / 2),
+        startRectLeft: rect.left,
+        startRectTop: rect.top,
+        startW: rect.width,
+        startH: rect.height
+    };
+
+    try {
+        charButton.setPointerCapture(event.pointerId);
+    } catch (_) {
+        // ignore
+    }
+    charButton.addEventListener('pointermove', handleCharPointerMove);
+    charButton.addEventListener('pointerup', handleCharPointerUp);
+    charButton.addEventListener('pointercancel', handleCharPointerUp);
+    event.preventDefault();
+}
+
+/**
+ * Moves a dragged letter with the pointer; highlights the next answer slot.
+ */
+function handleCharPointerMove(event) {
+    if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) {
+        return;
+    }
+
+    const dx = event.clientX - pointerDrag.startX;
+    const dy = event.clientY - pointerDrag.startY;
+    if (!pointerDrag.moved && Math.hypot(dx, dy) < DRAG_THRESHOLD) {
+        return;
+    }
+
+    const btn = pointerDrag.el;
+    if (!pointerDrag.moved) {
+        pointerDrag.moved = true;
+        btn.classList.add('game6-char--dragging');
+        setDropTargetHighlight(true);
+    }
+
+    const centerX = event.clientX - pointerDrag.dragOffsetX;
+    const centerY = event.clientY - pointerDrag.dragOffsetY;
+    const baseCenterX = pointerDrag.startRectLeft + pointerDrag.startW / 2;
+    const baseCenterY = pointerDrag.startRectTop + pointerDrag.startH / 2;
+    btn.style.transform = `translate(${centerX - baseCenterX}px, ${centerY - baseCenterY}px)`;
+}
+
+/**
+ * Ends drag or registers a tap on the letter button.
+ */
+function handleCharPointerUp(event) {
+    if (!pointerDrag || event.pointerId !== pointerDrag.pointerId) {
+        return;
+    }
+
+    const { el: charButton, char, moved } = pointerDrag;
+    cleanupCharPointerDrag(charButton);
+
+    if (moved) {
+        if (isPointerOverAnswerRow(event.clientX, event.clientY)) {
+            trySubmitChar(charButton, char);
+        }
+    } else {
+        trySubmitChar(charButton, char);
+    }
+}
+
+/**
+ * Removes drag listeners and resets letter appearance.
+ */
+function cleanupCharPointerDrag(charButton) {
+    const captureId = pointerDrag ? pointerDrag.pointerId : null;
+    charButton.classList.remove('game6-char--dragging');
+    charButton.style.transform = '';
+    charButton.removeEventListener('pointermove', handleCharPointerMove);
+    charButton.removeEventListener('pointerup', handleCharPointerUp);
+    charButton.removeEventListener('pointercancel', handleCharPointerUp);
+    if (captureId !== null) {
+        try {
+            charButton.releasePointerCapture(captureId);
+        } catch (_) {
+            // ignore
+        }
+    }
+    setDropTargetHighlight(false);
+    pointerDrag = null;
+}
+
+/**
+ * True when the pointer is over the answer row (drop zone for the next letter).
+ */
+function isPointerOverAnswerRow(clientX, clientY) {
+    if (!answerContainer) {
+        return false;
+    }
+    const r = answerContainer.getBoundingClientRect();
+    return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+}
+
+/**
+ * Highlights the empty slot that accepts the next letter during drag.
+ */
+function setDropTargetHighlight(on) {
+    const slot = state.answerSlots[state.selectedIndex];
+    if (!slot || slot.classList.contains('game6-answer-char--filled')) {
+        return;
+    }
+    slot.classList.toggle('game6-answer-char--drop-target', Boolean(on));
+}
+
+/**
+ * Validates a letter (tap or successful drop) against the next position in the word.
+ * @param {HTMLElement} charButton - The letter control
  * @param {string} char - The character value
  */
-function handleCharClick(charButton, char) {
+function trySubmitChar(charButton, char) {
     // Check if this is the correct next character
     const expectedChar = state.wordChars[state.selectedIndex];
     

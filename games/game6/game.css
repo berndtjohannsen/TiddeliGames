@@ -183,10 +183,31 @@
     background: rgba(255, 255, 255, 0.95);
     border: 3px solid #8b5cf6;
     border-radius: 1.5rem;
-    cursor: pointer;
+    cursor: grab;
     transition: all 200ms ease;
     box-shadow: rgba(0, 0, 0, 0.25) 0 8px 16px, rgba(0, 0, 0, 0.15) 0 4px 8px;
     user-select: none;
+    touch-action: none;
+}
+
+/* Letter follows the finger while dragging */
+.game6-char--dragging {
+    position: relative;
+    z-index: 40;
+    cursor: grabbing;
+    transition: none;
+    transform-origin: center center;
+    box-shadow:
+        rgba(0, 0, 0, 0.28) 0 16px 28px,
+        rgba(139, 92, 246, 0.45) 0 0 0 3px;
+}
+
+/* Next empty answer slot while dragging */
+.game6-answer-char--drop-target {
+    border-color: #f59e0b;
+    border-style: solid;
+    background: rgba(254, 243, 199, 0.95);
+    box-shadow: rgba(245, 158, 11, 0.35) 0 0 0 4px;
 }
 
 .game6-char:hover:not(.game6-char--used) {

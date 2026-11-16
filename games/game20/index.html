@@ -1,0 +1,98 @@
+<!-- Mata fisken (Game 20) – feed the hungry fish the number of foods it asks for -->
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <!-- Set viewport height for PWA standalone mode - must run early -->
+    <script>
+        (function() {
+            function setViewportHeight() {
+                const vh = window.innerHeight;
+                document.documentElement.style.setProperty('--actual-vh', vh + 'px');
+            }
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+    <title>Mata fisken</title>
+    <link rel="stylesheet" href="../../css/tailwind.output.css">
+    <link rel="stylesheet" href="../../css/styles.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="game.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-sky-200 via-cyan-50 to-teal-100">
+    <div class="game20-wrapper">
+        <header class="game20-header">
+            <div class="game20-header__buttons">
+                <a href="../../index.html" class="back-button" aria-label="Tillbaka till alla spel">⟵</a>
+                <div id="round-progress" class="game20-pips" role="group" aria-live="polite"></div>
+            </div>
+            <!-- Empty slot matches game 19 header (spoken prompts only) -->
+            <div class="game20-header__center">
+                <h1 class="game20-title" aria-hidden="true"></h1>
+                <p class="game20-instructions" id="instructions-text" aria-live="polite"></p>
+            </div>
+        </header>
+
+        <main id="game20-field" class="game20-field" aria-live="polite">
+            <div id="game20-stage" class="game20-stage">
+                <button id="listen-button" class="game20-listen" type="button" aria-label="Spela om frågan">
+                    <svg class="game20-listen__icon" viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" focusable="false">
+                        <path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                </button>
+
+                <!-- Bubbles from the fish (CSS only) -->
+                <div id="bubble-layer" class="game20-bubble-layer" aria-hidden="true"></div>
+
+                <!-- The hungry fish: two stacked frames (mouth closed / open) -->
+                <div id="fish" class="game20-fish game20-fish--idle" role="img" aria-label="Hungrig fisk">
+                    <div class="game20-fish__bob">
+                        <div id="fish-body" class="game20-fish__body">
+                            <img id="fish-closed" class="game20-fish__img" alt="">
+                            <img id="fish-open" class="game20-fish__img game20-fish__img--open" alt="">
+                            <img id="fish-stuffed" class="game20-fish__img game20-fish__img--stuffed" alt="">
+                            <!-- Dizzy stars circling the head after the big burp (CSS only) -->
+                            <div class="game20-dizzy" aria-hidden="true">
+                                <span class="game20-dizzy__x"><span class="game20-dizzy__y"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.8 6 6.6.7-4.9 4.5 1.4 6.5L12 16.9l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7z"/></svg></span></span>
+                                <span class="game20-dizzy__x"><span class="game20-dizzy__y"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.8 6 6.6.7-4.9 4.5 1.4 6.5L12 16.9l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7z"/></svg></span></span>
+                                <span class="game20-dizzy__x"><span class="game20-dizzy__y"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.8 6 6.6.7-4.9 4.5 1.4 6.5L12 16.9l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7z"/></svg></span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="fish-badge" class="game20-fish__badge" aria-hidden="true">0</div>
+                    <!-- Little copies of what the fish has eaten (visual count) -->
+                    <div id="fish-tummy" class="game20-fish__tummy" aria-hidden="true"></div>
+                </div>
+
+                <!-- Plate of food at the bottom of the tank -->
+                <div id="food-plate" class="game20-plate" role="group"></div>
+
+                <canvas id="game20-confetti-canvas" class="game20-confetti" aria-hidden="true"></canvas>
+            </div>
+        </main>
+    </div>
+
+    <div id="completion-dialog" class="completion-dialog" hidden>
+        <div class="completion-dialog__content" role="dialog" aria-modal="true" aria-labelledby="completion-title">
+            <h2 id="completion-title" class="completion-dialog__title"></h2>
+            <p id="completion-message" class="completion-dialog__message"></p>
+            <div class="completion-dialog__actions">
+                <button id="continue-button" class="completion-dialog__btn completion-dialog__btn--primary" type="button"></button>
+                <button id="dialog-back-button" class="completion-dialog__btn completion-dialog__btn--secondary" type="button"></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/config.js" defer></script>
+    <script src="../../js/version-check.js" defer></script>
+    <script src="../../js/assets.js" defer></script>
+    <script src="../../js/volume-control.js" defer></script>
+    <script src="../../js/audio.js" defer></script>
+    <script src="../../js/fx.js" defer></script>
+    <script src="strings.js" defer></script>
+    <script src="game.js" defer></script>
+</body>
+</html>

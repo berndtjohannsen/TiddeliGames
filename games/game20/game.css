@@ -1,0 +1,630 @@
+/* Mata fisken (Game 20) – drag or tap food into the hungry fish, count to the asked number */
+
+.game20-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game20-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game20-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game20-header__center {
+    text-align: center;
+}
+
+/* Empty title row (same as game 19 — no visible title, keeps vertical rhythm) */
+.game20-title {
+    font-size: clamp(1.5rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #0e4c5a;
+    margin: 0;
+}
+
+.game20-title:empty {
+    display: none;
+}
+
+/* Spoken prompts only; empty line reserves space */
+.game20-instructions {
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    font-weight: 600;
+    color: #155e75;
+    margin: 0;
+    min-height: 0;
+}
+
+.game20-instructions:not(:empty) {
+    display: none;
+}
+
+.game20-header__buttons {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 0;
+}
+
+.back-button {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    background: #38bdf8;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+/* Same top row pattern as game 19: back control + centred progress */
+.game20-pips {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.35rem, 1.8vw, 0.65rem);
+    pointer-events: none;
+}
+
+.game20-pip {
+    display: inline-block;
+    font-size: clamp(1.65rem, 5.6vw, 2.35rem);
+    line-height: 1;
+    opacity: 0.4;
+    filter: grayscale(1);
+    transform: scale(0.92);
+    transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+    user-select: none;
+}
+
+.game20-pip--done {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+}
+
+.game20-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 2rem;
+    overflow: hidden;
+    box-shadow: inset 0 0 25px rgba(14, 116, 144, 0.16);
+    touch-action: manipulation;
+}
+
+.game20-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #7ec8d4;
+    background-image: linear-gradient(180deg, #9ad7e3 0%, #5eb3c6 55%, #f4e2b8 100%);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+.game20-listen {
+    position: absolute;
+    top: clamp(0.4rem, 1.5vmin, 0.85rem);
+    left: clamp(0.4rem, 1.5vmin, 0.85rem);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(2.75rem, 9vmin, 3.2rem);
+    height: clamp(2.75rem, 9vmin, 3.2rem);
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #0e7490;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.15) 0 4px 12px;
+}
+
+.game20-listen__icon {
+    width: 58%;
+    height: 58%;
+}
+
+.game20-bubble-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    overflow: hidden;
+}
+
+/* The hungry fish — centred in the upper-middle of the tank */
+.game20-fish {
+    position: absolute;
+    left: 50%;
+    top: 36%;
+    width: min(68%, 19rem);
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.game20-fish--idle .game20-fish__bob {
+    animation: game20-idle-bob 3.4s ease-in-out infinite;
+}
+
+@keyframes game20-idle-bob {
+    0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+    50% { transform: translateY(-9px) rotate(1.5deg); }
+}
+
+.game20-fish__body {
+    position: relative;
+    transform-origin: 50% 60%;
+}
+
+.game20-fish__img {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(0 8px 10px rgba(8, 47, 73, 0.28));
+}
+
+/* Open-mouth frame sits exactly on top; short crossfade hides small art differences */
+.game20-fish__img--open {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.09s linear;
+}
+
+.game20-fish--open .game20-fish__img--open {
+    opacity: 1;
+}
+
+/* Little "chomp" when food goes in */
+.game20-fish--chomp .game20-fish__body {
+    animation: game20-chomp 0.32s ease;
+}
+
+@keyframes game20-chomp {
+    0% { transform: scale(1, 1); }
+    40% { transform: scale(1.08, 0.93); }
+    100% { transform: scale(1, 1); }
+}
+
+/* Overfed (~2.9 s, transforms/opacity only; timings match OVERFEED_* in game.js):
+   0–0.2 s squash · 0.2–1.45 s swell to ~1.7x with jelly wobble (stuffed frame) + tremble
+   1.45 s BUURP → recoil and spin backwards · 1.95–2.45 s dizzy stars · 2.45–2.9 s deflate */
+.game20-fish__img--stuffed {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+}
+
+.game20-fish--overfed .game20-fish__body {
+    animation: game20-overfed 2.9s ease-in-out both;
+}
+
+.game20-fish--overfed #fish-closed {
+    animation: game20-overfed-hide 2.9s linear both;
+}
+
+.game20-fish--overfed .game20-fish__img--open {
+    opacity: 0;
+    transition: none;
+}
+
+/* Count badge and tummy row step aside while the fish is busy being overfull */
+.game20-fish--overfed .game20-fish__badge,
+.game20-fish--overfed .game20-fish__tummy {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.game20-fish--overfed .game20-fish__img--stuffed {
+    animation: game20-overfed-show 2.9s linear both;
+}
+
+.game20-fish--overfed .game20-fish__bob {
+    animation: game20-tremble 0.07s linear 0.75s 10 alternate;
+}
+
+@keyframes game20-overfed {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1, 1); }
+    7%   { transform: translate(0, 2%) rotate(0deg) scale(1.14, 0.88); }
+    18%  { transform: translate(0, -4%) rotate(-2deg) scale(1.42, 1.62); }
+    25%  { transform: translate(0, -3%) rotate(2deg) scale(1.74, 1.46); }
+    31%  { transform: translate(0, -4%) rotate(-2deg) scale(1.56, 1.7); }
+    36%  { transform: translate(0, -3%) rotate(1deg) scale(1.7, 1.56); }
+    41%  { transform: translate(0, -4%) rotate(-1deg) scale(1.62, 1.66); }
+    49%  { transform: translate(0, -4%) rotate(0deg) scale(1.72, 1.68); }
+    52%  { transform: translate(12%, -6%) rotate(45deg) scale(1.44, 1.3); }
+    60%  { transform: translate(14%, -8%) rotate(250deg) scale(1.34, 1.3); }
+    67%  { transform: translate(6%, -3%) rotate(360deg) scale(1.3, 1.26); }
+    74%  { transform: translate(4%, -2%) rotate(351deg) scale(1.28, 1.28); }
+    80%  { transform: translate(2%, -2%) rotate(368deg) scale(1.28, 1.26); }
+    85%  { transform: translate(0, -2%) rotate(358deg) scale(1.26, 1.28); }
+    93%  { transform: translate(0, 1%) rotate(360deg) scale(0.9, 1.08); }
+    97%  { transform: translate(0, 0) rotate(360deg) scale(1.05, 0.97); }
+    100% { transform: translate(0, 0) rotate(360deg) scale(1, 1); }
+}
+
+@keyframes game20-overfed-show {
+    0%, 9% { opacity: 0; }
+    15%, 86% { opacity: 1; }
+    92%, 100% { opacity: 0; }
+}
+
+@keyframes game20-overfed-hide {
+    0%, 9% { opacity: 1; }
+    15%, 86% { opacity: 0; }
+    92%, 100% { opacity: 1; }
+}
+
+@keyframes game20-tremble {
+    from { transform: translate(-4px, 1px) rotate(-2deg); }
+    to { transform: translate(4px, -1px) rotate(2deg); }
+}
+
+/* Dizzy stars circling the head (x/y eased separately = elliptical orbit, no distortion) */
+.game20-dizzy {
+    position: absolute;
+    left: 22%;
+    top: -2%;
+    width: 34%;
+    height: 14%;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.game20-fish--overfed .game20-dizzy {
+    animation: game20-dizzy-show 2.9s linear both;
+}
+
+.game20-dizzy__x,
+.game20-dizzy__y {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+
+.game20-dizzy__y svg {
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -0.75rem 0 0 -0.75rem;
+    filter: drop-shadow(0 1px 2px rgba(120, 53, 15, 0.45));
+    fill: #fde047;
+    stroke: #f59e0b;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+}
+
+.game20-fish--overfed .game20-dizzy__x {
+    animation: game20-dizzy-x 0.8s ease-in-out infinite alternate;
+}
+
+.game20-fish--overfed .game20-dizzy__y {
+    animation: game20-dizzy-y 0.8s ease-in-out infinite alternate;
+    animation-delay: -0.4s;
+}
+
+.game20-fish--overfed .game20-dizzy__x:nth-child(2) { animation-delay: -0.53s; }
+.game20-fish--overfed .game20-dizzy__x:nth-child(2) .game20-dizzy__y { animation-delay: -0.93s; }
+.game20-fish--overfed .game20-dizzy__x:nth-child(3) { animation-delay: -1.07s; }
+.game20-fish--overfed .game20-dizzy__x:nth-child(3) .game20-dizzy__y { animation-delay: -1.47s; }
+
+@keyframes game20-dizzy-x {
+    from { transform: translateX(-2.6rem); }
+    to { transform: translateX(2.6rem); }
+}
+
+@keyframes game20-dizzy-y {
+    from { transform: translateY(-0.7rem) scale(0.8); }
+    to { transform: translateY(0.7rem) scale(1.1); }
+}
+
+@keyframes game20-dizzy-show {
+    0%, 64% { opacity: 0; }
+    68%, 88% { opacity: 1; }
+    92%, 100% { opacity: 0; }
+}
+
+/* Happy flip on the right amount */
+.game20-fish--celebrate .game20-fish__body {
+    animation: game20-flip 0.8s ease-in-out;
+}
+
+@keyframes game20-flip {
+    0% { transform: translateY(0) rotate(0deg); }
+    40% { transform: translateY(-30px) rotate(180deg); }
+    100% { transform: translateY(0) rotate(360deg); }
+}
+
+/* Count bubble near the fish's head */
+.game20-fish__badge {
+    position: absolute;
+    top: 2%;
+    left: 4%;
+    min-width: 2.3rem;
+    height: 2.3rem;
+    padding: 0 0.4rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #0f172a;
+    font-weight: 800;
+    font-size: 1.45rem;
+    line-height: 2.3rem;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(8, 47, 73, 0.25);
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.game20-fish__badge--on {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.game20-fish__badge--pop {
+    animation: game20-badge-pop 0.35s ease;
+}
+
+@keyframes game20-badge-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+
+/* Row of small eaten foods under the fish */
+.game20-fish__tummy {
+    display: flex;
+    justify-content: center;
+    gap: 0.2rem;
+    min-height: 1.8rem;
+    margin-top: 0.2rem;
+}
+
+.game20-fish__tummy img {
+    width: 1.7rem;
+    height: 1.7rem;
+    animation: game20-tummy-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes game20-tummy-in {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+/* Plate of food — a soft cream dish on the sand */
+.game20-plate {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(0.5rem, 2.5vmin, 1.2rem);
+    transform: translateX(-50%);
+    width: min(94%, 26rem);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem 0.35rem;
+    padding: 0.55rem 0.8rem 0.7rem;
+    border-radius: 2.2rem / 1.6rem;
+    background:
+        radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 249, 235, 0.92) 55%, rgba(240, 228, 205, 0.92) 100%);
+    box-shadow:
+        inset 0 -6px 0 rgba(214, 196, 160, 0.55),
+        0 10px 18px rgba(8, 47, 73, 0.25);
+    z-index: 5;
+    touch-action: none;
+}
+
+.game20-food {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.1rem;
+    border: none;
+    background: transparent;
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.game20-food img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    filter: drop-shadow(0 3px 3px rgba(8, 47, 73, 0.3));
+}
+
+.game20-food--dragging,
+.game20-food--flying {
+    z-index: 20;
+    transition: none;
+    cursor: grabbing;
+}
+
+.game20-food--dragging img {
+    transform: scale(1.18);
+}
+
+.game20-food--gone {
+    visibility: hidden;
+}
+
+.game20-food--refill {
+    animation: game20-food-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+@keyframes game20-food-in {
+    from { transform: scale(0); }
+    to { transform: scale(1); }
+}
+
+.game20-bubble {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.05));
+    pointer-events: none;
+    animation: game20-bubble-rise 2.6s linear forwards;
+    opacity: 0.85;
+}
+
+/* Burp: bubbles shoot out of the mouth, then float up */
+.game20-bubble--burst {
+    animation-name: game20-bubble-burst;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1);
+    animation-fill-mode: both;
+    border: 3px solid rgba(255, 255, 255, 0.95);
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(186, 230, 253, 0.35) 60%, rgba(255, 255, 255, 0.15));
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+@keyframes game20-bubble-burst {
+    0% { transform: translate(-50%, -50%) scale(0.3); opacity: 1; }
+    30% { transform: translate(calc(-50% + var(--bx, 40px)), calc(-50% + var(--by, -40px))) scale(1); opacity: 1; }
+    70% { opacity: 0.85; }
+    100% { transform: translate(calc(-50% + var(--bx, 40px) * 1.2), calc(-50% + var(--by, -40px) - 110px)) scale(1.15); opacity: 0; }
+}
+
+@keyframes game20-bubble-rise {
+    0% { transform: translate(-50%, 0) scale(0.8); opacity: 0.85; }
+    80% { opacity: 0.7; }
+    100% { transform: translate(calc(-50% + var(--drift, 12px)), -140px) scale(1.15); opacity: 0; }
+}
+
+.game20-confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 252, 220, 0.98) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(125, 211, 252, 0.55) 0%, transparent 38%),
+        radial-gradient(circle at 70% 95%, rgba(120, 220, 190, 0.4) 0%, transparent 48%),
+        linear-gradient(165deg, #fff9ef 0%, #cceef5 45%, #d5ffe6 100%);
+    border: 3px solid rgba(56, 189, 248, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+        0 22px 50px rgba(8, 145, 178, 0.22),
+        0 0 48px rgba(125, 211, 252, 0.22);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    margin: 0;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    margin: 0;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior-y: none;
+}
