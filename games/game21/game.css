@@ -1,0 +1,631 @@
+/* Fåglarna flyger hem (Game 21) – drag or tap the coloured bird home to the nest of the same colour */
+
+.game21-wrapper {
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: clamp(0.35rem, 1vw, 1rem) clamp(0.5rem, 1.5vw, 1.5rem) clamp(0.5rem, 1vw, 1.25rem);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.2rem, 0.8vw, 0.75rem);
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (display-mode: standalone) {
+    .game21-wrapper {
+        height: var(--actual-vh, 100svh) !important;
+        max-height: var(--actual-vh, 100svh) !important;
+    }
+}
+
+.game21-header {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.25rem, 1vw, 0.75rem);
+    flex-shrink: 0;
+}
+
+.game21-header__center {
+    text-align: center;
+}
+
+/* Empty title row (same as game 19 — no visible title, keeps vertical rhythm) */
+.game21-title {
+    font-size: clamp(1.5rem, 4vw, 2.6rem);
+    font-weight: 800;
+    color: #365314;
+    margin: 0;
+}
+
+.game21-title:empty {
+    display: none;
+}
+
+/* Spoken prompts only; empty line reserves space */
+.game21-instructions {
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    font-weight: 600;
+    color: #3f6212;
+    margin: 0;
+    min-height: 0;
+}
+
+.game21-instructions:not(:empty) {
+    display: none;
+}
+
+.game21-header__buttons {
+    position: relative;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 0;
+}
+
+.back-button {
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    background: #a3e635;
+    color: #0f172a;
+    font-weight: 700;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    font-size: 1.75rem;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+}
+
+.back-button:active {
+    transform: translateY(2px);
+}
+
+/* Same top row pattern as game 19: back control + centred progress */
+.game21-pips {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(0.2rem, 1.2vw, 0.5rem);
+    pointer-events: none;
+}
+
+.game21-pip {
+    display: inline-block;
+    font-size: clamp(1.25rem, 4.6vw, 2rem);
+    line-height: 1;
+    opacity: 0.4;
+    filter: grayscale(1);
+    transform: scale(0.92);
+    transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+    user-select: none;
+}
+
+.game21-pip--done {
+    opacity: 1;
+    filter: none;
+    transform: scale(1);
+}
+
+.game21-field {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-radius: 2rem;
+    overflow: hidden;
+    box-shadow: inset 0 0 25px rgba(63, 98, 18, 0.16);
+    touch-action: manipulation;
+}
+
+.game21-stage {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #bfe3a8;
+    background-image: linear-gradient(180deg, #cfeaf7 0%, #d9efc0 55%, #a7d77f 100%);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+}
+
+.game21-listen {
+    position: absolute;
+    top: clamp(0.4rem, 1.5vmin, 0.85rem);
+    left: clamp(0.4rem, 1.5vmin, 0.85rem);
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(2.75rem, 9vmin, 3.2rem);
+    height: clamp(2.75rem, 9vmin, 3.2rem);
+    padding: 0;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.92);
+    color: #4d7c0f;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.15) 0 4px 12px;
+}
+
+.game21-listen__icon {
+    width: 58%;
+    height: 58%;
+}
+
+.game21-confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.completion-dialog {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.completion-dialog[hidden] {
+    display: none !important;
+}
+
+.completion-dialog__content {
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 18% 12%, rgba(255, 252, 220, 0.98) 0%, transparent 42%),
+        radial-gradient(circle at 88% 8%, rgba(125, 211, 252, 0.55) 0%, transparent 38%),
+        radial-gradient(circle at 70% 95%, rgba(120, 220, 190, 0.4) 0%, transparent 48%),
+        linear-gradient(165deg, #fff9ef 0%, #cceef5 45%, #d5ffe6 100%);
+    border: 3px solid rgba(56, 189, 248, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.85) inset,
+        0 22px 50px rgba(8, 145, 178, 0.22),
+        0 0 48px rgba(125, 211, 252, 0.22);
+    border-radius: 1.75rem;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    text-align: center;
+    max-width: 90%;
+    width: min(560px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.completion-dialog__title {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    margin: 0;
+}
+
+.completion-dialog__message {
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    margin: 0;
+}
+
+.completion-dialog__actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.completion-dialog__btn {
+    padding: 0.75rem 1.9rem;
+    border-radius: 9999px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 14px 28px, rgba(0, 0, 0, 0.22) 0 10px 10px;
+    color: #ffffff;
+}
+
+.completion-dialog__btn--primary {
+    background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.completion-dialog__btn--secondary {
+    background: linear-gradient(135deg, #bfdbfe, #93c5fd);
+    color: #1e3a8a;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior-y: none;
+}
+
+/* ---------- Game 21: tree, nests, chicks and the bird ---------- */
+
+/* Background: tree canopy must stay visible, so anchor to the top */
+.game21-stage {
+    background-position: center top;
+}
+
+.game21-nest-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* One nest = big tap target with chicks peeking out behind the rim */
+.game21-nest {
+    position: absolute;
+    width: min(34%, 10.5rem);
+    aspect-ratio: 1 / 0.88;
+    transform: translate(-50%, -50%);
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+}
+
+.game21-nest-layer--three .game21-nest {
+    width: min(29%, 9.5rem);
+}
+
+.game21-nest__inner {
+    position: absolute;
+    inset: 0;
+}
+
+.game21-nest__inner--enter {
+    animation: game21-nest-in 0.5s cubic-bezier(.34, 1.56, .64, 1) backwards;
+}
+
+@keyframes game21-nest-in {
+    from { transform: scale(0.3); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Box with the nest image's own aspect, sitting at the bottom of the tap target */
+.game21-nest__pic {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    aspect-ratio: 250 / 203;
+    pointer-events: none;
+}
+
+.game21-nest__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.game21-nest__img:first-child {
+    filter: drop-shadow(0 6px 6px rgba(40, 60, 20, 0.28));
+}
+
+/* Front rim = same nest image clipped to everything below the front edge of the opening */
+.game21-nest__front {
+    clip-path: polygon(0% 40%, 19.0% 40.0%, 20.1% 45.7%, 23.2% 51.0%, 28.1% 55.6%, 34.5% 59.1%, 42.0% 61.3%, 50.0% 62.0%, 58.0% 61.3%, 65.5% 59.1%, 71.9% 55.6%, 76.8% 51.0%, 79.9% 45.7%, 81.0% 40.0%, 100% 40%, 100% 100%, 0% 100%);
+}
+
+/* Chicks sit in the hollow; their bellies are hidden by the front rim */
+.game21-nest__chicks {
+    position: absolute;
+    left: 50%;
+    bottom: 47%;
+    width: 66%;
+    transform: translateX(-50%);
+    transform-origin: 50% 100%;
+    animation: game21-chicks-idle 2.6s ease-in-out infinite;
+    transition: left 0.35s ease, width 0.35s ease;
+    pointer-events: none;
+}
+
+/* Parent bird slot (hidden until it comes home), faces the chicks */
+.game21-nest__parent {
+    position: absolute;
+    left: 69%;
+    bottom: 42%;
+    width: 50%;
+    transform: translateX(-50%) scaleX(-1);
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* While the bird flies in, the chicks shuffle left to make room */
+.game21-nest--arriving .game21-nest__chicks,
+.game21-nest--home .game21-nest__chicks {
+    left: 35%;
+    width: 58%;
+}
+
+.game21-nest--home .game21-nest__parent {
+    visibility: visible;
+    animation: game21-parent-home 0.7s ease-in-out;
+}
+
+@keyframes game21-parent-home {
+    0%, 100% { transform: translateX(-50%) scaleX(-1) rotate(0); }
+    25% { transform: translateX(-50%) scaleX(-1) rotate(-8deg) translateY(-4px); }
+    75% { transform: translateX(-50%) scaleX(-1) rotate(8deg) translateY(-4px); }
+}
+
+@keyframes game21-chicks-idle {
+    0%, 100% { transform: translateX(-50%) translateY(0) scaleY(1); }
+    50% { transform: translateX(-50%) translateY(-3px) scaleY(1.03); }
+}
+
+/* Happy chicks: hop and stretch when their parent comes home */
+.game21-nest--happy .game21-nest__chicks {
+    animation: game21-chicks-hop 0.36s ease-in-out 4;
+}
+
+@keyframes game21-chicks-hop {
+    0%, 100% { transform: translateX(-50%) translateY(0) scale(1); }
+    50% { transform: translateX(-50%) translateY(-14px) scale(1.06, 1.1); }
+}
+
+/* Wrong nest: clear but gentle shake (no red, no X) */
+.game21-nest--nope .game21-nest__inner {
+    animation: game21-nest-nope 0.8s ease-in-out;
+}
+
+@keyframes game21-nest-nope {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    12% { transform: translateX(-9px) rotate(-7deg); }
+    28% { transform: translateX(9px) rotate(7deg); }
+    44% { transform: translateX(-7px) rotate(-5deg); }
+    60% { transform: translateX(6px) rotate(4deg); }
+    76% { transform: translateX(-3px) rotate(-2deg); }
+}
+
+/* Its chicks duck down into the nest and shake their heads "nej-nej" */
+.game21-nest--nope .game21-nest__chicks {
+    animation: game21-chicks-nope 1s ease-in-out;
+}
+
+@keyframes game21-chicks-nope {
+    0%, 100% { transform: translateX(-50%) translateY(0) rotate(0); }
+    15% { transform: translateX(-50%) translateY(22%) rotate(-12deg); }
+    30% { transform: translateX(-50%) translateY(26%) rotate(12deg); }
+    45% { transform: translateX(-50%) translateY(26%) rotate(-12deg); }
+    60% { transform: translateX(-50%) translateY(26%) rotate(12deg); }
+    80% { transform: translateX(-50%) translateY(14%) rotate(0); }
+}
+
+/* Hint after a wrong try: the right nest glows and pulses twice */
+.game21-nest--hint .game21-nest__inner {
+    animation: game21-nest-hint 0.8s ease-in-out 2;
+}
+
+.game21-nest--hint .game21-nest__img:first-child {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1)) drop-shadow(0 0 18px rgba(255, 250, 180, 0.95));
+}
+
+@keyframes game21-nest-hint {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.14); }
+}
+
+/* Puff cloud with a wobbling "?" over the wrong nest / the confused bird */
+.game21-question {
+    position: absolute;
+    width: 3.4rem;
+    height: 3.4rem;
+    margin: -1.7rem 0 0 -1.7rem;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff 0%, #f8fafc 55%, #e2e8f0 100%);
+    box-shadow: -0.9rem 0.5rem 0 -0.35rem #f8fafc, 0.9rem 0.55rem 0 -0.4rem #f1f5f9, 0 6px 14px rgba(40, 60, 20, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: game21-question-pop 1.4s ease-out forwards;
+}
+
+.game21-question--bird {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin: -1.3rem 0 0 -1.3rem;
+    box-shadow: 0 4px 10px rgba(40, 60, 20, 0.2);
+}
+
+.game21-question__mark {
+    font-size: 2.1rem;
+    font-weight: 900;
+    line-height: 1;
+    color: #7c3aed;
+    animation: game21-question-wobble 0.45s ease-in-out infinite;
+}
+
+.game21-question--bird .game21-question__mark {
+    font-size: 1.6rem;
+    color: #0369a1;
+}
+
+@keyframes game21-question-pop {
+    0% { transform: translateY(10px) scale(0.2); opacity: 0; }
+    15% { transform: translateY(0) scale(1.15); opacity: 1; }
+    25% { transform: scale(1); }
+    80% { transform: translateY(-6px) scale(1); opacity: 1; }
+    100% { transform: translateY(-16px) scale(0.85); opacity: 0; }
+}
+
+@keyframes game21-question-wobble {
+    0%, 100% { transform: rotate(-14deg); }
+    50% { transform: rotate(14deg); }
+}
+
+/* Confused bird: shakes its head, then a little spin */
+.game21-bird--confused .game21-bird__body {
+    animation: game21-bird-confused 1s ease-in-out;
+}
+
+@keyframes game21-bird-confused {
+    0%, 100% { transform: rotate(0) scale(1); }
+    10% { transform: rotate(-14deg); }
+    22% { transform: rotate(14deg); }
+    34% { transform: rotate(-14deg); }
+    46% { transform: rotate(14deg); }
+    58% { transform: rotate(0) scale(0.95); }
+    85% { transform: rotate(360deg) scale(1.05); }
+}
+
+/* Slight glow on a nest while the bird is dragged over it */
+.game21-nest--hover .game21-nest__img {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.95)) drop-shadow(0 6px 6px rgba(40, 60, 20, 0.28));
+}
+
+/* ---------- the bird ---------- */
+.game21-bird {
+    position: absolute;
+    left: 50%;
+    top: 75%;
+    z-index: 5;
+    width: min(36%, 10rem);
+    aspect-ratio: 1 / 0.9;
+    padding: 0;
+    border: none;
+    background: none;
+    transform: translate(-50%, -50%) scale(var(--bird-scale, 1)) scaleX(var(--bird-flip, 1));
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.game21-bird[hidden] {
+    display: none;
+}
+
+.game21-bird__bob,
+.game21-bird__body {
+    position: absolute;
+    inset: 0;
+    display: block;
+}
+
+.game21-bird__img {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    filter: drop-shadow(0 8px 6px rgba(40, 60, 20, 0.25));
+}
+
+/* Default (perched): wings down */
+.game21-bird__img--up { opacity: 0; }
+.game21-bird__img--down { opacity: 1; }
+
+/* Hovering and waiting: slow, calm flap + bob */
+.game21-bird--hover .game21-bird__bob {
+    animation: game21-bird-bob 1.6s ease-in-out infinite;
+}
+
+.game21-bird--hover .game21-bird__img--up { animation: game21-flap-up 0.42s steps(1) infinite; }
+.game21-bird--hover .game21-bird__img--down { animation: game21-flap-down 0.42s steps(1) infinite; }
+
+/* Flying or being dragged: fast flap */
+.game21-bird--flying .game21-bird__img--up,
+.game21-bird--dragging .game21-bird__img--up { animation: game21-flap-up 0.16s steps(1) infinite; }
+.game21-bird--flying .game21-bird__img--down,
+.game21-bird--dragging .game21-bird__img--down { animation: game21-flap-down 0.16s steps(1) infinite; }
+
+.game21-bird--dragging {
+    cursor: grabbing;
+    z-index: 7;
+}
+
+.game21-bird--dragging .game21-bird__body {
+    transform: scale(1.08);
+}
+
+/* Tapped (selected): a happy hop to show "now tap a nest" */
+.game21-bird--picked .game21-bird__body {
+    animation: game21-bird-picked 0.5s ease-in-out;
+}
+
+/* Arrived home: little celebratory wiggle */
+.game21-bird--home .game21-bird__body {
+    animation: game21-bird-home 0.7s ease-in-out;
+}
+
+@keyframes game21-flap-up {
+    0% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+@keyframes game21-flap-down {
+    0% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+@keyframes game21-bird-bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-12px) rotate(2deg); }
+}
+
+@keyframes game21-bird-picked {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-18px) scale(1.1); }
+}
+
+@keyframes game21-bird-home {
+    0%, 100% { transform: rotate(0) scale(1); }
+    25% { transform: rotate(-8deg) scale(1.08); }
+    75% { transform: rotate(8deg) scale(1.08); }
+}
+
+/* ---------- happy notes from the chicks ---------- */
+.game21-note-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.game21-note {
+    position: absolute;
+    font-size: 1.6rem;
+    line-height: 1;
+    transform: translate(-50%, -50%);
+    animation: game21-note-rise 1.4s ease-out forwards;
+}
+
+@keyframes game21-note-rise {
+    0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    20% { opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--nx, 0px)), calc(-50% - 90px)) scale(1.1); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game21-bird--hover .game21-bird__bob,
+    .game21-nest__chicks {
+        animation: none;
+    }
+}

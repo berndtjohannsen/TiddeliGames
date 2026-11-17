@@ -159,6 +159,13 @@ window.APP_STRINGS = Object.freeze({
                 description: 'Ge fisken rätt antal. (2+ år)',
                 icon: '🐠',
                 path: 'games/game20/index.html'
+            },
+            {
+                id: 'game21',
+                name: 'Fåglarna flyger hem',
+                description: 'Hjälp fåglarna hem. (2+ år)',
+                icon: '🐦',
+                path: 'games/game21/index.html'
             }
         ]
     },

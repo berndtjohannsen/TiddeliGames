@@ -1,6 +1,6 @@
 # TiddeliGames asset inventory
 
-Generated: **2026-11-16** by `node scripts/generate-assets-doc.js`. Re-run after code or assets change. Sizes from `C:\dev\cursor\TiddeliGames\TiddeliGames-assets`.
+Generated: **2026-11-17** by `node scripts/generate-assets-doc.js`. Re-run after code or assets change. Sizes from `C:\dev\cursor\TiddeliGames\TiddeliGames-assets`.
 
 ## Licence legend
 
@@ -651,6 +651,78 @@ On assets host: `games/game20/`
 | `sounds/vill_ha_morotter_4.mp3` | 42.2 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game20) |
 | `sounds/vill_ha_morotter_5.mp3` | 40.8 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game20) |
 | `sounds/vill_ha_morotter_6.mp3` | 46.0 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game20) |
+
+## game21
+
+On assets host: `games/game21/`
+
+| Relative path | Size | Licence (guess) |
+|---|---|---|
+| `images/background.jpg` | 95.3 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/background.webp` | 66.3 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_blue_down_1x.png` | 16.6 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_blue_down_1x.webp` | 4.9 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_blue_down_2x.webp` | 12.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_blue_up_1x.png` | 20.0 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_blue_up_1x.webp` | 6.4 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_blue_up_2x.webp` | 16.3 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_green_down_1x.png` | 16.6 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_green_down_1x.webp` | 4.7 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_green_down_2x.webp` | 11.7 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_green_up_1x.png` | 20.3 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_green_up_1x.webp` | 6.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_green_up_2x.webp` | 15.6 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_red_down_1x.png` | 16.5 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_red_down_1x.webp` | 5.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_red_down_2x.webp` | 12.5 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_red_up_1x.png` | 19.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_red_up_1x.webp` | 6.6 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_red_up_2x.webp` | 16.7 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_yellow_down_1x.png` | 16.5 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_yellow_down_1x.webp` | 4.8 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_yellow_down_2x.webp` | 11.7 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_yellow_up_1x.png` | 19.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_yellow_up_1x.webp` | 6.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/bird_yellow_up_2x.webp` | 15.5 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_blue_1x.png` | 10.5 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_blue_1x.webp` | 3.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_blue_2x.webp` | 8.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_green_1x.png` | 10.4 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_green_1x.webp` | 3.0 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_green_2x.webp` | 7.7 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_red_1x.png` | 11.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_red_1x.webp` | 3.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_red_2x.webp` | 8.8 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_yellow_1x.png` | 10.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_yellow_1x.webp` | 3.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/chicks_yellow_2x.webp` | 7.8 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_blue_1x.png` | 23.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_blue_1x.webp` | 6.3 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_blue_2x.webp` | 18.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_green_1x.png` | 22.2 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_green_1x.webp` | 5.9 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_green_2x.webp` | 17.0 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_red_1x.png` | 23.4 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_red_1x.webp` | 6.6 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_red_2x.webp` | 18.8 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_yellow_1x.png` | 20.5 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_yellow_1x.webp` | 6.1 KB | owner_nc Grok image tool / hue variants (game21) |
+| `images/nest_yellow_2x.webp` | 17.3 KB | owner_nc Grok image tool / hue variants (game21) |
+| `sounds/alla_faglar_ar_hemma.mp3` | 49.7 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/ambience.mp3` | 235.8 KB | owner_nc self-synthesised NumPy/ffmpeg (game21) |
+| `sounds/bla_bra.mp3` | 38.5 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/boing.mp3` | 9.9 KB | owner_nc self-synthesised NumPy/ffmpeg (game21) |
+| `sounds/den_bla_fageln_vill_flyga_hem.mp3` | 59.1 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/den_grona_fageln_vill_flyga_hem.mp3` | 57.2 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/den_gula_fageln_vill_flyga_hem.mp3` | 49.7 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/den_roda_fageln_vill_flyga_hem.mp3` | 52.5 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/flutter.mp3` | 16.4 KB | owner_nc self-synthesised NumPy/ffmpeg (game21) |
+| `sounds/gron_bra.mp3` | 36.1 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/gul_bra.mp3` | 39.4 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/nej_nej.mp3` | 11.8 KB | owner_nc self-synthesised NumPy/ffmpeg (game21) |
+| `sounds/peep.mp3` | 13.2 KB | owner_nc self-synthesised NumPy/ffmpeg (game21) |
+| `sounds/rod_bra.mp3` | 31.4 KB | gemini_tts Leda (promptgenerator; 24kHz mono; game21) |
+| `sounds/success.mp3` | 13.2 KB | owner_nc self-synthesised NumPy/ffmpeg (game21) |
 
 ---
 

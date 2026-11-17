@@ -36,9 +36,9 @@ Bump both together when releasing a coordinated app + media update. Do **not** m
 - **Live Server:** User runs it; you do not need to start it.
 - **License:** Non-commercial app (`README.md`); MIT third-party deps (Tailwind, Tone.js CDN) are fine for commercial *libraries* only — the app’s own license still applies.
 
-## Game catalog (20 games)
+## Game catalog (21 games)
 
-The hub list is authoritative in `js/strings.js` → `APP_STRINGS.games.items` (ids `game1` … `game20`). Each game folder: `index.html`, `game.js`, `game.css`, `strings.js`.
+The hub list is authoritative in `js/strings.js` → `APP_STRINGS.games.items` (ids `game1` … `game21`). Each game folder: `index.html`, `game.js`, `game.css`, `strings.js`.
 
 | Id | Hub title | Maintainer notes |
 |----|-----------|------------------|
@@ -51,6 +51,7 @@ The hub list is authoritative in `js/strings.js` → `APP_STRINGS.games.items` (
 | game18 | Hitta kaninen? | Colour + item prompts (`promptIntroSound`, per-pair clips); heavy prefetch |
 | game19 | Räkna hoppen | Round intro sounds + answer prompt |
 | game20 | Mata fisken | Count-by-feeding; `hungrySound`, `foods[].promptSounds`, overfeed SFX; uses `js/fx.js` |
+| game21 | Fåglarna flyger hem | Colour match bird → nest; drag/tap; 2 then 3 nests per round |
 
 **UI copy:** Completion dialog button is **`Igen`** (`labels.continue` in each game’s `strings.js`), not “Fortsätt”.
 
@@ -120,6 +121,7 @@ Hub age hints are in `js/strings.js` descriptions; below is what each game *does
 | game18 Hitta kaninen? | Colour + object ID | 3+ | Pairs in room; many prompt MP3s | `promptIntroSound`, `promptSoundFor()`, `media`, `errorSound`, `rabbitSound` |
 | game19 Räkna hoppen | Count rabbit hops | 4+ | 3 rounds | `roundIntroSounds`, `answerPromptSound`, `jumpSound`, `successSound`, `errorSound` |
 | game20 Mata fisken | Counting while feeding fish | 2+ | 3 rounds; weighted targets 1–6; overfeed retry | `hungrySound`, `foods[].promptSounds`, `countSounds`, `thanksSound`, `fullSound`, `inflateSound`, `burpSound`, `dizzySound`, `deflateSound`, `images.fishStuffed`, `ambience.track` |
+| game21 Fåglarna flyger hem | Colour + nest matching | 2+ | 6 rounds; 2 nests then 3 | `colors[].prompt`, `colors[].praise`, `wrongPlaceSound`, `allHomeSound`, `flutterSound`, `peepSound`, `boingSound`, `images.birdUp/birdDown/nest/chicks`, `nestsPerRound` |
 
 ## New game checklist (`gameN`)
 
@@ -255,7 +257,7 @@ TiddeliGames/
 │   ├── game4/              # Match Words (Ord) - Match images to words
 │   ├── game5/              # Addition (Addera) - Count two groups of emojis and add them
 │   ├── game6/              # Spell Words (Stava ord) - Spell words by clicking letters in order
-│   └── game7/ … game20/    # One folder per hub entry (see js/strings.js)
+│   └── game7/ … game21/    # One folder per hub entry (see js/strings.js)
 ├── assets/
 │   └── icons/              # PWA icons (small; stays in app repo)
 ├── docs/                   # assets.md (generated), asset-licenses.json (manual)
@@ -479,10 +481,10 @@ Games **14, 16, 17, 18** expose a listen control for replaying the current promp
   - `npm run test:headed` - Run with visible browser
   - `npm run test:debug` - Debug mode
   - `npm run test:report` - Show test report
-- **Test coverage**: Hub navigation, PWA features, volume control, help dialog; individual game tests may not list all 20 games — extend tests when adding mechanics
+- **Test coverage**: Hub navigation, PWA features, volume control, help dialog; individual game tests may not list all 21 games — extend tests when adding mechanics
 
 ## Test Areas
-- Game selection page functionality (20 games in hub)
+- Game selection page functionality (21 games in hub)
 - Individual game mechanics (all games fully functional)
 - Audio playback (HTML5 Audio API - implemented)
 - Responsive design across screen sizes (mobile-first, prevents unwanted scrolling)
